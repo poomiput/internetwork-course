@@ -1,7 +1,302 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import ComingSoon from "../components/ComingSoon.astro";
+import Term from "../components/Term.astro";
 ---
-<Layout title="IP Routing Essentials" description="พื้นฐานตาราง Routing, Administrative Distance, และวิธีที่ Router ตัดสินใจเลือกเส้นทาง">
-  <ComingSoon n={6} title="IP Routing Essentials" pages={37} accent="var(--coral)" blurb="พื้นฐานตาราง Routing, Administrative Distance, และวิธีที่ Router ตัดสินใจเลือกเส้นทาง" />
+<Layout title="IP Routing Essentials" description="บทที่ 6 — Router ตัดสินใจเลือกเส้นทางยังไง: Distance Vector, Link-State, Path Vector, Administrative Distance, Prefix Length, และ Static Route ทุกชนิด">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--slate)">Internetwork · Chapter 6 of 14</p>
+    <h1>IP Routing Essentials</h1>
+    <p class="deck">บทที่ 1-5 พูดเรื่อง Layer 2 ล้วน ๆ (VLAN, Trunk, STP, EtherChannel) — บทนี้ข้ามไป Layer 3: Router รู้ได้ยังไงว่าเครือข่ายปลายทางอยู่ทางไหน และถ้ารู้จากหลายทาง จะเลือกทางไหนไปติดตั้งใน Routing Table จริง</p>
+    <div class="credit-bar">
+      <span>R1 · R3 · D1 · D2</span><span>Cisco IOS XE 16.9.4</span><span>Static Route</span><span>Administrative Distance</span><span>RIB / FIB</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="grid-2">
+      <div class="card">
+        <h3>เชื่อมจากที่รู้แล้ว</h3>
+        <ul>
+          <li>จากบทที่ 1 เรารู้แล้วว่า R1 มี static route <code>10.2.0.0/16 → 10.1.13.13</code> ชี้ไปทาง D1 และมี default route <code>0.0.0.0/0 → 10.1.3.3</code> ชี้ออก Serial0/1/1 — ตอนนั้นเรามองแค่ว่า CEF เอาคำตอบนี้ไปแปะแพ็กเก็ตยังไง</li>
+          <li>สิ่งที่ยังไม่เคยพูดถึง: คำตอบใน Routing Table นั้นมาจากไหน ถ้ามีมากกว่าหนึ่งแหล่งบอกเส้นทางเดียวกัน Router เลือกยังไง และ static route ที่เห็นในบทที่ 1 จริง ๆ แล้วมีกี่แบบ</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>สิ่งที่บทนี้ครอบคลุม</h3>
+        <ul>
+          <li><b>Routing Protocol Overview</b> — Distance Vector, Enhanced Distance Vector, Link-State, Path Vector ต่างกันตรงไหน</li>
+          <li><b>Path Selection</b> — Prefix Length, Administrative Distance, Metric สามชั้นที่ Router ใช้ตัดสินใจ</li>
+          <li><b>Static Routing</b> — Directly Attached, Recursive, Fully Specified, Floating, Null Route, IPv6</li>
+          <li><b>VRF</b> — สร้าง Router เสมือนหลายตัวซ้อนบนเครื่องเดียว</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="7" cy="13" r="4" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
+        <circle cx="19" cy="13" r="4" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
+        <line x1="11" y1="13" x2="15" y2="13" stroke="var(--slate)" stroke-width="1.8"/>
+      </svg>
+      <h2>Routing Protocol Overview</h2>
+    </div>
+    <p class="sec-sub">Router รู้จักเครือข่ายที่ไม่ได้ต่อตรงได้สองทาง: ตั้ง static route มือ หรือใช้ dynamic routing protocol ให้ Router คุยกันเองแล้วปรับตัวอัตโนมัติเมื่อ topology เปลี่ยน กลุ่ม Router ที่บริหารร่วมกันแบบนี้เรียกว่า <b>Autonomous System (AS)</b> — โปรโตคอลที่ route ภายใน AS เดียวกันเรียก <b>Interior Gateway Protocol (IGP)</b> (RIPv2, EIGRP, OSPF, IS-IS) ส่วน BGP เป็นข้อยกเว้นที่ route ระหว่าง AS</p>
+
+    <div class="tablewrap">
+      <table>
+        <caption>4 แนวคิดที่ Dynamic Routing Protocol ใช้คำนวณเส้นทาง</caption>
+        <thead><tr><th scope="col">ประเภท</th><th scope="col">หลักการ</th><th scope="col">ตัวอย่าง</th></tr></thead>
+        <tbody>
+          <tr><th scope="row"><Term id="distanceVectorProtocol">Distance Vector</Term></th><td>บอกแค่ "ระยะทาง" (metric/hop count) และ "ทิศทาง" (next-hop) ไม่รู้ topology ทั้งหมด ใช้ Bellman-Ford คำนวณ</td><td>RIP</td></tr>
+          <tr><th scope="row"><Term id="enhancedDistanceVector">Enhanced Distance Vector</Term></th><td>ยังเป็น Distance Vector แต่เพิ่ม hello/neighbor relationship แบบ link-state และ metric ละเอียดขึ้น (bandwidth, delay, reliability, load, MTU) — เรียกว่า Hybrid Routing Protocol</td><td>EIGRP (ใช้ DUAL)</td></tr>
+          <tr><th scope="row"><Term id="linkStateProtocol">Link-State</Term></th><td>ทุก Router แจก "สถานะลิงก์ตัวเอง" ให้ทุกตัวในเครือข่ายเห็นเหมือนกันหมด (LSDB) แล้วแต่ละตัวรัน Dijkstra SPF เองเพื่อคำนวณเส้นทางที่ดีที่สุด</td><td>OSPF (LSA), IS-IS (LSP)</td></tr>
+          <tr><th scope="row"><Term id="pathVectorProtocol">Path Vector</Term></th><td>คล้าย Distance Vector แต่ใช้ Path Attribute (เช่น AS_Path) แทนระยะทาง — เห็น AS ตัวเองอยู่ใน AS_Path ที่ได้รับมา = ถือว่าเป็น loop แล้วทิ้งทันที</td><td>BGP</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h3>ทำไม EIGRP ถึงเรียกว่า Hybrid</h3>
+      <p style="color:var(--ink-2);margin:0">EIGRP ใช้ DUAL (Diffusing Update Algorithm) ซึ่งยังเป็นตระกูล Distance Vector อยู่ที่แกน — แต่ยืมพฤติกรรมของ Link-State มาสองอย่าง: (1) ส่ง hello สร้างความสัมพันธ์เพื่อนบ้านก่อนแลกข้อมูล และ (2) ส่งเฉพาะส่วนที่เปลี่ยน ไม่ส่งทั้งตารางซ้ำเป็นรอบเหมือน RIP ผลคือ converge เร็วกว่า Distance Vector ทั่วไปมาก และรองรับ load balance ได้ทั้งแบบ equal-cost และ unequal-cost</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M4 20 L4 6 L20 6" fill="none" stroke="var(--coral)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="4" cy="20" r="2" fill="var(--coral)"/><circle cx="20" cy="6" r="2" fill="var(--coral)"/>
+        <circle cx="12" cy="13" r="2" fill="var(--coral)"/>
+      </svg>
+      <h2>Path Selection — Router ตัดสินใจยังไง</h2>
+    </div>
+    <p class="sec-sub">Router ประเมิน 3 ชั้นตามลำดับ: <Term id="prefixLength">Prefix Length</Term> ก่อน แล้วค่อย <Term id="administrativeDistance">Administrative Distance</Term> แล้วค่อย Metric — เส้นทางที่ถูกเลือกจริงจะถูกเขียนลง <b>RIB</b> (Routing Information Base = Routing Table) แล้ว compile ต่อเป็น <b>FIB</b> (Forwarding Information Base) ที่ CEF ใช้ส่งแพ็กเก็ตจริง (จากบทที่ 1)</p>
+
+    <div class="tablewrap">
+      <table>
+        <caption>ชั้นที่ 1 — Longest Prefix Match: ยิ่ง prefix ยาว ยิ่งชนะ (ทุกแถวนี้อยู่ใน RIB พร้อมกันได้ เพราะถือเป็นคนละปลายทาง)</caption>
+        <thead><tr><th scope="col">Prefix</th><th scope="col">ช่วง IP ที่ครอบคลุม</th><th scope="col">Next Hop</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">10.0.3.0/28</th><td>10.0.3.0 – 10.0.3.15</td><td>10.1.1.1 via Gi1/1</td></tr>
+          <tr><th scope="row">10.0.3.0/26</th><td>10.0.3.0 – 10.0.3.63</td><td>10.2.2.2 via Gi2/2</td></tr>
+          <tr><th scope="row">10.0.3.0/24</th><td>10.0.3.0 – 10.0.3.255</td><td>10.3.3.3 via Gi3/3</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--ink-2);font-size:.9rem;margin-top:10px">ถ้าแพ็กเก็ตปลายทาง 10.0.3.5 ตรงกับทั้ง 3 แถว — Router เลือก <code>/28</code> เพราะ prefix ยาวที่สุด (จำนวนบิตที่ตรงกันมากที่สุด) นี่คือกฎข้อแรกเสมอ ไม่ว่า AD หรือ Metric จะเป็นเท่าไหร่ก็ตาม</p>
+
+    <div class="knob" style="margin-top:20px">
+      <span class="where c1">ชั้นที่ 2</span>
+      <h3>Administrative Distance — ใช้เมื่อ Prefix Length เท่ากัน</h3>
+      <p class="why">AD คือค่าความน่าเชื่อถือของ "แหล่งที่มา" ของเส้นทาง — ถ้ามีมากกว่าหนึ่งโปรโตคอลเสนอ prefix length เดียวกันสำหรับปลายทางเดียวกัน Router เลือกตัวที่ AD ต่ำกว่า (ต่ำ = น่าเชื่อกว่า) ตัวที่แพ้จะถูกเก็บไว้เผื่อ ไม่ได้ทิ้ง — ถ้าเส้นที่ชนะล่ม Router จะย้อนมาถามตัวที่แพ้ใหม่</p>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>ตาราง Administrative Distance ที่ต้องจำ (ยิ่งต่ำ ยิ่งน่าเชื่อ)</caption>
+        <thead><tr><th scope="col">แหล่งที่มา</th><th scope="col">AD</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Connected</th><td>0</td></tr>
+          <tr><th scope="row">Static</th><td>1</td></tr>
+          <tr><th scope="row">EIGRP summary route</th><td>5</td></tr>
+          <tr><th scope="row">External BGP (eBGP)</th><td>20</td></tr>
+          <tr><th scope="row">EIGRP (internal)</th><td>90</td></tr>
+          <tr><th scope="row">OSPF</th><td>110</td></tr>
+          <tr><th scope="row">IS-IS</th><td>115</td></tr>
+          <tr><th scope="row">RIP</th><td>120</td></tr>
+          <tr><th scope="row">EIGRP (external)</th><td>170</td></tr>
+          <tr><th scope="row">Internal BGP (iBGP)</th><td>200</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>ตัวอย่างการแข่งขัน AD <span class="tag">ออกสอบ</span></h4>
+      <p>สมมติ EIGRP, OSPF, IS-IS ทั้งสามตัวเสนอเส้นทางไปที่ <code>10.3.3.0/24</code> พร้อมกัน (prefix length เท่ากันทั้งหมด) — EIGRP internal (AD 90) ชนะ OSPF (AD 110) และ IS-IS (AD 115) จึงถูกติดตั้งลง RIB เพียงตัวเดียว ส่วนอีกสองตัวยังคง "จำ" เส้นทางไว้ในฐานข้อมูลของโปรโตคอลตัวเอง (topology table/LSDB) รอไว้เผื่อเส้นของ EIGRP ล่ม</p>
+      <p style="margin:0"><b>ข้อควรระวัง:</b> ลำดับการประมวลผลของ Router มีผล — ในบางสถานการณ์เส้นทาง AD ต่ำสุดอาจไม่ได้ถูกติดตั้งจริงถ้ามันมาถึงทีหลังและ RIB ยึดเส้นเดิมไว้แล้วโดยยังไม่ได้เทียบ AD ใหม่ ต้องตรวจสอบด้วย <code>show ip route</code> เสมอ ไม่ใช่เดาจากตารางเฉย ๆ</p>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3>ชั้นที่ 3 — Metric (ใช้เมื่อ AD เท่ากันด้วย)</h3>
+        <p style="color:var(--ink-2);margin:0">Metric คือหน่วยวัดของโปรโตคอลตัวเดียวกันเอง (เช่น hop count ของ RIP หรือ composite bandwidth/delay ของ EIGRP) ใช้เทียบกันเฉพาะภายในโปรโตคอลเดียวกันเท่านั้น เทียบข้ามโปรโตคอลไม่ได้เพราะหน่วยไม่เหมือนกัน — IGP ส่วนใหญ่เลือกเส้นทาง internal ก่อน external เสมอ แล้วค่อยเทียบ metric ต่ำสุด</p>
+      </div>
+      <div class="card">
+        <h3><Term id="ecmp">Equal-Cost Multipathing</Term> (ECMP)</h3>
+        <p style="color:var(--ink-2);margin:0">ถ้าโปรโตคอลเจอหลายเส้นทางที่ metric เท่ากันเป๊ะ และรองรับหลาย path entry ต่อปลายทาง — ติดตั้งทุกเส้นลง RIB พร้อมกัน แบ่งโหลดเท่า ๆ กัน RIP, EIGRP, OSPF, IS-IS รองรับ ECMP ทั้งหมด</p>
+      </div>
+    </div>
+
+    <div class="knob" style="margin-top:20px">
+      <span class="where c2">EIGRP เท่านั้น</span>
+      <h3><Term id="unequalCostLoadBalancing">Unequal-Cost Load Balancing</Term></h3>
+      <p class="why">ปกติ Router ติดตั้งเฉพาะเส้นทางที่ metric ต่ำสุดเท่านั้น — แต่ EIGRP ปรับได้ให้ติดตั้งหลายเส้นที่ metric ต่างกันพร้อมกัน แล้วแบ่งสัดส่วนทราฟฟิกตามอัตราส่วนของ metric (ไม่ใช่แบ่งเท่า ๆ กันแบบ ECMP)</p>
+      <p class="why" style="margin:0">ตัวอย่างจากสไลด์: R1 มีสองเส้นไป R3 — เส้นผ่าน R2 metric 3328 และเส้นผ่าน R4 metric 5632 (มาจากการปรับ delay บน Gi0/2 ของ R1) ถ้าเปิด unequal-cost load balancing เส้นทั้งสองจะถูกใช้พร้อมกันตามสัดส่วนของ metric ต้องดูสัดส่วนจริงด้วยคำสั่งดู path บน Router โดยตรง</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="3" y="11" width="8" height="6" rx="1.5" fill="none" stroke="var(--gold)" stroke-width="1.8"/>
+        <rect x="15" y="11" width="8" height="6" rx="1.5" fill="none" stroke="var(--gold)" stroke-width="1.8"/>
+        <line x1="11" y1="14" x2="15" y2="14" stroke="var(--gold)" stroke-width="1.8" stroke-dasharray="2 2"/>
+      </svg>
+      <h2>Static Routing — ของจริงจาก R1 ในบทที่ 1</h2>
+    </div>
+    <p class="sec-sub">Static route มี AD = 1 (เชื่อถือรองจาก Connected เท่านั้น) — ใช้ bandwidth เป็นศูนย์เพราะไม่ต้องคุยกับใคร แต่ก็ไม่รู้เลยว่า link ล่มแล้วหรือยัง ถ้าไม่ตั้ง track เสริม สไลด์แบ่ง static route ออกเป็น 3 แบบหลักตามวิธีระบุ next-hop</p>
+
+    <div class="tablewrap">
+      <table>
+        <caption>3 แบบของ Static Route — ต่างกันตรง syntax และวิธี Router resolve next-hop</caption>
+        <thead><tr><th scope="col">แบบ</th><th scope="col">Syntax</th><th scope="col">ใช้เมื่อไหร่</th></tr></thead>
+        <tbody>
+          <tr><th scope="row"><Term id="directlyAttachedStaticRoute">Directly Attached</Term></th><td><code>ip route network mask next-hop-interface</code></td><td>เฉพาะสาย P2P ที่ไม่ใช้ ARP เช่น Serial เท่านั้น</td></tr>
+          <tr><th scope="row"><Term id="recursiveStaticRoute">Recursive</Term></th><td><code>ip route network mask next-hop-ip</code></td><td>Ethernet ทั่วไปที่ต้อง ARP หา MAC ปลายทาง</td></tr>
+          <tr><th scope="row"><Term id="fullySpecifiedStaticRoute">Fully Specified</Term></th><td><code>ip route network mask interface-id next-hop-ip</code></td><td>Ethernet ที่อยากได้ความชัวร์ของ interface + ป้องกันปัญหา recursive lookup ผิดทิศ</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3>Directly Attached — ทำไมไม่ควรใช้กับ Ethernet</h3>
+        <p style="color:var(--ink-2);margin:0">ระบุแค่ outbound interface (ต้อง up ถึงจะติดตั้งใน RIB) ใช้ได้ดีกับ P2P serial เพราะไม่มี ARP มาเกี่ยวข้อง — แต่ถ้าใช้กับ Ethernet interface Router ต้อง ARP หา MAC ของ<b>ทุกปลายทาง</b>ที่ match static route นี้ใหม่ทุกครั้ง กิน CPU/memory มากในเครือข่ายใหญ่ ไม่แนะนำ</p>
+      </div>
+      <div class="card">
+        <h3>Recursive — ทำไมต้องมี "การเดินทางสองชั้น"</h3>
+        <p style="color:var(--ink-2);margin:0">ระบุแค่ next-hop IP — Forwarding Engine ต้องรู้ interface จริง จึงต้อง query RIB อีกรอบเพื่อหาว่า next-hop IP นั้นไปถึงได้ทาง interface ไหน (connected/static/dynamic) แล้วค่อยไป cross-reference adjacency table เอา MAC มาแปะ — ขั้นตอนนี้เรียก <b>recursive lookup</b> ข้อจำกัดสำคัญ: next-hop จะ resolve ผ่าน default route (0.0.0.0/0) ไม่ได้ ถ้า resolve ได้แค่ทาง default route ถือว่าไม่ผ่าน จะไม่ถูกติดตั้งใน RIB</p>
+      </div>
+    </div>
+
+    <div class="figwrap" style="margin-top:20px">
+      <figure>
+        <svg viewBox="0 0 760 220" role="img" aria-label="R1 ตั้ง recursive static route ไปที่ 10.2.0.0/16 ผ่าน next-hop IP 10.1.13.13 ของ D1 เมื่อมีแพ็กเก็ตต้องส่ง R1 ต้อง query RIB ซ้ำเพื่อหาว่า 10.1.13.13 ไปถึงทาง interface ไหน คือ GigabitEthernet0/0/1 แล้วค่อยไปหา MAC จาก adjacency table เทียบกับ fully specified route ที่ระบุทั้ง interface และ next-hop ไปพร้อมกันในคำสั่งเดียว ทำให้ข้ามขั้นตอน recursive lookup ไปเลย">
+          <text x="190" y="28" text-anchor="middle" font-size="13" font-weight="700" fill="var(--blk)">Recursive — ต้องค้นสองรอบ</text>
+          <rect x="60" y="55" width="130" height="45" rx="7" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/>
+          <text x="125" y="82" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ink)">ip route ... 10.1.13.13</text>
+          <line x1="125" y1="100" x2="125" y2="130" stroke="var(--gold)" stroke-width="2" marker-end="url(#r6a)"/>
+          <text x="125" y="150" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">1) query RIB: 10.1.13.13 อยู่ทางไหน?</text>
+          <text x="125" y="165" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">→ Gi0/0/1 (attached)</text>
+          <text x="125" y="185" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">2) query adjacency table หา MAC</text>
+
+          <line x1="240" y1="90" x2="270" y2="90" stroke="var(--rule)" stroke-width="1.5" stroke-dasharray="4 4"/>
+
+          <text x="570" y="28" text-anchor="middle" font-size="13" font-weight="700" fill="var(--fwd)">Fully Specified — รอบเดียวจบ</text>
+          <rect x="440" y="55" width="260" height="45" rx="7" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="2"/>
+          <text x="570" y="76" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--ink)">ip route ... Gi0/0/1 10.1.13.13</text>
+          <text x="570" y="92" text-anchor="middle" font-size="10" fill="var(--ink-2)">interface + next-hop มาพร้อมกัน</text>
+          <line x1="570" y1="100" x2="570" y2="130" stroke="var(--fwd)" stroke-width="2" marker-end="url(#r6b)"/>
+          <text x="570" y="150" text-anchor="middle" font-size="10.5" fill="var(--fwd)" font-weight="700">query adjacency table หา MAC ทันที</text>
+          <text x="570" y="167" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">ไม่ต้อง recursive lookup เลย</text>
+
+          <defs>
+            <marker id="r6a" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="var(--gold)"/></marker>
+            <marker id="r6b" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="var(--fwd)"/></marker>
+          </defs>
+        </svg>
+        <figcaption>ใช้ static route จริงจาก R1 (บทที่ 1) เป็นตัวอย่าง: <code>10.2.0.0/16</code> ผ่าน D1 — ถ้าเขียนแบบ recursive (<code>ip route 10.2.0.0 255.255.0.0 10.1.13.13</code>) ต้องค้นสองรอบ ถ้าเขียนแบบ fully specified (<code>ip route 10.2.0.0 255.255.0.0 GigabitEthernet0/0/1 10.1.13.13</code>) รอบเดียวจบ และไม่เสี่ยงปัญหา recursive lookup ผิดทิศเมื่อ topology ซับซ้อนขึ้น</figcaption>
+      </figure>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="knob">
+        <span class="where c3">สำรอง</span>
+        <h3><Term id="floatingStaticRoute">Floating Static Route</Term></h3>
+        <p class="why">Static route ที่ตั้ง AD สูงกว่าเส้นทางหลักโดยเจตนา (default static AD คือ 1) เพื่อให้มันแพ้เสมอเมื่อเส้นทางหลักยังใช้งานได้ และถูกติดตั้งใน RIB ก็ต่อเมื่อเส้นทางหลักหลุดไปแล้วเท่านั้น</p>
+        <pre>ip route 0.0.0.0 0.0.0.0 Serial0/1/1 210</pre>
+        <p class="why" style="margin:0">ตัวเลขท้ายคำสั่งคือ AD ที่ตั้งเอง (ในตัวอย่างนี้ตั้งไว้ 210 สูงกว่าทุกโปรโตคอลใน AD table เพื่อให้เป็นทางเลือกสุดท้ายจริง ๆ)</p>
+      </div>
+      <div class="knob">
+        <span class="where c3">กันลูป</span>
+        <h3><Term id="staticNullRoute">Static Null Route</Term></h3>
+        <p class="why">Static route ที่ชี้ไปที่ interface Null0 — ทิ้งแพ็กเก็ตที่ match โดยไม่ต้องตั้ง access list เลย ใช้ป้องกัน routing loop เมื่อมี aggregate block ใหญ่ที่ใช้จริงแค่บางส่วน</p>
+        <pre>ip route 172.16.0.0 255.255.240.0 Null0</pre>
+        <p class="why" style="margin:0">ถ้าไม่มีเส้นนี้: แพ็กเก็ตปลายทางในช่วง 172.16.0.0/20 ที่ไม่ตรงกับ subnet ย่อยไหนเลย จะวิ่งออกทาง default route ไปหา ISP แล้ว ISP ส่งกลับมาตาม route แบบเดิม เกิดเป็น loop วนจน TTL หมด</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h3>IPv6 Static Route — หลักการเดียวกับ IPv4 ทุกประการ</h3>
+      <p style="color:var(--ink-2);margin:0 0 10px">Syntax เปลี่ยนจาก <code>ip route</code> เป็น <code>ipv6 route</code> และรวม prefix/prefix-length ไว้ในพารามิเตอร์เดียวแทนที่จะแยก network กับ subnet mask — โครงสร้าง directly attached / recursive / fully specified เหมือนเดิมทุกอย่าง</p>
+      <pre style="margin:0">! R1 — ไปหา 2001:db8:22::/64 ของ R2 แบบ recursive
+ipv6 route 2001:db8:22::/64 2001:db8:12::2</pre>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>คำสั่งอ้างอิง Static Routing</caption>
+        <thead><tr><th scope="col">งาน</th><th scope="col">คำสั่ง</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Directly attached</th><td><code>ip route network mask exit-interface</code></td></tr>
+          <tr><th scope="row">Recursive</th><td><code>ip route network mask next-hop-ip</code></td></tr>
+          <tr><th scope="row">Fully specified</th><td><code>ip route network mask exit-interface next-hop-ip</code></td></tr>
+          <tr><th scope="row">Null route</th><td><code>ip route network mask Null0</code></td></tr>
+          <tr><th scope="row">IPv6 route</th><td><code>ipv6 route prefix/length (exit-interface / next-hop-ip)</code></td></tr>
+          <tr><th scope="row">ดู Routing Table</th><td><code>show ip route</code> / <code>show ipv6 route</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="3" y="3" width="8" height="8" rx="2" fill="none" stroke="var(--violet)" stroke-width="1.8"/>
+        <rect x="15" y="3" width="8" height="8" rx="2" fill="none" stroke="var(--violet)" stroke-width="1.8"/>
+        <rect x="9" y="15" width="8" height="8" rx="2" fill="none" stroke="var(--violet)" stroke-width="1.8"/>
+      </svg>
+      <h2>Virtual Routing and Forwarding (VRF)</h2>
+    </div>
+    <p class="sec-sub">แนวคิด: สร้าง Router เสมือนหลายตัวซ้อนอยู่บน Router กายภาพเครื่องเดียว แต่ละตัวมี Routing Table และ Forwarding Table แยกกันเด็ดขาด</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>หลักการ</h3>
+        <ul>
+          <li>Interface ทุกพอร์ตอยู่ใน <b>Global VRF</b> เป็นค่าเริ่มต้น จนกว่าจะถูกกำหนดให้ไปอยู่ VRF อื่น</li>
+          <li>แต่ละ VRF มี routing table แยกกันสนิท — ทำให้ IP range เดียวกัน<b>ซ้ำกันได้</b>ระหว่างสอง VRF โดยไม่ชนกัน เพราะอยู่คนละตาราง</li>
+          <li>ทราฟฟิกจาก VRF หนึ่งจะข้ามไปอีก VRF ไม่ได้เลยถ้าไม่ได้ตั้งค่าเชื่อมเป็นพิเศษ — เพิ่มความปลอดภัยและแยก segment โดยไม่ต้องเข้ารหัสเพิ่ม</li>
+        </ul>
+      </div>
+      <div class="knob">
+        <span class="where c3">5 ขั้นตอนสร้าง VRF</span>
+        <pre>vrf definition MGMT
+ address-family ipv4
+ exit-address-family
+!
+interface g0/3
+ vrf forwarding MGMT
+ ip address 10.0.3.1 255.255.255.0</pre>
+        <p class="why" style="margin:0">ลำดับคือ: สร้าง VRF → เปิด address-family → เข้า interface → ผูก <code>vrf forwarding</code> → ค่อยตั้ง IP (ต้องผูก VRF <b>ก่อน</b>ตั้ง IP เสมอ ไม่งั้น IP เดิมจะถูกล้างออกอัตโนมัติเมื่อผูก VRF ทีหลัง)</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="grid-2">
+      <div class="exam">
+        <h4>ช่องว่างที่ต้องรู้ <span class="tag">แจ้งเตือน</span></h4>
+        <p>MidEx ระบุหัวข้อ <b>"Route Filtering และ Redistribution"</b> อยู่ในขอบเขตของบทนี้ แต่เนื้อหานี้<b>ไม่ปรากฏ</b>ในสไลด์ต้นฉบับของ Chapter 6 เลย (สไลด์ครอบคลุมแค่ Routing Protocol Overview, Path Selection, Static Routing, VRF) — ไม่ได้เขียนเนื้อหาส่วนนี้ขึ้นมาเองเพื่อความถูกต้อง แนะนำให้หาสไลด์/เอกสารเพิ่มเติมเฉพาะหัวข้อนี้แยกต่างหาก (มักปรากฏพร้อมกับเนื้อหา OSPF/EIGRP ขั้นสูงในบทถัด ๆ ไป)</p>
+      </div>
+      <div class="card">
+        <h3>สรุปคำศัพท์บทนี้</h3>
+        <ul>
+          <li><b>AD</b> — ความน่าเชื่อถือของแหล่งที่มาเส้นทาง ใช้ตัดสินเมื่อ prefix length เท่ากัน</li>
+          <li><b>Prefix Length</b> — ยิ่งยาวยิ่งชนะ ตัดสินก่อน AD เสมอ</li>
+          <li><b>Recursive vs Fully Specified</b> — ต่างกันที่ต้อง query RIB ซ้ำหรือไม่</li>
+          <li><b>Floating Static</b> — AD สูงกว่าเจตนา รอเป็นตัวสำรอง</li>
+          <li><b>VRF</b> — Routing table แยกกันสนิทบน Router เครื่องเดียว</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Internetwork Chapter 6 · ใช้ static route จริงจาก R1/D1 ในบทที่ 1 (Cisco IOS XE 16.9.4) เป็นตัวอย่างต่อเนื่อง · แหล่งอ้างอิง: Chapter 6 slide deck, MidEx exam scope
+  </footer>
+
 </Layout>
