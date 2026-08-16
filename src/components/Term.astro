@@ -1,0 +1,7 @@
+---
+interface Props {
+  id: string;
+}
+const { id } = Astro.props;
+---
+<button type="button" class="term" data-term-id={id} aria-describedby="term-tooltip" aria-expanded="false"><slot /></button>

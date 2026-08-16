@@ -1,5 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import Term from "../components/Term.astro";
 ---
 <Layout title="VLAN Trunking, DTP & EtherChannel" description="บทที่ 5 — VTP, DTP, และ EtherChannel: การจัดการ VLAN อัตโนมัติ และการรวมสายซ้ำซ้อนแทนการปล่อยให้ STP บล็อกทิ้ง">
 
@@ -50,7 +51,7 @@ import Layout from "../layouts/Layout.astro";
         <line x1="7.5" y1="13" x2="13" y2="15" stroke="var(--slate)" stroke-width="1.5"/>
         <line x1="18.5" y1="13" x2="13" y2="15" stroke="var(--slate)" stroke-width="1.5"/>
       </svg>
-      <h2>VTP (VLAN Trunking Protocol) — ออกสอบ</h2>
+      <h2><Term id="vtp">VTP</Term> (VLAN Trunking Protocol) — ออกสอบ</h2>
     </div>
     <p class="sec-sub">ปัญหา: สวิตช์ 20 ตัว ต้องสร้าง VLAN 10 เท่ากันทุกตัว ถ้าตั้งมือทีละตัว โอกาสพิมพ์เลขผิดหรือลืมสูงมาก — VTP แก้ด้วยการให้สร้าง VLAN "ที่เดียว" แล้วกระจายไปทุกตัวเอง</p>
 
@@ -98,7 +99,7 @@ vtp password mypassword</pre>
 
     <div class="exam" style="margin-top:20px">
       <h4>กับดักที่ทำเครือข่ายทั้งบริษัทพังได้ <span class="tag">ออกสอบบ่อย</span></h4>
-      <p><b>Configuration Revision Number</b> คือเลขนับเวอร์ชันการเปลี่ยนแปลง VLAN ที่เพิ่มขึ้นทุกครั้งที่มีคนแก้ VLAN บน Server — เลขนี้ติดตัวสวิตช์ไปตลอด แม้จะถอดออกจากโดเมนไปแล้วก็ยังจำได้</p>
+      <p><b><Term id="revisionNumber">Configuration Revision Number</Term></b> คือเลขนับเวอร์ชันการเปลี่ยนแปลง VLAN ที่เพิ่มขึ้นทุกครั้งที่มีคนแก้ VLAN บน Server — เลขนี้ติดตัวสวิตช์ไปตลอด แม้จะถอดออกจากโดเมนไปแล้วก็ยังจำได้</p>
       <p>ถ้าเอาสวิตช์ตัวหนึ่งที่เคยมี Configuration Revision Number สูง (เช่น เคยเป็น Server ในแล็บอื่นมาก่อน) มาเสียบเข้าโดเมนใหม่ — สวิตช์ตัวอื่นจะเห็นว่า revision number ของมันสูงกว่า แล้ว<b>เชื่อว่ามันคือข้อมูลใหม่กว่า</b> จึงยอมรับ VLAN database ของมันมาแทนที่ของตัวเอง ถ้า VLAN บนสวิตช์ที่เสียบเข้ามาว่างเปล่า <b>VLAN ทั้งโดเมนจะหายหมด</b></p>
       <p style="margin:0"><b>วิธีป้องกัน:</b> รีเซ็ต revision number ก่อนเสียบสวิตช์เข้าโดเมนจริงเสมอ วิธีที่ง่ายที่สุดคือเปลี่ยน <code>vtp domain</code> เป็นชื่ออื่นแล้วเปลี่ยนกลับ (การเปลี่ยนชื่อโดเมนจะรีเซ็ต revision number เป็น 0 โดยอัตโนมัติ) หรือตั้งเป็น <code>vtp mode transparent</code> ก่อนเสียบ</p>
     </div>
@@ -110,7 +111,7 @@ vtp password mypassword</pre>
         <path d="M4 13 L11 13 M15 13 L22 13" stroke="var(--slate)" stroke-width="2" stroke-linecap="round"/>
         <path d="M11 9 L15 13 L11 17" fill="none" stroke="var(--slate)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <h2>DTP (Dynamic Trunking Protocol) — ออกสอบ</h2>
+      <h2><Term id="dtp">DTP</Term> (Dynamic Trunking Protocol) — ออกสอบ</h2>
     </div>
     <p class="sec-sub">ปัญหาคนละเรื่องกับ VTP: VTP จัดการว่า "มี VLAN อะไรบ้าง" ส่วน DTP จัดการว่า "พอร์ตนี้ควรเป็น Trunk หรือ Access" โดยให้สวิตช์สองฝั่งเจรจากันเอง</p>
 
@@ -184,7 +185,7 @@ vtp password mypassword</pre>
   <!-- ============================================================ -->
   <section class="act-title" style="margin-top:60px">
     <span style="display:block;font-family:var(--mono);font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--coral);font-weight:700;margin-bottom:6px">Part B</span>
-    <h2 style="margin:0 0 8px;font-size:1.4rem;font-weight:800">EtherChannel — รวมสายซ้ำซ้อนแทนการปล่อยให้ Block</h2>
+    <h2 style="margin:0 0 8px;font-size:1.4rem;font-weight:800"><Term id="etherchannel">EtherChannel</Term> — รวมสายซ้ำซ้อนแทนการปล่อยให้ Block</h2>
     <p style="margin:0;color:var(--ink-2);max-width:72ch">จากบทที่ 2 เรารู้แล้วว่า STP ต้อง Block พอร์ตที่ซ้ำซ้อนเพื่อกันลูป — EtherChannel คือวิธีที่ทำให้สายซ้ำซ้อนเหล่านั้น <b>ไม่ต้องถูกมองว่าซ้ำซ้อนอีกต่อไป</b></p>
   </section>
 
@@ -288,14 +289,14 @@ vtp password mypassword</pre>
       </div>
       <div class="knob">
         <span class="where c2">D1 ↔ A1</span>
-        <h3>PAgP (Port Aggregation Protocol)</h3>
+        <h3><Term id="pagp">PAgP</Term> (Port Aggregation Protocol)</h3>
         <p class="why">มีการเจรจา ใช้ได้เฉพาะกับสวิตช์ Cisco ด้วยกัน แนะนำใส่ non-silent เพื่อบังคับให้ต้องได้รับ PAgP packet ก่อนถึงจะรวมสาย</p>
         <pre>interface range f0/1-2
  channel-group 2 mode desirable non-silent</pre>
       </div>
       <div class="knob">
         <span class="where c3">D1 ↔ D2</span>
-        <h3>LACP (Link Aggregation Control Protocol)</h3>
+        <h3><Term id="lacp">LACP</Term> (Link Aggregation Control Protocol)</h3>
         <p class="why">ใช้ข้ามยี่ห้อได้ เป็นตัวที่ใช้บ่อยสุดในงานจริงปัจจุบัน</p>
         <pre>interface range g1/0/1-4
  channel-group 3 mode active</pre>
@@ -432,7 +433,7 @@ D2# show lacp sys-id
     <p class="sec-sub">คำถามที่มักเข้าใจผิด: EtherChannel ไม่ได้ส่งแบบ round-robin ทีละแพ็กเก็ตสลับสาย</p>
 
     <div class="card">
-      <h3>หลักการจริง: Hash ไม่ใช่ Round-Robin</h3>
+      <h3>หลักการจริง: <Term id="loadBalanceHash">Hash</Term> ไม่ใช่ Round-Robin</h3>
       <p style="color:var(--ink-2);margin:0 0 10px">สวิตช์คำนวณ hash จาก field ในเฟรม/แพ็กเก็ต (เช่น MAC หรือ IP ต้นทาง-ปลายทาง) แล้ว<b>ผูกทราฟฟิกชุดเดียวกันให้วิ่งสายเดิมเสมอ</b> — เพื่อไม่ให้แพ็กเก็ตมาถึงปลายทางไม่เรียงลำดับ</p>
       <p style="color:var(--ink-2);margin:0">ตั้งได้ด้วยคำสั่ง <code>port-channel load-balance &lt;hash-method&gt;</code> ระดับทั้งสวิตช์ (ใช้กับทุก EtherChannel บนสวิตช์นั้น) ตัวเลือกที่พบบ่อย: <code>src-mac</code>, <code>dst-mac</code>, <code>src-dst-ip</code>, <code>src-dst-port</code></p>
     </div>

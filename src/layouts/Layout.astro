@@ -1,6 +1,7 @@
 ---
 import "../fonts.css";
 import Sidebar from "../components/Sidebar.astro";
+import { terms } from "../data/terms.js";
 
 interface Props {
   title: string;
@@ -26,6 +27,107 @@ const { title, description = "Internetwork Course" } = Astro.props;
       <slot />
     </main>
   </div>
+
+  <div id="term-tooltip" class="term-tooltip" role="tooltip" hidden></div>
+
+  <script define:vars={{ terms }}>
+    window.__TERMS__ = terms;
+  </script>
+  <script>
+    (function () {
+      const tooltip = document.getElementById("term-tooltip");
+      if (!tooltip) return;
+      const supportsHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+      let activeTrigger = null;
+
+      function render(data) {
+        tooltip.innerHTML = "";
+        const strong = document.createElement("strong");
+        strong.textContent = data.term;
+        tooltip.appendChild(strong);
+        if (data.full) {
+          const full = document.createElement("span");
+          full.className = "term-full";
+          full.textContent = data.full;
+          tooltip.appendChild(full);
+        }
+        const p = document.createElement("p");
+        p.textContent = data.def;
+        tooltip.appendChild(p);
+      }
+
+      function position(trigger) {
+        const rect = trigger.getBoundingClientRect();
+        const margin = 10;
+        const tw = tooltip.offsetWidth;
+        const th = tooltip.offsetHeight;
+        let left = rect.left + rect.width / 2 - tw / 2;
+        left = Math.max(margin, Math.min(left, window.innerWidth - tw - margin));
+        let top = rect.bottom + 8;
+        if (top + th > window.innerHeight - margin) {
+          top = rect.top - th - 8;
+        }
+        tooltip.style.left = left + window.scrollX + "px";
+        tooltip.style.top = top + window.scrollY + "px";
+      }
+
+      function show(trigger) {
+        const data = window.__TERMS__ && window.__TERMS__[trigger.dataset.termId];
+        if (!data) return;
+        activeTrigger = trigger;
+        render(data);
+        tooltip.hidden = false;
+        position(trigger);
+        trigger.setAttribute("aria-expanded", "true");
+      }
+
+      function hide() {
+        if (!activeTrigger) return;
+        tooltip.hidden = true;
+        activeTrigger.setAttribute("aria-expanded", "false");
+        activeTrigger = null;
+      }
+
+      if (supportsHover) {
+        document.addEventListener("mouseover", (e) => {
+          const t = e.target.closest(".term");
+          if (t) show(t);
+        });
+        document.addEventListener("mouseout", (e) => {
+          const t = e.target.closest(".term");
+          if (t && (!e.relatedTarget || !t.contains(e.relatedTarget))) hide();
+        });
+      } else {
+        document.addEventListener("click", (e) => {
+          const t = e.target.closest(".term");
+          if (t) {
+            e.preventDefault();
+            if (activeTrigger === t) {
+              hide();
+            } else {
+              show(t);
+            }
+            return;
+          }
+          if (!tooltip.contains(e.target)) hide();
+        });
+      }
+
+      document.addEventListener("focusin", (e) => {
+        const t = e.target.closest(".term");
+        if (t) show(t);
+      });
+      document.addEventListener("focusout", (e) => {
+        const t = e.target.closest(".term");
+        if (t) hide();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") hide();
+      });
+      window.addEventListener("scroll", () => { if (activeTrigger) position(activeTrigger); }, { passive: true });
+      window.addEventListener("resize", () => { if (activeTrigger) position(activeTrigger); });
+    })();
+  </script>
 </body>
 </html>
 
@@ -146,4 +248,24 @@ const { title, description = "Internetwork Course" } = Astro.props;
   .bridge b{color:var(--violet)}
 
   footer{max-width:1180px;margin:56px auto 0;padding:20px 22px 40px;border-top:3px solid var(--ink);text-align:center;font-size:.8rem;color:var(--ink-3)}
+
+  /* ---- terminology tooltip ---- */
+  .term{
+    font:inherit;color:inherit;background:none;border:none;padding:0;margin:0;cursor:help;
+    text-decoration:underline;text-decoration-style:dotted;text-decoration-color:var(--ink-3);
+    text-underline-offset:3px;
+  }
+  .term:hover,.term[aria-expanded="true"]{color:var(--coral);text-decoration-color:var(--coral)}
+  .term:focus-visible{outline:2px solid var(--coral);outline-offset:2px;border-radius:2px}
+
+  .term-tooltip{
+    position:absolute;z-index:50;max-width:300px;
+    background:var(--ink);color:var(--paper);
+    border-radius:10px;padding:12px 14px;
+    font-size:.85rem;line-height:1.55;
+    box-shadow:0 8px 24px rgba(0,0,0,.18);
+  }
+  .term-tooltip strong{display:inline;font-size:.92rem;font-weight:800}
+  .term-tooltip .term-full{display:block;font-size:.74rem;color:var(--ink-3);margin:1px 0 6px;font-family:var(--mono)}
+  .term-tooltip p{margin:0;color:var(--paper)}
 </style>
