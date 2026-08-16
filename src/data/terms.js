@@ -263,4 +263,219 @@ export const terms = {
     full: "",
     def: "การที่ ABR สรุปหลาย Type 1 LSA ในช่วงที่กำหนดให้เหลือเป็น Type 3 LSA ตัวเดียวก่อนประกาศออกนอก Area ต้นทาง ลดขนาด LSDB และจำกัดผลกระทบของ SPF เมื่อลิงก์ภายใน Area ขยับ",
   },
+  linkLocalAddress: {
+    term: "IPv6 Link-Local Address",
+    full: "",
+    def: "ที่อยู่ IPv6 ที่ใช้ได้เฉพาะภายใน link เดียวกัน มีอยู่บนทุก interface ที่เปิด IPv6 — OSPFv3 ใช้ที่อยู่ชนิดนี้สื่อสารระหว่าง Router ทำให้สร้าง adjacency ได้แม้สองฝั่งจะไม่ได้อยู่ subnet เดียวกัน",
+  },
+  instanceId: {
+    term: "Instance ID",
+    full: "",
+    def: "ฟิลด์ใน OSPFv3 packet ที่ใช้กำหนดว่า Router ตัวไหนบน network segment เดียวกันได้รับอนุญาตให้ฟอร์ม adjacency ร่วมกันบ้าง — ทำให้รันหลาย instance แยกกันบน link เดียวได้",
+  },
+  interareaPrefixLsa: {
+    term: "Interarea Prefix LSA (0x2003)",
+    full: "",
+    def: "LSA ที่ ABR สร้างเพื่อบอกเส้นทางไปยัง IPv6 prefix ที่อยู่ใน Area อื่น — คือ Network Summary LSA (Type 3) ของ OSPFv2 ที่ถูกเปลี่ยนชื่อใน OSPFv3",
+  },
+  interareaRouterLsa: {
+    term: "Interarea Router LSA (0x2004)",
+    full: "",
+    def: "LSA ที่ ABR สร้างเพื่อประกาศตำแหน่งของ ASBR ที่อยู่ใน Area อื่น — คือ ASBR Summary LSA (Type 4) ของ OSPFv2 ที่ถูกเปลี่ยนชื่อใน OSPFv3",
+  },
+  linkLsa: {
+    term: "Link LSA (0x0008)",
+    full: "",
+    def: "LSA ชนิดใหม่ของ OSPFv3 ที่จับคู่ global unicast prefix ทุกตัวบน interface เข้ากับ link-local address ของ Router — แชร์เฉพาะระหว่างเพื่อนบ้านบน link เดียวกัน ไม่ flood ออกไปไกลกว่านั้น",
+  },
+  intraAreaPrefixLsa: {
+    term: "Intra-area Prefix LSA (0x2009)",
+    full: "",
+    def: "LSA ชนิดใหม่ของ OSPFv3 ที่ประกาศ IPv6 prefix ซึ่งผูกกับ Router, stub หรือ transit segment — การแยก prefix ออกมาแบบนี้ทำให้เพิ่ม/แก้ address บน interface ได้โดยไม่ต้องรัน SPF ใหม่",
+  },
+  autonomousSystemBgp: {
+    term: "Autonomous System Number (ASN)",
+    full: "",
+    def: "หมายเลขประจำกลุ่ม Router ที่อยู่ภายใต้การควบคุมขององค์กรเดียว ขอจาก IANA — เดิม 2 ไบต์ ขยายเป็น 4 ไบต์ตาม RFC 4893 มีช่วงส่วนตัวที่ห้ามใช้บนอินเทอร์เน็ตเหมือน IP address",
+  },
+  asPath: {
+    term: "AS_Path",
+    full: "",
+    def: "Well-known mandatory path attribute ที่เก็บรายชื่อ ASN ทั้งหมดที่เส้นทางนั้นเดินผ่านมา — ทุก AS ที่ส่งต่อจะเติม ASN ตัวเองเข้าไป ใช้ทั้งกันลูป (เห็นชื่อตัวเองก็ทิ้ง) และเลือก best path",
+  },
+  pathAttribute: {
+    term: "Path Attribute (PA)",
+    full: "",
+    def: "ค่าคุณลักษณะที่ BGP แนบไปกับแต่ละเส้นทาง ใช้ควบคุม routing policy อย่างละเอียด — แบ่งเป็น 4 ประเภทตามว่าทุก implementation ต้องรู้จักไหมและต้องแนบมาทุกครั้งไหม",
+  },
+  wellKnownMandatory: {
+    term: "Well-known Mandatory",
+    full: "",
+    def: "Path attribute ที่ทุก BGP implementation ต้องรู้จักและต้องแนบมากับการประกาศ prefix ทุกครั้ง เช่น AS_Path, Next Hop, Origin",
+  },
+  wellKnownDiscretionary: {
+    term: "Well-known Discretionary",
+    full: "",
+    def: "Path attribute ที่ทุก BGP implementation ต้องรู้จัก แต่จะแนบมากับการประกาศ prefix หรือไม่ก็ได้ เช่น Local Preference",
+  },
+  optionalTransitive: {
+    term: "Optional Transitive",
+    full: "",
+    def: "Path attribute ที่ BGP ไม่จำเป็นต้องรู้จัก — ถ้าเจอตัวที่ไม่รู้จักจะยังส่งต่อให้ AS ถัดไปตามปกติ เช่น Atomic Aggregate, Aggregator",
+  },
+  optionalNonTransitive: {
+    term: "Optional Non-transitive",
+    full: "",
+    def: "Path attribute ที่ BGP ไม่จำเป็นต้องรู้จัก — ถ้าเจอตัวที่ไม่รู้จักจะทิ้งไปเลย ไม่ส่งต่อให้ AS ถัดไป เช่น MED (Multi-Exit Discriminator)",
+  },
+  addressFamily: {
+    term: "Address Family",
+    full: "",
+    def: "การแยกประเภทโปรโตคอลเครือข่ายใน MP-BGP ผ่าน AFI (เช่น IPv4, IPv6) และแยกย่อยด้วย SAFI (เช่น unicast, multicast) — แต่ละ address family มีฐานข้อมูลและการตั้งค่าแยกของตัวเอง",
+  },
+  ibgpSession: {
+    term: "iBGP Session",
+    full: "Internal BGP",
+    def: "BGP session ที่สร้างกับ Router ซึ่งอยู่ AS เดียวกัน (หรือ confederation เดียวกัน) — เส้นทางที่ได้มามี AD 200 รองรับ multi-hop และไม่เติม AS_Path หรือเปลี่ยน next-hop",
+  },
+  ebgpSession: {
+    term: "eBGP Session",
+    full: "External BGP",
+    def: "BGP session ที่สร้างกับ Router ซึ่งอยู่ต่าง AS — เส้นทางที่ได้มามี AD 20, ตั้ง TTL เป็น 1 (ไม่รองรับ multi-hop โดย default), เปลี่ยน next-hop เป็นตัวเอง และเติม ASN ตัวเองใน AS_Path",
+  },
+  locRib: {
+    term: "Loc-RIB Table",
+    full: "",
+    def: "ตารางกลางของ BGP ที่เก็บ NLRI ทั้งหมดที่ Router สร้างเองหรือรับมาจาก peer หลังผ่าน inbound policy แล้ว — ดูได้ด้วย show bgp afi safi (คู่กับ Adj-RIB-In ที่เก็บของดิบ และ Adj-RIB-Out ที่เก็บของหลังผ่าน outbound policy)",
+  },
+  atomicAggregate: {
+    term: "Atomic Aggregate",
+    full: "",
+    def: "Attribute ที่ BGP แปะไว้เมื่อเส้นทางถูกสรุปแล้วข้อมูล AS_Path, MED และ community ของ component route เดิมหายไป — เตือนว่าประวัติการเดินทางไม่ครบและกลไกกันลูปอ่อนแอลง",
+  },
+  asSet: {
+    term: "AS_SET",
+    full: "",
+    def: "Keyword เสริมของคำสั่ง aggregate-address ที่สั่งให้ Router คัดลอก BGP attribute จาก component route ทั้งหมดมาใส่ในเส้นทางสรุป — แก้ปัญหาประวัติหายของ Atomic Aggregate",
+  },
+  bgpMultihoming: {
+    term: "BGP Multihoming",
+    full: "",
+    def: "การเพิ่มวงจรและ BGP session ที่สองขึ้นไปเพื่อไม่ให้มีจุดล้มเหลวจุดเดียว (SPOF) — แบบที่ทนทานที่สุดคือต่อคนละ ISP พร้อมให้ Router ขอบสร้าง iBGP session ระหว่างกันเอง",
+  },
+  transitRouting: {
+    term: "Transit Routing",
+    full: "",
+    def: "การที่เครือข่ายของเรากลายเป็นทางผ่านให้ทราฟฟิกของ AS อื่น ทำให้ลิงก์เต็มและเส้นทางเดาไม่ได้ — ป้องกันด้วย outbound route policy ที่ประกาศเฉพาะเส้นทางของตัวเอง (นิยมใช้ AS path ACL แบบ ^$)",
+  },
+  prefixList: {
+    term: "Prefix List",
+    full: "",
+    def: "วิธีเลือก prefix ด้วย high-order bit pattern + bit count พร้อมพารามิเตอร์ ge/le เพื่อระบุช่วงความยาว prefix ได้ในบรรทัดเดียว — ประมวลผลบนลงล่าง เจอ match แรกก็จบ และมี implicit deny ท้ายสุด",
+  },
+  regex: {
+    term: "Regular Expression (regex)",
+    full: "",
+    def: "รูปแบบข้อความที่ใช้ค้นหาใน AS_Path ของ BGP — สัญลักษณ์สำคัญคือ ^ ต้นสตริง, $ ท้ายสตริง, _ ช่องว่าง เช่น ^$ หมายถึงเส้นทางที่กำเนิดในเครื่องนี้เอง",
+  },
+  routeMap: {
+    term: "Route Map",
+    full: "",
+    def: "เครื่องมือที่รวม match (เงื่อนไขเลือก) กับ set (การแก้ค่า) เข้าด้วยกัน — ทำได้มากกว่า ACL เพราะแก้ path attribute ได้ ไม่ใช่แค่ permit/deny เป็นหัวใจของการทำ routing policy แยกทีละ neighbor",
+  },
+  distributeListBgp: {
+    term: "Distribute List",
+    full: "",
+    def: "วิธีกรองเส้นทางของ BGP ที่อ้างอิง standard หรือ extended ACL ผูกทีละ neighbor และทิศทาง — สำหรับ BGP นั้น extended ACL ใช้ช่อง source เทียบ network และช่อง destination เทียบ network mask",
+  },
+  asPathAcl: {
+    term: "AS Path Access Control List",
+    full: "",
+    def: "รายการ regex ที่ใช้ permit/deny เส้นทางตามค่า AS_Path ปัจจุบัน IOS รองรับได้ถึง 500 รายการ — ใช้คู่กับ neighbor filter-list เป็นวิธีมาตรฐานในการไม่ให้ตัวเองกลายเป็น transit AS",
+  },
+  bgpCommunity: {
+    term: "BGP Community",
+    full: "",
+    def: "แท็กเลข 32 บิตแบบ optional transitive ที่ติดไปกับเส้นทางข้าม AS ได้ ใช้ส่งต่อ routing policy — Router ไม่ส่ง community ให้ peer โดย default ต้องเปิดด้วย neighbor send-community เอง",
+  },
+  bgpWeight: {
+    term: "Weight",
+    full: "",
+    def: "Attribute ที่ Cisco คิดขึ้นเอง ขนาด 16 บิต (0–65,535) เป็นขั้นแรกสุดของ best-path algorithm — ค่าสูงกว่าชนะ มีผลเฉพาะในเครื่องนั้น ไม่ประกาศให้ใคร และมีผลกับทราฟฟิกขาออกเท่านั้น",
+  },
+  localPreference: {
+    term: "Local Preference",
+    full: "",
+    def: "Well-known discretionary attribute ขนาด 32 บิต ค่า default 100 บอกความชอบในการออกจาก AS ไปยังปลายทาง — ค่าสูงกว่าชนะ ประกาศภายใน AS ได้แต่ไม่ข้ามไปยัง eBGP peer",
+  },
+  med: {
+    term: "Multi-Exit Discriminator (MED)",
+    full: "",
+    def: "Optional non-transitive attribute ขนาด 32 บิต ตั้งอัตโนมัติจาก metric ของ IGP — ค่าต่ำกว่าชนะ และเทียบกันได้เฉพาะเมื่อเส้นทางที่แข่งกันมาจาก ASN เดียวกันเท่านั้น",
+  },
+  igmp: {
+    term: "IGMP",
+    full: "Internet Group Management Protocol",
+    def: "โปรโตคอลที่ผู้รับใช้แจ้งเข้า/ออกกลุ่ม multicast กับ Router ท้องถิ่น ทำงานที่ Layer 2 — ห่อในแพ็กเก็ต IP protocol number 2 และตั้ง TTL เป็น 1 เพื่อไม่ให้ถูกส่งต่อออกนอก subnet",
+  },
+  igmpSnooping: {
+    term: "IGMP Snooping",
+    full: "",
+    def: "ความสามารถของสวิตช์ที่ 'แอบดู' IGMP join ที่ผ่านไป แล้วสร้างตารางจับคู่พอร์ตกับกลุ่ม multicast — ทำให้ส่งเฟรม multicast ออกเฉพาะพอร์ตที่มีผู้รับจริง แทนที่จะฟลัดออกทุกพอร์ต",
+  },
+  pim: {
+    term: "PIM",
+    full: "Protocol Independent Multicast",
+    def: "โปรโตคอล routing ที่พาทราฟฟิก multicast ข้ามเครือข่ายระหว่าง Router — ที่ชื่อ Protocol Independent เพราะใช้ตาราง unicast routing ของโปรโตคอลไหนก็ได้ (รวมถึง static route) ในการหาเส้นทาง",
+  },
+  multicastSpt: {
+    term: "Source Tree / Shortest Path Tree (SPT)",
+    full: "",
+    def: "ต้นไม้กระจาย multicast ที่มีต้นทางเป็นราก ใช้เส้นทางสั้นที่สุดถึงผู้รับ เขียนแทนด้วย (S,G) — ได้เส้นทางดีที่สุดแต่ต้องเก็บสถานะแยกทุกคู่ต้นทาง-กลุ่ม",
+  },
+  rpt: {
+    term: "Shared Tree / RP Tree (RPT)",
+    full: "",
+    def: "ต้นไม้กระจาย multicast ที่มี Rendezvous Point เป็นราก ส่งต่อตาม group address โดยไม่สนใจต้นทาง เขียนแทนด้วย (*,G) — เก็บสถานะน้อยกว่า SPT แต่เส้นทางอาจต้องอ้อมผ่าน RP",
+  },
+  fhr: {
+    term: "First-Hop Router (FHR)",
+    full: "",
+    def: "Router ที่ต่ออยู่กับต้นทางของ multicast stream โดยตรง มีหน้าที่ส่งทราฟฟิกไปให้ RP เพื่อให้ RP รู้จักต้นทางนั้น",
+  },
+  lhr: {
+    term: "Last-Hop Router (LHR)",
+    full: "",
+    def: "Router ที่ต่ออยู่กับผู้รับโดยตรง เป็นตัวรับ IGMP join แล้วส่ง PIM join ต่อขึ้นไปทางรากของต้นไม้ (RP สำหรับ shared tree หรือ FHR สำหรับ source tree)",
+  },
+  oil: {
+    term: "Outgoing Interface List (OIL)",
+    full: "",
+    def: "รายการ interface ที่ Router ต้องส่งสำเนาของ multicast stream ออกไป — เมื่อแพ็กเก็ตมาถึงทาง RPF interface ที่ถูกต้องแล้ว Router จะส่งต่อออกทุก interface ในรายการนี้",
+  },
+  mrib: {
+    term: "Multicast Routing Information Base (MRIB)",
+    full: "",
+    def: "ตารางเส้นทาง multicast ของ Router — คู่ขนานกับ RIB ของฝั่ง unicast เก็บสถานะ (S,G) และ (*,G) พร้อม incoming interface และ OIL",
+  },
+  mfib: {
+    term: "Multicast Forwarding Information Base (MFIB)",
+    full: "",
+    def: "ตารางส่งต่อ multicast ที่ใช้ตัดสินใจส่งแพ็กเก็ตจริงในระดับฮาร์ดแวร์ — คู่ขนานกับ FIB ของฝั่ง unicast ที่ CEF ใช้",
+  },
+  pimDr: {
+    term: "PIM Designated Router (DR)",
+    full: "",
+    def: "Router ที่ถูกเลือกผ่าน PIM hello ให้เป็นตัวแทนของ LAN segment เพื่อกันไม่ให้ส่งทราฟฟิก multicast ซ้ำซ้อน — priority default คือ 1 ถ้าเท่ากันใช้ IP สูงสุดตัดสิน (ตรงข้ามกับ IGMP querier ที่ใช้ IP ต่ำสุด)",
+  },
+  rpf: {
+    term: "Reverse Path Forwarding (RPF)",
+    full: "",
+    def: "อัลกอริทึมกันลูปของ multicast — ตรวจว่าแพ็กเก็ตเข้ามาทาง interface เดียวกับที่ Router ใช้ส่ง unicast ไปหาต้นทางหรือไม่ ถ้าใช่จึงส่งต่อออก OIL ถ้าไม่ใช่ให้ทิ้งทันที",
+  },
+  rendezvousPoint: {
+    term: "Rendezvous Point (RP)",
+    full: "",
+    def: "Router ที่ถูกแต่งตั้งให้เป็นรากร่วมของ shared tree ใน PIM-SM เป็นจุดนัดพบระหว่างต้นทางกับผู้รับ — กำหนดได้ 3 วิธี: Static RP, Auto-RP (ของ Cisco) หรือ BSR (มาตรฐานเปิด)",
+  },
 };

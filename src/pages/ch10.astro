@@ -1,7 +1,242 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import ComingSoon from "../components/ComingSoon.astro";
+import Term from "../components/Term.astro";
 ---
-<Layout title="OSPFv3" description="เวอร์ชันของ OSPF ที่ออกแบบมาให้รองรับ IPv6 โดยเฉพาะ">
-  <ComingSoon n={10} title="OSPFv3" pages={30} accent="var(--coral)" blurb="เวอร์ชันของ OSPF ที่ออกแบบมาให้รองรับ IPv6 โดยเฉพาะ" />
+<Layout title="OSPFv3" description="บทที่ 10 — OSPFv3: สิ่งที่เปลี่ยนไปจาก OSPFv2, LSA 8 ชนิดใหม่, การสื่อสารด้วย Link-Local, การตั้งค่า และการรองรับ IPv4 ผ่าน OSPFv3">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--slate)">Internetwork · Chapter 10 of 14</p>
+    <h1>OSPFv3</h1>
+    <p class="deck">บทที่ 8-9 คือ OSPFv2 ทั้งหมด บทนี้ดูว่า OSPFv3 เปลี่ยนอะไรไปบ้าง — คำตอบคือ<b>ตรรกะหลักเหมือนเดิมเกือบทั้งหมด</b> แต่ย้ายฐานไปวิ่งบน IPv6 โดยตรง แยกข้อมูล prefix ออกจาก LSA โครงสร้าง และที่หลายคนไม่รู้: OSPFv3 ใช้ route ทั้ง IPv6 <b>และ</b> IPv4 ได้ในตัวเดียว</p>
+    <div class="credit-bar">
+      <span>Protocol 89 over IPv6</span><span>FF02::5 / FF02::6</span><span>8 LSA Types</span><span>Address Family</span><span>ospfv3 command</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="grid-2">
+      <div class="card">
+        <h3>เชื่อมจากที่รู้แล้ว</h3>
+        <ul>
+          <li>จากบทที่ 8-9 เรารู้ครบแล้วว่า OSPF ทำงานยังไง: 5 packet types, 8 neighbor states, DR/BDR, Area 0 backbone, LSA Type 1/2/3, Path Selection, Summarization ที่ ABR</li>
+          <li>สิ่งที่ยังไม่เคยพูดถึง: ทั้งหมดนั้นเป็น OSPFv2 ซึ่งรองรับแค่ IPv4 — แล้ว IPv6 ล่ะ? ต้องเรียนใหม่หมดไหม (คำตอบ: ไม่ ตรรกะเดิมใช้ได้เกือบทั้งหมด)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>สิ่งที่บทนี้ครอบคลุม</h3>
+        <ul>
+          <li><b>OSPFv3 Fundamentals</b> — 5 ความต่างหลักจาก v2 และ LSA 8 ชนิด</li>
+          <li><b>OSPFv3 Configurations</b> — 4 ขั้นตอนตั้งค่า, verification, passive interface, summarization, network type</li>
+          <li><b>IPv4 Support in OSPFv3</b> — ใช้ OSPFv3 route IPv4 ด้วย</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="13" cy="13" r="10" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
+        <text x="13" y="17" text-anchor="middle" font-size="10" font-weight="700" fill="var(--slate)">v3</text>
+      </svg>
+      <h2>OSPFv3 Fundamentals — อะไรเปลี่ยน อะไรเหมือนเดิม</h2>
+    </div>
+    <p class="sec-sub">OSPFv3 วิ่งบน IPv6 โดยตรง (ยังใช้ protocol ID 89 เหมือนเดิม) และลดจำนวน field ใน packet header ลง — แนวคิดสำคัญที่สุดคือ ข้อมูล IP prefix ถูกย้ายไปเป็น <b>payload</b> ของ LSA แทนที่จะฝังอยู่ในโครงสร้าง ทำให้ตัวโปรโตคอลเอง<b>ไม่ผูกกับ address family ใด ๆ</b> (address family independent)</p>
+
+    <div class="tablewrap">
+      <table>
+        <caption>5 ความต่างหลักจาก OSPFv2 ที่ต้องจำ</caption>
+        <thead><tr><th scope="col">หัวข้อ</th><th scope="col">OSPFv3 ต่างจาก v2 ยังไง</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Router ID</th><td>ยังเป็นเลข 32 บิตเหมือนเดิม (ไม่ใช่ IPv6 address) และใช้ระบุเพื่อนบ้านทุก network type — แต่<b>ต้องตั้งเองด้วยมือเสมอ</b> ใน routing process ไม่มีการเดาจาก interface ให้อัตโนมัติแบบ v2</td></tr>
+          <tr><th scope="row">Authentication</th><td><b>ถูกถอดออกจากตัวโปรโตคอลไปเลย</b> — ไปใช้ IPsec extension header ของ IPv6 packet แทน</td></tr>
+          <tr><th scope="row">Neighbor Adjacency</th><td>สื่อสารระหว่าง Router ด้วย <Term id="linkLocalAddress">IPv6 Link-Local Address</Term> ไม่ใช่ global address</td></tr>
+          <tr><th scope="row">Multiple subnets</th><td>สร้าง adjacency ได้<b>แม้สอง Router จะไม่ได้อยู่ subnet เดียวกัน</b> — ต่างจาก v2 ที่บังคับว่าต้อง subnet เดียวกัน (เพราะ v3 คุยกันด้วย link-local ที่มีอยู่บนทุก link อยู่แล้ว)</td></tr>
+          <tr><th scope="row">Multiple instances</th><td>packet มี field <Term id="instanceId">Instance ID</Term> ใช้กำหนดว่า Router ตัวไหนบน segment เดียวกันได้รับอนุญาตให้ฟอร์ม adjacency กันบ้าง</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3>สิ่งที่ <b>ไม่</b> เปลี่ยนเลย</h3>
+        <ul style="margin:0">
+          <li><b>Packet Type ทั้ง 5 ชนิด</b> (Hello, DBD, LSR, LSU, LSAck) และตรรกะการทำงานเหมือน OSPFv2 ทุกประการ</li>
+          <li>Neighbor state ทั้ง 8 ขั้น, DR/BDR election, Area 0 backbone, ABR</li>
+          <li>Protocol ID ยังเป็น 89</li>
+        </ul>
+        <p style="color:var(--ink-2);margin-top:10px">แปลว่าทุกอย่างที่เรียนในบทที่ 8-9 ยังใช้ได้หมด — บทนี้แค่เรียนส่วนต่าง</p>
+      </div>
+      <div class="knob">
+        <span class="where c2">Multicast Address</span>
+        <h3>คุยกันที่ไหน</h3>
+        <p class="out">FF02::5  → AllSPFRouters (ทุก Router)
+FF02::6  → AllDRouters (เฉพาะ DR/BDR)</p>
+        <p class="why" style="margin:0">ทุก Router ส่ง hello ไปที่ <code>FF02::5</code> เพื่อค้นหาเพื่อนบ้าน และ DR/BDR ก็ใช้ที่อยู่นี้ส่ง LSU/LSAck กลับให้ทุกตัว — ส่วน Router ที่<b>ไม่ใช่</b> DR/BDR จะส่ง update/ack ขึ้นไปหา DR ที่ <code>FF02::6</code> เท่านั้น (เทียบกับ v2 ที่ใช้ 224.0.0.5 / 224.0.0.6 ตามลำดับ — แนวคิดเดียวกันเป๊ะ)</p>
+      </div>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>LSA 8 ชนิดของ OSPFv3 — เทียบกับ v2 (เลข LS Type เขียนเป็นเลขฐานสิบหก)</caption>
+        <thead><tr><th scope="col">LS Type</th><th scope="col">ชื่อ</th><th scope="col">หน้าที่ · เทียบกับ v2</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">0x2001</th><td>Router</td><td>ทุก Router สร้าง บอกสถานะและ cost ของ interface ตัวเองใน Area — <b>โครงสร้างถูกแก้ใหม่</b> ให้ประกาศแค่พารามิเตอร์ของ interface (ชนิด, metric) ไม่พก IP address แล้ว</td></tr>
+          <tr><th scope="row">0x2002</th><td>Network</td><td>DR สร้าง ประกาศ Router ทุกตัวที่ต่ออยู่บน link นั้นรวมทั้งตัวเอง — เหมือน Type 2 ของ v2</td></tr>
+          <tr><th scope="row">0x2003</th><td><Term id="interareaPrefixLsa">Interarea Prefix</Term></td><td>ABR สร้าง บอกเส้นทางไปยัง IPv6 prefix ที่อยู่ Area อื่น — <b>คือ Network Summary LSA (Type 3) ของ v2 ที่ถูกเปลี่ยนชื่อ</b></td></tr>
+          <tr><th scope="row">0x2004</th><td><Term id="interareaRouterLsa">Interarea Router</Term></td><td>ABR สร้าง ประกาศตำแหน่งของ ASBR ที่อยู่ Area อื่น — <b>คือ ASBR Summary LSA (Type 4) ของ v2 ที่ถูกเปลี่ยนชื่อ</b></td></tr>
+          <tr><th scope="row">0x4005</th><td>AS External</td><td>ASBR สร้าง ประกาศ default route หรือเส้นทางที่ redistribute เข้ามาจากโปรโตคอลอื่น — เหมือน Type 5 ของ v2</td></tr>
+          <tr><th scope="row">0x2007</th><td>NSSA</td><td>ASBR ที่อยู่ใน NSSA สร้าง สำหรับเส้นทางที่ redistribute เข้ามาใน area นั้น — เหมือน Type 7 ของ v2</td></tr>
+          <tr><th scope="row">0x0008</th><td><Term id="linkLsa">Link</Term></td><td><b>ชนิดใหม่ของ v3</b> — จับคู่ global unicast prefix ทุกตัวบน interface เข้ากับ link-local address ของ Router ตัวนั้น แชร์เฉพาะระหว่างเพื่อนบ้านบน link เดียวกัน ไม่ flood ออกไปไกลกว่านั้น</td></tr>
+          <tr><th scope="row">0x2009</th><td><Term id="intraAreaPrefixLsa">Intra-area Prefix</Term></td><td><b>ชนิดใหม่ของ v3</b> — ประกาศ IPv6 prefix ที่ผูกกับ Router, stub หรือ transit segment</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>ทำไมต้องแยก prefix ออกมาเป็น LSA ใหม่ <span class="tag">ออกสอบ</span></h4>
+      <p>ใน OSPFv2 ข้อมูล IP address ฝังอยู่ใน Router LSA (Type 1) โดยตรง — พอเพิ่มหรือแก้ prefix บน interface ทีนึง Type 1 LSA เปลี่ยน ทุก Router ใน Area ต้องรัน SPF ใหม่ทั้ง ๆ ที่ <b>โครงสร้าง topology ไม่ได้เปลี่ยนเลย</b></p>
+      <p style="margin:0"><b>ทางแก้ของ v3:</b> ย้ายข้อมูล prefix ไปอยู่ใน LSA แยกสองชนิดใหม่ (Link LSA และ Intra-area Prefix LSA) แล้วให้ LSDB สร้าง shortest path tree จาก <b>link</b> แทนที่จะสร้างจาก <b>network</b> — ผลคือเพิ่ม/แก้ prefix บน interface ได้โดย<b>ไม่ต้องรัน SPF ใหม่</b> เพราะโครงสร้าง link ไม่ได้ขยับ</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="3" y="3" width="20" height="20" rx="4" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+        <line x1="8" y1="9" x2="18" y2="9" stroke="var(--coral)" stroke-width="1.8"/>
+        <line x1="8" y1="14" x2="18" y2="14" stroke="var(--coral)" stroke-width="1.8"/>
+        <line x1="8" y1="19" x2="14" y2="19" stroke="var(--coral)" stroke-width="1.8"/>
+      </svg>
+      <h2>OSPFv3 Configurations</h2>
+    </div>
+    <p class="sec-sub">topology ตัวอย่างจากสไลด์: R1, R2, R3 อยู่ Area 0 — R3, R4 อยู่ Area 34 — R3 เป็น ABR</p>
+
+    <div class="knob">
+      <span class="where c1">4 ขั้นตอน</span>
+      <h3>ลำดับการตั้งค่า</h3>
+      <pre>ipv6 unicast-routing              ! ขั้น 1 — เปิด IPv6 routing ก่อนเสมอ
+!
+router ospfv3 1
+ router-id 1.1.1.1                ! ขั้น 2 — ต้องตั้งเองเสมอ ไม่มีการเดาให้
+ address-family ipv6 unicast      ! ขั้น 3 — ไม่บังคับ (เปิดเองอัตโนมัติตอนผูก interface)
+ exit-address-family
+!
+interface g0/0/1
+ ospfv3 1 ipv6 area 0             ! ขั้น 4 — ผูก interface เข้า process + area</pre>
+      <p class="why" style="margin:0">สังเกตรูปแบบคำสั่ง <code>ospfv3 process-id {'{'}ipv4 | ipv6{'}'} area area-id</code> — ระบุ address family ตรงนี้ นี่คือกุญแจที่ทำให้ process เดียวรองรับทั้งสอง address family ได้ (ดูหัวข้อสุดท้าย)</p>
+    </div>
+
+    <div class="fixnote" style="background:var(--slate-soft);margin-top:20px">
+      <b style="color:var(--slate)">คำสั่งเก่าที่ไม่ควรใช้แล้ว:</b> IOS รุ่นเก่าใช้ <code>ipv6 router ospf</code> สำหรับสร้าง process และ <code>ipv6 ospf process-id area area-id</code> สำหรับผูก interface — ทั้งคู่ถือเป็น <b>legacy</b> แล้ว ควรย้ายมาใช้ <code>router ospfv3</code> + <code>ospfv3 process-id ipv6 area area-id</code> แทน (เจอบ่อยในเอกสารเก่าและข้อสอบชอบเอามาหลอก)
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="knob">
+        <span class="where c2">ตรวจสอบเพื่อนบ้าน</span>
+        <h3>show ospfv3 ipv6 neighbor</h3>
+        <p class="why" style="margin:0 0 8px">แสดง Router ID ของเพื่อนบ้าน, OSPFv3 priority, state ของการเชื่อมต่อ และ interface ที่เรียนรู้เพื่อนบ้านตัวนั้นมา — โครงสร้างเดียวกับ <code>show ip ospf neighbor</code> ของ v2</p>
+        <p class="why" style="margin:0">คำสั่งอื่นที่ใช้บ่อย: <code>show ospfv3 interface [interface-id]</code> ดู Interface ID, Router ID, DR/BDR และ adjacency — <code>show ospfv3 interface brief</code> ดูสรุปว่า interface ไหนอยู่ area ไหนและมีบทบาทอะไรบน link (State)</p>
+      </div>
+      <div class="knob">
+        <span class="where c2">ตรวจสอบเส้นทาง</span>
+        <h3>show ipv6 route ospf</h3>
+        <p class="out">O   2001:db8:0:1::/64 [110/1]
+OI  2001:db8:0:34::/64 [110/2]</p>
+        <p class="why" style="margin:0"><code>O</code> = Intra-area route (Area เดียวกัน) — <code>OI</code> = Interarea route (ข้าม Area ผ่าน ABR) เทียบกับ v2 ที่ใช้ <code>O</code> และ <code>O IA</code> — ความหมายเหมือนกันทุกอย่าง แค่เขียนย่อกว่า</p>
+      </div>
+    </div>
+
+    <div class="grid-3" style="margin-top:20px">
+      <div class="knob">
+        <span class="where c3">Passive Interface</span>
+        <h3>วางคำสั่งได้ 2 ระดับ</h3>
+        <pre>router ospfv3 1
+ passive-interface default
+ address-family ipv6 unicast
+  passive-interface g0/0/2</pre>
+        <p class="why" style="margin:0">วางใต้ <b>process</b> = มีผลกับทั้งสอง address family พร้อมกัน (cascade ลงไป) — วางใต้ <b>address family</b> เฉพาะเจาะจง = มีผลแค่ family นั้น ตั้งทีละ interface หรือ <code>default</code> ทั้งหมดก็ได้เหมือน v2</p>
+      </div>
+      <div class="knob">
+        <span class="where c3">Summarization</span>
+        <h3>สรุปที่ ABR</h3>
+        <pre>router ospfv3 1
+ address-family ipv6 unicast
+  area 34 range 2001:db8:0::/48</pre>
+        <p class="why" style="margin:0">รูปแบบ <code>area area-id range prefix/prefix-length</code> — เขียน prefix/prefix-length ติดกันแบบ IPv6 แทนที่จะแยก network กับ subnet mask เหมือน v2 หลักการเหมือนบทที่ 9 ทุกอย่าง: ลดจำนวน route entry บน Router เพื่อนบ้าน</p>
+      </div>
+      <div class="knob">
+        <span class="where c3">Network Type</span>
+        <h3>แก้เมื่อเดาผิด</h3>
+        <pre>interface g0/3
+ ospfv3 network point-to-point</pre>
+        <p class="why" style="margin:0">บางครั้ง network type ที่เรียนรู้อัตโนมัติไม่ตรงกับ topology จริง (ตัวอย่างจากสไลด์: R2 G0/3 ขึ้นเป็น <code>BROADCAST</code> ทั้งที่ควรเป็น point-to-point) — แก้ตรง interface ได้เลย แต่<b>ต้องแก้ให้ตรงกันทั้งสองปลายของ link</b> ไม่งั้น adjacency พัง</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="2" y="6" width="10" height="6" rx="1.5" fill="none" stroke="var(--gold)" stroke-width="1.8"/>
+        <rect x="14" y="14" width="10" height="6" rx="1.5" fill="none" stroke="var(--gold)" stroke-width="1.8"/>
+        <path d="M12 9 L18 9 L18 14" fill="none" stroke="var(--gold)" stroke-width="1.5"/>
+      </svg>
+      <h2>IPv4 Support in OSPFv3</h2>
+    </div>
+    <p class="sec-sub">จุดที่หลายคนเข้าใจผิด: OSPFv3 <b>ไม่ได้</b>มีไว้สำหรับ IPv6 อย่างเดียว — เพราะตัวโปรโตคอลถูกออกแบบให้ address family independent (จากหัวข้อแรก) จึงเอามา route IPv4 ได้ด้วย</p>
+
+    <div class="knob">
+      <span class="where c1">2 ขั้นตอน</span>
+      <h3>เปิดใช้ IPv4 บน OSPFv3</h3>
+      <pre>interface g0/0/1
+ ip address 10.1.13.13 255.255.255.0
+ ipv6 address 2001:db8:0:13::13/64    ! ขั้น 1 — ต้องมี IPv6 address (global หรือ link-local ก็ได้)
+ ospfv3 1 ipv4 area 0                 ! ขั้น 2 — เปิด address family ipv4</pre>
+      <p class="why" style="margin:0"><b>เงื่อนไขที่ห้ามลืม:</b> interface ต้องมี IPv6 address ก่อนเสมอ ถึงจะเปิด IPv4 support ได้ — เพราะตัวโปรโตคอลยังต้องคุยกันผ่าน IPv6 link-local อยู่ดี (จากตาราง 5 ความต่างด้านบน) IPv4 เป็นแค่ payload ที่ถูกขนไปเท่านั้น</p>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3>คำสั่งตรวจสอบฝั่ง IPv4</h3>
+        <ul style="margin:0">
+          <li><code>show ip route ospfv3</code> — ดูเส้นทาง IPv4 ที่ได้จาก OSPFv3 (สังเกตว่าไม่ใช่ <code>show ip route ospf</code> ซึ่งเป็นของ v2)</li>
+          <li><code>show ospfv3 interface brief</code> — ดูว่า interface ไหนเปิด address family อะไรไว้บ้าง</li>
+          <li><code>show ospfv3 neighbor</code> — ดูเพื่อนบ้านของทั้งสอง address family พร้อมกัน</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>คำสั่งดู LSDB</h3>
+        <ul style="margin:0">
+          <li><code>show ospfv3 database router</code> — Router LSA (0x2001)</li>
+          <li><code>show ospfv3 database network</code> — Network LSA (0x2002)</li>
+          <li><code>show ospfv3 database link</code> — Link LSA (0x0008) ซึ่งเป็นชนิดใหม่ของ v3</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="grid-2">
+      <div class="card">
+        <h3>ความครบถ้วนของบทนี้</h3>
+        <p style="color:var(--ink-2);margin:0">สไลด์ Chapter 10 ระบุ Key Topics ไว้ 5 หัวข้อ — <b>ครอบคลุมครบทั้งหมดในหน้านี้</b>: OSPFv3 fundamentals, OSPFv3 Packet Types (เหมือน v2 ทุกประการ), OSPFv3 verification, OSPFv3 summarization, และ IPv4 support on OSPFv3 — บทนี้ไม่มีหน้า "Key Terms" แยกในสไลด์ต้นฉบับ ศัพท์ที่ทำ tooltip ไว้จึงคัดจากเนื้อหาหลักโดยตรง</p>
+      </div>
+      <div class="card">
+        <h3>สรุปคำศัพท์บทนี้</h3>
+        <ul>
+          <li><b>Link-Local Address</b> — ที่อยู่ที่ OSPFv3 ใช้คุยกันระหว่าง Router</li>
+          <li><b>Link LSA (0x0008)</b> — ชนิดใหม่ จับคู่ prefix กับ link-local ภายใน link เดียว</li>
+          <li><b>Intra-area Prefix LSA (0x2009)</b> — ชนิดใหม่ ขน IPv6 prefix แยกจากโครงสร้าง</li>
+          <li><b>Interarea Prefix / Router LSA</b> — Type 3 / Type 4 ของ v2 ที่เปลี่ยนชื่อ</li>
+          <li><b>Instance ID</b> — คุมว่าใครบน segment เดียวกันฟอร์ม adjacency ได้</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Internetwork Chapter 10 · topology และคำสั่งอ้างอิงจากสไลด์ต้นฉบับ (Figure 10-1, Example 10-9/10-11, Table 10-2) · แหล่งอ้างอิง: Chapter 10 slide deck, MidEx exam scope (ข้อ "OSPFv3 (IPv6)" ใน Chapter 9)
+  </footer>
+
 </Layout>

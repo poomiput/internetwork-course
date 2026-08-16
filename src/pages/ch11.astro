@@ -1,7 +1,420 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import ComingSoon from "../components/ComingSoon.astro";
+import Term from "../components/Term.astro";
 ---
-<Layout title="BGP" description="Border Gateway Protocol — โปรโตคอลที่ใช้เชื่อม Autonomous System บน Internet">
-  <ComingSoon n={11} title="BGP" pages={55} accent="var(--violet)" blurb="Border Gateway Protocol — โปรโตคอลที่ใช้เชื่อม Autonomous System บน Internet" />
+<Layout title="BGP" description="บทที่ 11 — BGP: ASN, Path Attributes, iBGP vs eBGP, การตั้งค่าแบบโมดูล, 3 ตาราง BGP, Route Summarization และ MP-BGP สำหรับ IPv6">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--slate)">Internetwork · Chapter 11 of 14</p>
+    <h1>BGP — Border Gateway Protocol</h1>
+    <p class="deck">ทุกโปรโตคอลที่ผ่านมา (EIGRP, OSPF) เป็น IGP ที่ route <b>ภายใน</b> องค์กรเดียว — BGP คือตัวเดียวที่ route <b>ระหว่าง</b> องค์กร และเป็นโปรโตคอลที่ทำให้อินเทอร์เน็ตทั้งโลกเชื่อมกันได้จริง กติกาการเลือกเส้นทางจึงต่างจาก IGP โดยสิ้นเชิง</p>
+    <div class="credit-bar">
+      <span>TCP port 179</span><span>Path Vector</span><span>iBGP AD 200 / eBGP AD 20</span><span>Loc-RIB</span><span>MP-BGP</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="grid-2">
+      <div class="card">
+        <h3>เชื่อมจากที่รู้แล้ว</h3>
+        <ul>
+          <li>จากบทที่ 6 เรารู้แล้วว่า BGP เป็น <Term id="pathVectorProtocol">Path Vector Protocol</Term> ที่ใช้ AS_Path กันลูปแทนการวัดระยะทาง และ AD ของ eBGP = 20 / iBGP = 200</li>
+          <li>จากบทที่ 6 อีกเช่นกัน: BGP เป็นโปรโตคอล<b>ตัวเดียว</b>ในรายการที่ไม่ใช่ IGP</li>
+          <li>สิ่งที่ยังไม่เคยพูดถึง: BGP หาเพื่อนบ้านยังไง (สปอยล์: ไม่มี hello ไม่มีการค้นหาอัตโนมัติเลย), ตัดสินใจด้วยอะไรถ้าไม่ใช่ metric, และทำไมถึง scale ไปถึงเส้นทางกว่า 780,000 เส้นบนอินเทอร์เน็ตได้</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>สิ่งที่บทนี้ครอบคลุม</h3>
+        <ul>
+          <li><b>BGP Fundamentals</b> — ASN, Path Attributes, Loop Prevention, Address Family, การสื่อสาร, Session Types, Messages, Neighbor States</li>
+          <li><b>Basic BGP Configuration</b> — 5 ขั้นตอนแบบโมดูล, การตรวจสอบ, Prefix Advertisement, 3 ตาราง BGP</li>
+          <li><b>Route Summarization</b> — Static vs Dynamic, Atomic Aggregate, AS_SET</li>
+          <li><b>MP-BGP for IPv6</b> — AFI/SAFI, การตั้งค่าและสรุปเส้นทาง IPv6</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="7" cy="8" r="4" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
+        <circle cx="19" cy="8" r="4" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
+        <circle cx="13" cy="19" r="4" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
+        <line x1="11" y1="8" x2="15" y2="8" stroke="var(--slate)" stroke-width="1.5"/>
+      </svg>
+      <h2>BGP Fundamentals</h2>
+    </div>
+    <p class="sec-sub">BGP เป็น <b>EGP</b> (Exterior Gateway Protocol) แบบ Path Vector ที่เป็นมาตรฐานเปิด — ออกแบบมาตั้งแต่แรกเพื่อเชื่อมต่อ<b>ระหว่างองค์กร</b> บนเครือข่ายสาธารณะอย่างอินเทอร์เน็ตและเครือข่ายเช่าส่วนตัว จุดขายคือ scalability, ความยืดหยุ่น และความเสถียร</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3><Term id="autonomousSystemBgp">Autonomous System Number (ASN)</Term></h3>
+        <p style="color:var(--ink-2);margin:0 0 10px">ในมุมของ BGP: AS คือกลุ่ม Router ภายใต้การควบคุมขององค์กรเดียว ใช้ IGP และ metric ร่วมกัน — องค์กรที่ต้องการต่ออินเทอร์เน็ตต้องขอ ASN จาก <b>IANA</b></p>
+        <ul style="margin:0">
+          <li>เดิม ASN เป็น 2 ไบต์ (65,535 หมายเลข) — RFC 4893 ขยายเป็น <b>4 ไบต์</b> (4,294,967,295 หมายเลข)</li>
+          <li>ช่วงส่วนตัว (ห้ามใช้บนอินเทอร์เน็ต): <b>64,512–65,535</b> ในช่วง 16 บิต และ <b>4,200,000,000–4,294,967,294</b> ในช่วง 32 บิต</li>
+          <li>IANA ขอหลักฐาน 3 อย่าง: มี network range สาธารณะจริง, ต่ออินเทอร์เน็ตผ่านหลายทาง, และมีความจำเป็นต้องใช้ routing policy ของตัวเอง</li>
+        </ul>
+        <p style="color:var(--ink-2);margin-top:10px">ใช้ได้เฉพาะ ASN ที่ IANA ให้ ที่ ISP ให้ หรือ ASN ส่วนตัวเท่านั้น — ใช้ของคนอื่นโดยไม่ได้รับอนุญาตทำให้ทราฟฟิกหายและก่อความวุ่นวายทั่วอินเทอร์เน็ตได้</p>
+      </div>
+      <div class="knob">
+        <span class="where c1">กันลูปด้วย AS_Path</span>
+        <h3>ทำไม BGP ไม่ต้องรู้ topology ทั้งหมด</h3>
+        <p class="why">BGP ไม่เก็บ topology ครบเหมือน Link-State — มันทำตัวคล้าย Distance Vector แต่ใช้ <Term id="asPath">AS_Path</Term> รับประกันว่าเส้นทางไม่วนลูป</p>
+        <p class="out">AS 100 ประกาศ 172.16.1.0/24 → AS 200
+AS 200 → AS 400 → AS 300
+AS 300 ประกาศกลับมา AS 100 ด้วย AS_Path "300 400 200 100"
+AS 100 เห็น ASN ตัวเองใน AS_Path → ทิ้งทันที</p>
+        <p class="why" style="margin:0">กติกาเดียวกับที่เห็นในบทที่ 6 — ทุก AS ที่ส่งต่อจะ<b>เติม ASN ตัวเองเข้าไปข้างหน้า</b> AS_Path เสมอ ทำให้ตรวจลูปได้แค่ดูว่ามีชื่อตัวเองอยู่ในรายการหรือเปล่า</p>
+      </div>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption><Term id="pathAttribute">Path Attributes (PA)</Term> 4 ประเภท — ตัวที่ให้ BGP คุม routing policy ได้ละเอียด (ตาม RFC 4271)</caption>
+        <thead><tr><th scope="col">ประเภท</th><th scope="col">ทุก BGP ต้องรู้จักไหม</th><th scope="col">ต้องแนบมากับทุก prefix ไหม</th><th scope="col">ตัวอย่าง</th></tr></thead>
+        <tbody>
+          <tr><th scope="row"><Term id="wellKnownMandatory">Well-known mandatory</Term></th><td>ต้องรู้จัก</td><td><b>ต้องแนบทุกครั้ง</b></td><td>AS_Path, Next Hop, Origin</td></tr>
+          <tr><th scope="row"><Term id="wellKnownDiscretionary">Well-known discretionary</Term></th><td>ต้องรู้จัก</td><td>จะแนบหรือไม่ก็ได้</td><td>Local Preference</td></tr>
+          <tr><th scope="row"><Term id="optionalTransitive">Optional transitive</Term></th><td>ไม่จำเป็น</td><td>ไม่บังคับ — ถ้าไม่รู้จักก็<b>ส่งต่อ</b>ให้ AS ถัดไปได้</td><td>Atomic Aggregate, Aggregator</td></tr>
+          <tr><th scope="row"><Term id="optionalNonTransitive">Optional non-transitive</Term></th><td>ไม่จำเป็น</td><td>ไม่บังคับ — ถ้าไม่รู้จักต้อง<b>ทิ้ง</b> ไม่ส่งต่อ</td><td>MED (Multi-Exit Discriminator)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--ink-2);font-size:.9rem;margin-top:10px">วิธีจำ: <b>Well-known</b> = ทุก implementation ต้องรู้จัก / <b>Optional</b> = รู้จักก็ได้ไม่รู้จักก็ได้ — <b>Mandatory</b> = ต้องมีทุก prefix / <b>Discretionary</b> = มีก็ได้ — <b>Transitive</b> = ไม่รู้จักแต่ยังส่งต่อ / <b>Non-transitive</b> = ไม่รู้จักก็ทิ้งเลย</p>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>BGP หาเพื่อนบ้านไม่เป็น — ต้องบอกทีละตัว <span class="tag">ออกสอบ</span></h4>
+      <p><b>BGP ไม่มี hello packet</b> และ<b>ค้นหาเพื่อนบ้านอัตโนมัติไม่ได้เลย</b> ต่างจาก IGP ทุกตัวที่ผ่านมา — ต้องระบุเพื่อนบ้านด้วย IP address ทีละตัวด้วยมือเสมอ</p>
+      <p style="margin:0">BGP ใช้ <b>TCP port 179</b> เป็นช่องทางสื่อสาร ซึ่งให้ผลข้างเคียงที่สำคัญมาก: <b>สร้าง adjacency กับ Router ที่อยู่ห่างหลาย hop ได้</b> (IGP ทำไม่ได้เพราะผูกกับ link ตรง ๆ) — implementation รุ่นใหม่ส่วนใหญ่ตั้ง DF bit เพื่อป้องกัน fragmentation แล้วพึ่ง path MTU discovery แทน</p>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3>Single-Hop vs Multi-Hop Session</h3>
+        <p style="color:var(--ink-2);margin:0 0 10px"><b>BGP Session</b> = ความสัมพันธ์ที่สร้างสำเร็จแล้วระหว่าง BGP Router สองตัว</p>
+        <ul style="margin:0">
+          <li><b>เพื่อนบ้านบน network เดียวกัน</b> — ใช้ ARP table หา IP ของ peer ได้เลย</li>
+          <li><b>Multi-hop session</b> — ต้องมีเส้นทางใน RIB (static หรือจากโปรโตคอลไหนก็ได้) เพื่อหา IP ของ peer ให้เจอก่อนถึงจะสร้าง TCP session ได้</li>
+          <li><b>ข้อควรระวัง:</b> default route <b>ไม่เพียงพอ</b>สำหรับสร้าง multi-hop BGP session — ต้องมีเส้นทางเจาะจงจริง ๆ</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><Term id="addressFamily">Address Family</Term> — MP-BGP</h3>
+        <p style="color:var(--ink-2);margin:0">RFC 2858 เพิ่มความสามารถ Multi-Protocol BGP ผ่าน <b>AFI</b> (Address Family Identifier) ซึ่งระบุโปรโตคอลเครือข่าย เช่น IPv4 หรือ IPv6 — และแยกย่อยลงไปอีกด้วย <b>SAFI</b> (Subsequent AFI) เช่น unicast หรือ multicast</p>
+        <p style="color:var(--ink-2);margin:10px 0 0">ทำได้ด้วย PA สองตัวคือ <code>MP_REACH_NLRI</code> และ <code>MP_UNREACH_NLRI</code> ที่ขนข้อมูล reachability ของแต่ละ address family แยกกัน — <b>ทุก address family มีฐานข้อมูลและการตั้งค่าแยกของตัวเอง</b> (คำว่า MP-BGP กับ MBGP หมายถึงสิ่งเดียวกัน)</p>
+      </div>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>iBGP vs eBGP — ต่างกันที่ AS และพฤติกรรม</caption>
+        <thead><tr><th scope="col">หัวข้อ</th><th scope="col"><Term id="ibgpSession">iBGP Session</Term></th><th scope="col"><Term id="ebgpSession">eBGP Session</Term></th></tr></thead>
+        <tbody>
+          <tr><th scope="row">สร้างกับใคร</th><td>Router ที่อยู่ AS <b>เดียวกัน</b> (หรือใน confederation เดียวกัน)</td><td>Router ที่อยู่ AS <b>ต่างกัน</b></td></tr>
+          <tr><th scope="row">AD ตอนติดตั้งใน RIB</th><td><b>200</b></td><td><b>20</b></td></tr>
+          <tr><th scope="row">Multi-hop</th><td>รองรับ</td><td><b>ไม่รองรับโดย default</b> — ตั้ง TTL = 1 แพ็กเก็ตจึงถูกทิ้งถ้าพยายามต่อข้ามหลาย hop</td></tr>
+          <tr><th scope="row">Next-hop</th><td>ไม่เปลี่ยน</td><td>Router ที่ประกาศ<b>เปลี่ยน next-hop เป็น IP ของตัวเอง</b>ที่ใช้เปิด BGP session</td></tr>
+          <tr><th scope="row">AS_Path</th><td>ไม่เติม</td><td>Router ที่ประกาศ<b>เติม ASN ตัวเองเข้าไป</b>ใน AS_Path</td></tr>
+          <tr><th scope="row">ตรวจลูป</th><td>—</td><td>ฝั่งรับตรวจว่า AS_Path ไม่มี ASN ของตัวเอง ถ้ามีจะ<b>ทิ้ง NLRI ทันที</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>ทำไมองค์กรทั่วไปต้องทำ iBGP full mesh ไม่ใช่ redistribute เข้า IGP <span class="tag">ออกสอบ</span></h4>
+      <p>ISP มีหน้าที่ให้บริการ transit (ให้ทราฟฟิกคนอื่นวิ่งผ่าน) แต่<b>องค์กรทั่วไปไม่ควรกลายเป็น transit AS</b> — วิธีที่ดูเหมือนง่ายคือ redistribute เส้นทาง BGP เข้า IGP แล้วให้ IGP ส่งต่อ แต่<b>ใช้ไม่ได้จริง</b>ด้วย 3 เหตุผล:</p>
+      <ul>
+        <li><b>Scalability</b> — อินเทอร์เน็ตมี IPv4 prefix เกิน 780,000 เส้น IGP ไม่มีทางรองรับจำนวนขนาดนั้นได้</li>
+        <li><b>Custom routing</b> — IGP ใช้ metric เป็นตัวเลือกเส้นทางหลัก แต่ BGP มีหลายขั้นตอนในการเลือกและปรับแต่งเส้นทางเฉพาะ prefix</li>
+        <li><b>Path attributes</b> — PA ของ BGP ทั้งหมดไม่สามารถเก็บรักษาไว้ในโปรโตคอล IGP ได้</li>
+      </ul>
+      <p style="margin:0"><b>ทางออกที่ถูกต้อง:</b> สร้าง iBGP session ระหว่าง Router ภายในแบบ <b>full mesh</b> เพื่อให้ forwarding ระหว่าง AS ทำงานถูกต้อง</p>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="knob">
+        <span class="where c2">4 ชนิด</span>
+        <h3>BGP Messages</h3>
+        <table style="width:100%;font-size:.85rem;border-collapse:collapse">
+          <tbody>
+            <tr><td style="padding:4px 6px"><b>1 OPEN</b></td><td style="padding:4px 6px">ตั้งค่าและสร้าง BGP adjacency</td></tr>
+            <tr><td style="padding:4px 6px"><b>2 UPDATE</b></td><td style="padding:4px 6px">ประกาศ อัปเดต หรือถอนเส้นทาง</td></tr>
+            <tr><td style="padding:4px 6px"><b>3 NOTIFICATION</b></td><td style="padding:4px 6px">แจ้งข้อผิดพลาดให้เพื่อนบ้าน</td></tr>
+            <tr><td style="padding:4px 6px"><b>4 KEEPALIVE</b></td><td style="padding:4px 6px">ยืนยันว่าเพื่อนบ้านยังมีชีวิต</td></tr>
+          </tbody>
+        </table>
+        <p class="why" style="margin:10px 0 0">สังเกตว่ามีแค่ 4 ชนิด (OSPF มี 5) และ<b>ไม่มี Hello</b> — หน้าที่ตรวจสุขภาพเป็นของ KEEPALIVE แทน</p>
+      </div>
+      <div class="knob">
+        <span class="where c2">6 ขั้น (FSM)</span>
+        <h3>BGP Neighbor States</h3>
+        <p class="out">Idle → Connect → Active → OpenSent → OpenConfirm → Established</p>
+        <ul style="margin:0;font-size:.88rem;color:var(--ink-2)">
+          <li><b>Idle</b> — ขั้นแรก ตรวจพบ start event แล้วพยายามเปิด TCP session</li>
+          <li><b>Connect</b> — เริ่มเปิด TCP เมื่อ handshake เสร็จจะรีเซ็ต ConnectRetryTimer ส่ง OPEN แล้วไป OpenSent (ช่วงนี้ Router ที่ IP สูงกว่าเป็นคนคุมการเชื่อมต่อ)</li>
+          <li><b>Active</b> — เริ่ม TCP three-way handshake อีกรอบ ถ้าสำเร็จส่ง OPEN แล้วไป OpenSent</li>
+          <li><b>OpenSent</b> — ถ้า OPEN ที่ได้รับไม่มี error → OpenConfirm</li>
+          <li><b>OpenConfirm</b> — รอ KEEPALIVE หรือ NOTIFICATION พอได้ KEEPALIVE → Established</li>
+          <li><b>Established</b> — แลกเปลี่ยนเส้นทางด้วย UPDATE ได้แล้ว</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="3" y="3" width="20" height="20" rx="4" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+        <line x1="8" y1="9" x2="18" y2="9" stroke="var(--coral)" stroke-width="1.8"/>
+        <line x1="8" y1="14" x2="18" y2="14" stroke="var(--coral)" stroke-width="1.8"/>
+        <line x1="8" y1="19" x2="14" y2="19" stroke="var(--coral)" stroke-width="1.8"/>
+      </svg>
+      <h2>Basic BGP Configuration</h2>
+    </div>
+    <p class="sec-sub">คิดเป็น <b>โมดูล</b> 3 ส่วน: (1) พารามิเตอร์ของ session — ASN ของ peer, authentication, keepalive timer (2) การเปิด address family — การประกาศ network และการสรุปเส้นทางเกิดขึ้นที่นี่ (3) การ activate address family บน peer — ถ้าไม่ activate อย่างน้อยหนึ่ง family session จะไม่เริ่มเลย</p>
+
+    <div class="knob">
+      <span class="where c1">5 ขั้นตอน</span>
+      <h3>ลำดับการตั้งค่า</h3>
+      <pre>router bgp 65200                          ! ขั้น 1 — สร้าง process ด้วย ASN ตัวเอง
+ bgp router-id 192.168.2.2                ! ขั้น 2 — (ไม่บังคับ) ตั้ง RID เอง
+ no bgp default ipv4-unicast              !          ปิดการเปิด IPv4 อัตโนมัติ
+ neighbor 10.12.1.1 remote-as 65100       ! ขั้น 3 — ระบุ peer + ASN ของ peer
+ !
+ address-family ipv4                      ! ขั้น 4 — เปิด address family
+  network 10.12.1.0 mask 255.255.255.0
+  neighbor 10.12.1.1 activate             ! ขั้น 5 — activate peer ใน family นี้
+ exit-address-family</pre>
+      <p class="why" style="margin:0"><b>ขั้น 2 ถ้าไม่ตั้งเอง:</b> BGP เลือก RID อัตโนมัติจาก IP ที่สูงที่สุดของ loopback interface ที่ up อยู่ — <b>ข้อสังเกตสำคัญ:</b> ถ้าไม่สั่ง <code>no bgp default ipv4-unicast</code> IOS จะเปิด IPv4 address family ให้อัตโนมัติ (ดูตัวอย่าง R1 ที่สั้นกว่ามากเพราะพึ่ง default นี้) — การปิดแล้วเขียนเองชัด ๆ เป็นแนวปฏิบัติที่ดีกว่าเมื่อทำงานหลาย address family</p>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>อ่านผล <code>show bgp afi safi summary</code> (คำสั่งเก่า <code>show ip bgp summary</code> มีมาก่อน MP-BGP จึงไม่รองรับโครงสร้างหลาย protocol)</caption>
+        <thead><tr><th scope="col">คอลัมน์</th><th scope="col">ความหมาย</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Neighbor</th><td>IP address ของ BGP peer</td></tr>
+          <tr><th scope="row">V</th><td>เวอร์ชัน BGP ที่ peer ใช้</td></tr>
+          <tr><th scope="row">AS</th><td>ASN ของ peer</td></tr>
+          <tr><th scope="row">MsgRcvd / MsgSent</th><td>จำนวนข้อความที่รับ / ส่งกับ peer</td></tr>
+          <tr><th scope="row">TblVer</th><td>เวอร์ชันล่าสุดของฐานข้อมูล BGP ที่ส่งให้ peer</td></tr>
+          <tr><th scope="row">InQ / OutQ</th><td>จำนวนข้อความที่รอ peer ประมวลผล / รอส่งออก</td></tr>
+          <tr><th scope="row">Up/Down</th><td>ระยะเวลาที่ session established แล้ว หรือสถานะปัจจุบันถ้ายังไม่ established</td></tr>
+          <tr><th scope="row">State/PfxRcd</th><td><b>สองความหมายในคอลัมน์เดียว</b> — ถ้ายังไม่ established จะโชว์ state, ถ้า established แล้วจะโชว์<b>จำนวน prefix</b>ที่รับมาจาก peer</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h3>Prefix Advertisement — <code>network</code> ของ BGP ไม่เหมือน IGP</h3>
+      <p style="color:var(--ink-2);margin:0 0 10px"><b>จุดที่สับสนบ่อยที่สุด:</b> คำสั่ง <code>network</code> ของ BGP <b>ไม่ได้</b>เปิด BGP บน interface (ต่างจาก OSPF/EIGRP โดยสิ้นเชิง) — มันแค่ระบุว่า prefix ไหนควรถูกติดตั้งลงตาราง BGP (<Term id="locRib">Loc-RIB</Term>) เท่านั้น</p>
+      <p style="color:var(--ink-2);margin:0 0 10px">รูปแบบ: <code>network network mask subnet-mask [route-map route-map-name]</code> วางใต้ address family ที่เหมาะสม — ตัวเลือก <code>route-map</code> ใช้กำหนดค่า PA เฉพาะตอน prefix ถูกติดตั้งลง Loc-RIB</p>
+      <p style="color:var(--ink-2);margin:0"><b>ค่า PA ที่ถูกตั้งอัตโนมัติตอนติดตั้ง</b> ขึ้นกับชนิดของเส้นทางใน RIB:</p>
+      <ul style="margin:8px 0 0">
+        <li><b>Connected network</b> → next-hop = <code>0.0.0.0</code>, origin = <code>i</code> (IGP), weight = <b>32,768</b></li>
+        <li><b>Static route หรือจาก routing protocol</b> → next-hop = next-hop IP ใน RIB, origin = <code>i</code>, weight = <b>32,768</b>, และ <b>MED = metric ของ IGP</b></li>
+      </ul>
+    </div>
+
+    <div class="figwrap" style="margin-top:20px">
+      <figure>
+        <svg viewBox="0 0 780 250" role="img" aria-label="สามตารางของ BGP เรียงจากซ้ายไปขวา Adj-RIB-In เก็บ NLRI ในรูปแบบดั้งเดิมที่รับมาจากเพื่อนบ้าน จากนั้นผ่าน inbound policy เข้าสู่ Loc-RIB ซึ่งเก็บ NLRI ทั้งหมดที่สร้างเองในเครื่องหรือรับมาจาก peer แล้วผ่าน outbound policy ออกไปเก็บที่ Adj-RIB-Out ก่อนประกาศให้เพื่อนบ้านตัวถัดไป">
+          <rect x="30" y="70" width="180" height="80" rx="8" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/>
+          <text x="120" y="100" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)">Adj-RIB-In</text>
+          <text x="120" y="122" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">NLRI รูปแบบดั้งเดิม</text>
+          <text x="120" y="138" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">ที่รับมาจาก peer</text>
+
+          <line x1="210" y1="110" x2="290" y2="110" stroke="var(--gold)" stroke-width="2.5" marker-end="url(#b11)"/>
+          <text x="250" y="100" text-anchor="middle" font-size="10" fill="var(--gold)">inbound</text>
+          <text x="250" y="112" text-anchor="middle" font-size="10" fill="var(--gold)">policy</text>
+
+          <rect x="290" y="60" width="200" height="100" rx="8" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="2.2"/>
+          <text x="390" y="95" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">Loc-RIB</text>
+          <text x="390" y="118" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">NLRI ทั้งหมดที่สร้างเอง</text>
+          <text x="390" y="134" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">หรือรับมาจาก peer</text>
+          <text x="390" y="150" text-anchor="middle" font-size="10" fill="var(--coral)">← show bgp afi safi ดูตารางนี้</text>
+
+          <line x1="490" y1="110" x2="570" y2="110" stroke="var(--gold)" stroke-width="2.5" marker-end="url(#b11)"/>
+          <text x="530" y="100" text-anchor="middle" font-size="10" fill="var(--gold)">outbound</text>
+          <text x="530" y="112" text-anchor="middle" font-size="10" fill="var(--gold)">policy</text>
+
+          <rect x="570" y="70" width="180" height="80" rx="8" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/>
+          <text x="660" y="100" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)">Adj-RIB-Out</text>
+          <text x="660" y="122" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">NLRI หลังผ่าน policy</text>
+          <text x="660" y="138" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">แยกตารางต่อ peer แต่ละตัว</text>
+
+          <text x="390" y="200" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--ink)">3 ขั้นตอนก่อนประกาศออกจาก Loc-RIB</text>
+          <text x="390" y="220" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">1) ตรวจความถูกต้อง — NLRI ต้อง valid และ next-hop ต้อง resolve ได้ใน global RIB</text>
+          <text x="390" y="236" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">2) ประมวลผล outbound policy → 3) ถ้า next-hop เป็น 0.0.0.0 เปลี่ยนเป็น IP ของ BGP session</text>
+
+          <defs><marker id="b11" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="var(--gold)"/></marker></defs>
+        </svg>
+        <figcaption>ขั้นตอนที่ 3 คือคำตอบของ <b>BGP Next-Hop Processing</b> — next-hop <code>0.0.0.0</code> (ที่ตั้งไว้ตอนประกาศ connected network) จะถูกแทนที่ด้วย IP จริงที่ใช้เปิด session ก่อนส่งออกเสมอ · ดู Adj-RIB-Out ได้ด้วย <code>show bgp afi safi neighbor ip-address advertised-routes</code></figcaption>
+      </figure>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>อ่านผล <code>show bgp afi safi</code> — เนื้อหาของ Loc-RIB</caption>
+        <thead><tr><th scope="col">คอลัมน์</th><th scope="col">ความหมาย</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Network</th><td>รายการ prefix ที่ติดตั้งใน BGP — เครื่องหมาย <code>*</code> = NLRI ที่ valid, <code>&gt;</code> = เส้นทางที่ถูกเลือกเป็น best path</td></tr>
+          <tr><th scope="row">Next Hop</th><td>Well-known mandatory PA ที่ระบุ next-hop ของ NLRI นั้น</td></tr>
+          <tr><th scope="row">Metric</th><td><b>MED</b> — Optional non-transitive PA</td></tr>
+          <tr><th scope="row">LocPrf</th><td><b>Local Preference</b> — Well-known discretionary PA ใช้ในอัลกอริทึมเลือก best path</td></tr>
+          <tr><th scope="row">Weight</th><td>Attribute เฉพาะของ Cisco ที่มีความหมาย<b>เฉพาะในเครื่องนั้น</b> (locally significant) ใช้ในการเลือก best path</td></tr>
+          <tr><th scope="row">Path</th><td><b>AS_Path</b> — Well-known mandatory PA ใช้กันลูปและเลือก best path</td></tr>
+          <tr><th scope="row">Origin</th><td>Well-known mandatory PA ตัวสุดท้ายของบรรทัด: <code>i</code> = มาจาก IGP, <code>e</code> = มาจาก EGP, <code>?</code> = ถูก redistribute เข้ามา</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="fixnote" style="background:var(--slate-soft);margin-top:20px">
+      <b style="color:var(--slate)">Route Advertisement จากแหล่งอื่น:</b> BGP ควรถูกมองเป็น "แอปพลิเคชัน" เพราะตัว session กับการประกาศเส้นทางเป็นคนละส่วนกัน — BGP ติดตั้งเส้นทางที่เรียนรู้จาก static route, EIGRP และ OSPF ได้ผ่าน <code>redistribute</code> — <b>ทิศทางสำคัญมาก:</b> redistribute จาก IGP <b>เข้า</b> BGP ปลอดภัยดี แต่ redistribute จาก BGP <b>เข้า</b> IGP ต้องระวังอย่างที่สุด (ด้วยเหตุผลเรื่อง scalability ในหัวข้อ iBGP ด้านบน)
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="3" y="4" width="8" height="6" rx="1.5" fill="none" stroke="var(--violet)" stroke-width="1.8"/>
+        <rect x="3" y="16" width="8" height="6" rx="1.5" fill="none" stroke="var(--violet)" stroke-width="1.8"/>
+        <path d="M11 7 L18 7 L18 19 L11 19" fill="none" stroke="var(--violet)" stroke-width="1.5"/>
+        <rect x="18" y="10" width="7" height="6" rx="1.5" fill="var(--violet-soft)" stroke="var(--violet)" stroke-width="1.8"/>
+      </svg>
+      <h2>Route Summarization</h2>
+    </div>
+    <p class="sec-sub">ประโยชน์ 3 อย่าง: ประหยัดทรัพยากร Router, เร่งการคำนวณ best-path เพราะตารางเล็กลง และ<b>เพิ่มความเสถียร</b>ด้วยการซ่อน route flap ไม่ให้กระเพื่อมลงไปหา Router ปลายน้ำ</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>2 เทคนิค — Static vs Dynamic</h3>
+        <p style="color:var(--ink-2);margin:0 0 10px"><b>Static</b> — สร้าง static route ชี้ Null0 สำหรับ prefix สรุป แล้วประกาศด้วย <code>network</code> statement<br/><span style="color:var(--blk)">ข้อเสีย: summary ถูกประกาศ<b>ตลอดเวลา</b> แม้เครือข่ายย่อยข้างในจะล่มหมดแล้วก็ตาม</span></p>
+        <p style="color:var(--ink-2);margin:0"><b>Dynamic</b> — ตั้งค่า aggregate prefix ไว้ พอมี component route ที่ใช้งานได้จริงและตรงกับช่วง aggregate เข้ามาในตาราง BGP ตัว aggregate ถึงจะถูกสร้างขึ้น — Router ต้นทางตั้ง next-hop เป็น Null0 เป็น discard route กันลูปให้อัตโนมัติ</p>
+      </div>
+      <div class="knob">
+        <span class="where c1">Dynamic Aggregation</span>
+        <h3>aggregate-address</h3>
+        <pre>router bgp 65200
+ address-family ipv4
+  aggregate-address 192.168.0.0 255.255.0.0 summary-only
+  aggregate-address 172.16.0.0 255.255.240.0 as-set summary-only</pre>
+        <p class="why" style="margin:0">รูปแบบ <code>aggregate-address network subnet-mask [summary-only] [as-set]</code> — ถ้า<b>ไม่ใส่</b> <code>summary-only</code> BGP จะประกาศ<b>ทั้ง</b> aggregate <b>และ</b> prefix ย่อยออกไปพร้อมกัน ใส่ <code>summary-only</code> เพื่อระงับ prefix ย่อยให้เหลือแต่ก้อนสรุป</p>
+      </div>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4><Term id="atomicAggregate">Atomic Aggregate</Term> — สรุปแล้วประวัติหาย <span class="tag">ออกสอบ</span></h4>
+      <p>เส้นทางที่ถูก aggregate จะทำตัวเหมือน<b>เส้นทาง BGP ใหม่</b>ที่มี prefix length สั้นลง — ปัญหาคือตอนสรุป Router <b>ไม่ประกาศข้อมูล AS_Path ของก่อนหน้านั้นต่อไป</b> PA อย่าง AS_Path, MED และ BGP community จึงไม่ถูกแนบไปกับการประกาศใหม่ ทำให้ประวัติการเดินทางหายไป (และกลไกกันลูปด้วย AS_Path อ่อนแอลง)</p>
+      <p style="margin:0">BGP จะแปะ attribute <code>atomic-aggregate</code> ไว้บอกว่าเส้นทางนี้ผ่านการสรุปที่ทำให้ข้อมูลหายไปแล้ว — เห็นได้จาก <code>show bgp ipv4 unicast 172.16.0.0</code> ที่แสดงบรรทัด <code>(aggregated by 65200 192.168.2.2)</code> และคำว่า <code>atomic-aggregate</code></p>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h3><Term id="asSet">AS_SET</Term> — ทางแก้ของ Atomic Aggregate</h3>
+      <p style="color:var(--ink-2);margin:0">ใส่ keyword <code>as-set</code> ต่อท้ายคำสั่ง <code>aggregate-address</code> เพื่อ<b>รักษาประวัติ BGP path เอาไว้</b> — ตอน Router สร้างเส้นทาง aggregate ขึ้นมา มันจะคัดลอก BGP attribute จาก component route ทั้งหมดมาใส่ในเส้นทางสรุปด้วย ทำให้กลไกกันลูปยังทำงานได้ครบ</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="2" y="6" width="10" height="6" rx="1.5" fill="none" stroke="var(--gold)" stroke-width="1.8"/>
+        <rect x="14" y="14" width="10" height="6" rx="1.5" fill="none" stroke="var(--gold)" stroke-width="1.8"/>
+        <path d="M12 9 L18 9 L18 14" fill="none" stroke="var(--gold)" stroke-width="1.5"/>
+      </svg>
+      <h2>Multiprotocol BGP for IPv6</h2>
+    </div>
+    <p class="sec-sub">MP-BGP ทำให้ BGP ขน NLRI ของหลายโปรโตคอลได้ — IPv4, IPv6 และ MPLS L3VPN (RFC 4760 นิยาม AFI model ใหม่ พร้อม PA แบบ optional non-transitive สองตัว: Multiprotocol reachable NLRI และ Multiprotocol unreachable NLRI)</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>สิ่งที่เหมือนเดิมทุกอย่าง</h3>
+        <ul style="margin:0">
+          <li>คุณสมบัติและกติกาของ Path Vector ที่ใช้กับ IPv4 <b>ใช้กับ MP-BGP for IPv6 เหมือนกันหมด</b></li>
+          <li>ยังใช้ <b>TCP port 179</b> เดิมในการ peer</li>
+          <li>กฎการตั้งค่าเหมือนเดิมทุกข้อ ต่างแค่ต้องเปิด IPv6 address family และ activate neighbor ในนั้น</li>
+        </ul>
+        <p style="color:var(--ink-2);margin-top:10px"><b>AFI / SAFI ที่ต้องจำ:</b> IPv4 unicast = AFI 1, SAFI 1 — IPv6 unicast = AFI <b>2</b>, SAFI 1</p>
+      </div>
+      <div class="knob">
+        <span class="where c2">ตั้งค่า IPv6</span>
+        <h3>เหมือนเดิม แค่เปลี่ยน family</h3>
+        <pre>router bgp 65200
+ bgp router-id 192.168.2.2
+ no bgp default ipv4-unicast
+ neighbor 2001:DB8:0:12::1 remote-as 65100
+ !
+ address-family ipv6
+  network 2001:DB8::2/128
+  redistribute connected
+  neighbor 2001:DB8:0:12::1 activate
+ exit-address-family</pre>
+        <p class="why" style="margin:0">สังเกตว่า RID ยังเป็นเลขแบบ IPv4 (32 บิต) แม้จะ peer กันด้วย IPv6 — เหมือน OSPFv3 ในบทที่ 10</p>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="knob">
+        <span class="where c3">ตรวจสอบ</span>
+        <h3>เช็คว่า capability เจรจาสำเร็จไหม</h3>
+        <p class="out">R1# show bgp ipv6 unicast neighbors 2001:DB8:0:12::2
+BGP state = Established, up for 00:28:25
+Neighbor capabilities:
+  Four-octets ASN Capability: advertised and received
+  Address family IPv6 Unicast: advertised and received</p>
+        <p class="why" style="margin:0">Router แลกเปลี่ยนความสามารถด้าน AFI กันตอนเจรจา session ครั้งแรก — บรรทัด <code>advertised and received</code> คือหลักฐานว่าทั้งสองฝั่งรองรับและตกลงกันได้</p>
+      </div>
+      <div class="knob">
+        <span class="where c3">อ่านตาราง IPv6</span>
+        <h3>เครื่องหมาย :: หมายถึงอะไร</h3>
+        <p class="out">*&gt; 2001:DB8::2/128      ::                 0  32768 i
+*&gt; 2001:DB8::3/128      2001:DB8:0:23::3   0      0 65300 i</p>
+        <p class="why" style="margin:0">ที่อยู่ <code>::</code> (unspecified address) หมายความว่า <b>Router ตัวนี้เองเป็นคนสร้าง prefix นั้น</b> ไม่ได้รับมาจากใคร — สังเกตว่าบรรทัดนั้น weight = 32,768 ตรงกับกฎการตั้ง PA ของ connected network ที่พูดถึงในหัวข้อ Prefix Advertisement</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h3>IPv6 Route Summarization — เหมือน IPv4 ทุกประการ</h3>
+      <p style="color:var(--ink-2);margin:0 0 10px">รูปแบบเหมือนกันเป๊ะ ต่างแค่วางใต้ IPv6 address family และเขียน prefix ติดกัน: <code>aggregate-address prefix/prefix-length [summary-only] [as-set]</code></p>
+      <div class="tablewrap">
+        <table>
+          <caption>จำนวนบิตที่ต้องยืม → prefix สรุปที่ได้</caption>
+          <thead><tr><th scope="col">บิต</th><th scope="col">Summary Address</th><th scope="col">ครอบคลุม /64 ตั้งแต่ – ถึง</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">2</th><td>2001:db8:0:0::/62</td><td>2001:db8:0:0:: – 2001:db8:0:3::</td></tr>
+            <tr><th scope="row">3</th><td>2001:db8:0:0::/61</td><td>2001:db8:0:0:: – 2001:db8:0:7::</td></tr>
+            <tr><th scope="row">4</th><td>2001:db8:0:0::/60</td><td>2001:db8:0:0:: – 2001:db8:0:F::</td></tr>
+            <tr><th scope="row">5</th><td>2001:db8:0:0::/59</td><td>2001:db8:0:0:: – 2001:db8:0:1F::</td></tr>
+            <tr><th scope="row">6</th><td>2001:db8:0:0::/58</td><td>2001:db8:0:0:: – 2001:db8:0:3F::</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="grid-2">
+      <div class="card">
+        <h3>ความครบถ้วนของบทนี้</h3>
+        <p style="color:var(--ink-2);margin:0">สไลด์ Chapter 11 ระบุ Key Topics ไว้ 21 หัวข้อและ Key Terms 12 คำ — <b>ครอบคลุมครบทั้งหมดในหน้านี้</b> และตรงกับขอบเขต MidEx Chapter 11 ทุกข้อ (แนวคิดพื้นฐาน, iBGP vs eBGP, Path Attributes, Neighbors/Sessions, การกำหนดค่า, Next-Hop Processing, Route Summarization) — หัวข้อ <b>BGP Route Selection Process</b> ที่หลายคนคาดว่าจะอยู่บทนี้ ความจริงอยู่ในบทที่ 12 (Advanced BGP)</p>
+      </div>
+      <div class="card">
+        <h3>สรุปคำศัพท์บทนี้</h3>
+        <ul>
+          <li><b>ASN</b> — หมายเลขประจำ AS ขอจาก IANA มีช่วงส่วนตัวเหมือน IP</li>
+          <li><b>PA 4 ประเภท</b> — Well-known mandatory/discretionary, Optional transitive/non-transitive</li>
+          <li><b>iBGP (AD 200) / eBGP (AD 20)</b> — ต่างกันที่ AS, TTL, next-hop, AS_Path</li>
+          <li><b>3 ตาราง</b> — Adj-RIB-In → Loc-RIB → Adj-RIB-Out</li>
+          <li><b>Atomic Aggregate / AS_SET</b> — สรุปแล้วประวัติหาย / วิธีรักษาประวัติไว้</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Internetwork Chapter 11 · คำสั่งและตัวอย่างอ้างอิงจากสไลด์ต้นฉบับ (Example 11-12/11-15/11-23/11-24, Table 11-2/11-3/11-4) · แหล่งอ้างอิง: Chapter 11 slide deck, MidEx exam scope Chapter 11
+  </footer>
+
 </Layout>

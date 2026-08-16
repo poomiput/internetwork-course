@@ -1,7 +1,412 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import ComingSoon from "../components/ComingSoon.astro";
+import Term from "../components/Term.astro";
 ---
-<Layout title="Multicast" description="การส่งข้อมูลแบบ Multicast และโปรโตคอลกลุ่ม PIM">
-  <ComingSoon n={13} title="Multicast" pages={53} accent="var(--violet)" blurb="การส่งข้อมูลแบบ Multicast และโปรโตคอลกลุ่ม PIM" />
+<Layout title="Multicast" description="บทที่ 13 — IP Multicast: Class D Addressing, การ map เป็น MAC, IGMPv2/v3, IGMP Snooping, PIM (DM/SM), RPF, Source Tree vs Shared Tree และ Rendezvous Point">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--slate)">Internetwork · Chapter 13 of 14</p>
+    <h1>IP Multicast</h1>
+    <p class="deck">ทุกอย่างที่ผ่านมาคือ <b>Unicast</b> — หนึ่งต้นทางถึงหนึ่งปลายทาง บทนี้คือการส่ง <b>หนึ่งต้นทางถึงผู้รับหลายคน</b> โดยส่งข้อมูลชุดเดียวลงสายเส้นเดียวแล้วให้อุปกรณ์กลางทางแตกสำเนาให้เอง — ใช้ IGMP คุยกับผู้รับที่ Layer 2 และ PIM คุยระหว่าง Router ที่ Layer 3</p>
+    <div class="credit-bar">
+      <span>224.0.0.0/4</span><span>01:00:5E</span><span>IGMPv2 / v3</span><span>PIM-DM / PIM-SM</span><span>RPF</span><span>(S,G) / (*,G)</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="grid-2">
+      <div class="card">
+        <h3>เชื่อมจากที่รู้แล้ว</h3>
+        <ul>
+          <li>จากบทที่ 1 เรารู้แล้วว่า Router แยก <b>RIB</b> (ตารางเส้นทาง) ออกจาก <b>FIB</b> (ตารางส่งต่อจริงที่ CEF ใช้) — multicast ก็มีคู่เดียวกันชื่อ MRIB/MFIB</li>
+          <li>จากบทที่ 8-10 เราเคยเห็นที่อยู่ multicast มาแล้วโดยไม่รู้ตัว: OSPF ใช้ <code>224.0.0.5</code> / <code>224.0.0.6</code> และ OSPFv3 ใช้ <code>FF02::5</code> / <code>FF02::6</code></li>
+          <li>สิ่งที่ยังไม่เคยพูดถึง: ที่อยู่พวกนี้มาจากไหน ใครเป็นคนกำหนด และถ้าอยากส่งวิดีโอให้คน 100 คนพร้อมกันโดยไม่ทำให้แบนด์วิดท์ระเบิด ต้องทำยังไง</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>สิ่งที่บทนี้ครอบคลุม</h3>
+        <ul>
+          <li><b>Multicast Fundamentals</b> — เทียบ Unicast / Broadcast / Multicast ด้วยตัวเลขจริง</li>
+          <li><b>Multicast Addressing</b> — Class D, บล็อกของ IANA, การ map ลง MAC และปัญหาการทับซ้อน 32:1</li>
+          <li><b>IGMP</b> — v2 (5 message types, querier election), v3 (source filtering), IGMP Snooping</li>
+          <li><b>PIM</b> — Source Tree vs Shared Tree, 5 โหมด, PIM-DM, PIM-SM, RPF, DR</li>
+          <li><b>Rendezvous Points</b> — Static RP, Auto-RP, BSR</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="5" cy="13" r="3" fill="var(--slate)"/>
+        <circle cx="21" cy="6" r="2.5" fill="none" stroke="var(--slate)" stroke-width="1.6"/>
+        <circle cx="21" cy="13" r="2.5" fill="none" stroke="var(--slate)" stroke-width="1.6"/>
+        <circle cx="21" cy="20" r="2.5" fill="none" stroke="var(--slate)" stroke-width="1.6"/>
+        <line x1="8" y1="13" x2="13" y2="13" stroke="var(--slate)" stroke-width="1.6"/>
+        <path d="M13 13 L18.5 6 M13 13 L18.5 13 M13 13 L18.5 20" stroke="var(--slate)" stroke-width="1.4" fill="none"/>
+      </svg>
+      <h2>Multicast Fundamentals</h2>
+    </div>
+    <p class="sec-sub">การสื่อสาร IP แบบดั้งเดิมมี 3 รูปแบบ: <b>Unicast</b> (one-to-one), <b>Broadcast</b> (one-to-all), <b>Multicast</b> (one-to-many) — ตัวอย่างจากสไลด์ใช้โจทย์เดียวกันคือส่งวิดีโอ 10 Mbps ให้ workstation 5 เครื่อง</p>
+
+    <div class="tablewrap">
+      <table>
+        <caption>เทียบ 3 วิธีด้วยโจทย์เดียวกัน — วิดีโอ 10 Mbps ผู้ชม 5 คน</caption>
+        <thead><tr><th scope="col">วิธี</th><th scope="col">แบนด์วิดท์ที่ใช้</th><th scope="col">ภาระเซิร์ฟเวอร์</th><th scope="col">ปัญหา</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Unicast</th><td>ลิงก์ R1-R2 ต้องการ <b>50 Mbps</b> · R2-R4 = 30 Mbps · R2-R5 = 20 Mbps</td><td>ต้องดูแล session แยกทุกเครื่อง</td><td><b>โตขึ้นเรื่อย ๆ</b>ตามจำนวนผู้รับ ทั้งแบนด์วิดท์และภาระเซิร์ฟเวอร์</td></tr>
+          <tr><th scope="row">Broadcast</th><td>ทุกลิงก์ใช้ <b>10 Mbps</b> เท่ากันหมด</td><td>ดูแลแค่ session เดียว</td><td>IP directed broadcast <b>ปิดไว้เป็นค่าเริ่มต้น</b>บน Router Cisco และการเปิดทำให้เสี่ยงถูกโจมตี DDoS · เครื่องที่ไม่ต้องการดู (Workstation F) ก็<b>ยังต้องเสียเวลาประมวลผล</b></td></tr>
+          <tr><th scope="row">Multicast</th><td>ทุกลิงก์ใช้ <b>10 Mbps</b> เท่า broadcast</td><td>ดูแลแค่ session เดียว</td><td><b>ไม่มี</b> — เฉพาะผู้ที่สนใจเท่านั้นที่ประมวลผล เครื่องที่ไม่สนใจทิ้งทราฟฟิกตั้งแต่ระดับ <b>NIC</b> เพราะไม่ได้ถูกโปรแกรมให้รับ</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h3>ศัพท์พื้นฐานที่ต้องแม่น</h3>
+      <ul style="margin:0">
+        <li>ข้อมูลถูกส่งลงลิงก์<b>ชุดเดียว</b> แล้วถูก<b>แตกสำเนา (replicate)</b> เมื่อเส้นทางแยกทาง โดยอุปกรณ์เครือข่ายบน <b>Multicast Distribution Tree (MDT)</b></li>
+        <li>ชุดข้อมูลเรียกว่า <b>stream</b> ซึ่งใช้ IP ปลายทางพิเศษเรียกว่า <b>group address</b></li>
+        <li>อุปกรณ์ที่รับ stream เรียกว่า <b>receiver</b> — เป็นฝ่ายร้องขอเข้ามาเองแบบเลือกได้</li>
+        <li>แอปที่ใช้จริง: Cisco TelePresence, วิดีโอเรียลไทม์, IPTV, กระดานหุ้น, การเรียนทางไกล, ประชุมภาพ/เสียง, เพลงรอสาย และเกม</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="3" y="7" width="20" height="12" rx="3" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+        <line x1="9" y1="7" x2="9" y2="19" stroke="var(--coral)" stroke-width="1.5"/>
+        <line x1="15" y1="7" x2="15" y2="19" stroke="var(--coral)" stroke-width="1.5"/>
+      </svg>
+      <h2>Multicast Addressing</h2>
+    </div>
+    <p class="sec-sub">IANA จองพื้นที่ IP Class D คือ <b>224.0.0.0/4</b> (224.0.0.0 ถึง 239.255.255.255) ให้ multicast — สังเกตว่า 4 บิตแรกของทั้งช่วงนี้เป็น <code>1110</code> เสมอ</p>
+
+    <div class="grid-2">
+      <div class="tablewrap">
+        <table>
+          <caption>บล็อกที่สำคัญที่สุด 4 กลุ่ม</caption>
+          <thead><tr><th scope="col">ชื่อบล็อก</th><th scope="col">ช่วง</th><th scope="col">ใช้ทำอะไร</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Local network control</th><td>224.0.0.0/24</td><td>ทราฟฟิกควบคุมของโปรโตคอลที่<b>ไม่ถูกส่งออกนอก broadcast domain</b></td></tr>
+            <tr><th scope="row">Internetwork control</th><td>224.0.1.0/24</td><td>ทราฟฟิกควบคุมที่<b>ส่งผ่านอินเทอร์เน็ตได้</b></td></tr>
+            <tr><th scope="row">SSM</th><td>232.0.0.0/8</td><td>ช่วง default ของ Source Specific Multicast (ส่วนขยายของ PIM ตาม RFC 4607)</td></tr>
+            <tr><th scope="row">GLOP</th><td>233.0.0.0/8</td><td>ที่อยู่ scope ระดับโลกที่กำหนดแบบคงที่ ตาม RFC 3180</td></tr>
+            <tr><th scope="row">Administratively scoped</th><td>239.0.0.0/8</td><td>จำกัดอยู่ในกลุ่มหรือองค์กรท้องถิ่น ตาม RFC 2365 — <b>เทียบได้กับ RFC 1918</b> (10.0.0.0/8 ฯลฯ) ของฝั่ง unicast และ IANA จะไม่แจกจ่ายให้ใคร</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <caption>ที่อยู่สงวนที่ต้องจำ (ออกสอบบ่อย)</caption>
+          <thead><tr><th scope="col">ที่อยู่</th><th scope="col">ความหมาย</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">224.0.0.1</th><td><b>ทุก host</b> ใน subnet นี้ (all-hosts group)</td></tr>
+            <tr><th scope="row">224.0.0.2</th><td><b>ทุก Router</b> ใน subnet นี้</td></tr>
+            <tr><th scope="row">224.0.0.5 / .6</th><td>OSPF ทุกตัว (AllSPFRouters) / OSPF DR (AllDRouters)</td></tr>
+            <tr><th scope="row">224.0.0.9</th><td>RIPv2 ทุกตัว</td></tr>
+            <tr><th scope="row">224.0.0.10</th><td>EIGRP ทุกตัว</td></tr>
+            <tr><th scope="row">224.0.0.13</th><td><b>PIM ทุกตัว</b></td></tr>
+            <tr><th scope="row">224.0.0.18</th><td>VRRP</td></tr>
+            <tr><th scope="row">224.0.0.22</th><td>IGMPv3</td></tr>
+            <tr><th scope="row">224.0.0.102</th><td>HSRPv2 และ GLBP</td></tr>
+            <tr><th scope="row">224.0.1.1</th><td>NTP</td></tr>
+            <tr><th scope="row">224.0.1.39 / .40</th><td><b>Cisco-RP-Announce / Cisco-RP-Discovery</b> (Auto-RP)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="figwrap" style="margin-top:20px">
+      <figure>
+        <svg viewBox="0 0 780 260" role="img" aria-label="แผนภาพการแปลง IP multicast address 239.255.1.1 เป็น MAC address 01 00 5E 7F 01 01 โดย 25 บิตแรกของ MAC คงที่เสมอ ส่วน 23 บิตท้ายถูกคัดลอกมาจาก 23 บิตท้ายของ IP address ทำให้มีบิต 5 ตัวจาก IP ที่ไม่ถูกส่งต่อ ส่งผลให้ IP multicast address 32 ตัวแปลงมาได้ MAC เดียวกัน">
+          <text x="390" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">IP Multicast 239.255.1.1 → MAC 01:00:5E:7F:01:01</text>
+
+          <rect x="40" y="55" width="180" height="42" rx="6" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="2"/>
+          <text x="130" y="72" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)">4 บิตแรก = 1110</text>
+          <text x="130" y="89" text-anchor="middle" font-size="10" fill="var(--ink-2)">(บอกว่าเป็น Class D)</text>
+
+          <rect x="230" y="55" width="150" height="42" rx="6" fill="var(--blk-soft, var(--card))" stroke="var(--blk)" stroke-width="2"/>
+          <text x="305" y="72" text-anchor="middle" font-size="11" font-weight="700" fill="var(--blk)">5 บิตที่หายไป</text>
+          <text x="305" y="89" text-anchor="middle" font-size="10" fill="var(--ink-2)">ไม่ถูกคัดลอกลง MAC</text>
+
+          <rect x="390" y="55" width="350" height="42" rx="6" fill="var(--fwd-soft, var(--card))" stroke="var(--fwd)" stroke-width="2"/>
+          <text x="565" y="72" text-anchor="middle" font-size="11" font-weight="700" fill="var(--fwd)">23 บิตท้าย</text>
+          <text x="565" y="89" text-anchor="middle" font-size="10" fill="var(--ink-2)">คัดลอกลง MAC ตรง ๆ</text>
+
+          <text x="30" y="115" font-size="10.5" fill="var(--ink-2)">IP (32 บิต)</text>
+
+          <line x1="565" y1="97" x2="565" y2="135" stroke="var(--fwd)" stroke-width="2.5" marker-end="url(#m13)"/>
+
+          <rect x="40" y="150" width="340" height="42" rx="6" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="2"/>
+          <text x="210" y="167" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)">25 บิตแรกคงที่เสมอ: 01:00:5E + บิต 0</text>
+          <text x="210" y="184" text-anchor="middle" font-size="10" fill="var(--ink-2)">I/G bit = 1 บอกว่าเป็นเฟรม multicast · บิตที่ 25 = 0 เสมอ</text>
+
+          <rect x="390" y="150" width="350" height="42" rx="6" fill="var(--fwd-soft, var(--card))" stroke="var(--fwd)" stroke-width="2"/>
+          <text x="565" y="175" text-anchor="middle" font-size="11" font-weight="700" fill="var(--fwd)">23 บิตท้าย (แปรผันตาม IP)</text>
+
+          <text x="30" y="210" font-size="10.5" fill="var(--ink-2)">MAC (48 บิต)</text>
+
+          <text x="390" y="235" text-anchor="middle" font-size="12" font-weight="700" fill="var(--blk)">ผลลัพธ์: 2⁵ = 32 IP multicast address แปลงมาได้ MAC เดียวกัน (ทับซ้อนกัน)</text>
+
+          <defs><marker id="m13" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="var(--fwd)"/></marker></defs>
+        </svg>
+        <figcaption>ทุก multicast MAC ขึ้นต้นด้วย <code>01:00:5E</code> เสมอ — <b>I/G bit</b> (บิตต่ำสุดของไบต์แรก) ที่เป็น 1 คือตัวบอกว่าเฟรมนี้เป็น multicast · จาก 9 บิตของ IP ที่ไม่ถูกคัดลอก มี 4 บิตที่ตรึงเป็น <code>1110</code> อยู่แล้ว เหลือ <b>5 บิตที่แปรผันได้แต่หายไป</b> จึงเกิดการทับซ้อนแบบ 32:1</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M13 4 L13 16 M9 12 L13 16 L17 12" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="5" y1="21" x2="21" y2="21" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <h2><Term id="igmp">IGMP</Term> — ผู้รับเข้าร่วมกลุ่มยังไง</h2>
+    </div>
+    <p class="sec-sub">เมื่อผู้รับต้องการ stream ใด ก็ส่ง <b>IGMP join</b> ด้วย group address ของ stream นั้น แล้ว<b>โปรแกรม NIC ตัวเองใหม่</b>ให้ยอมรับ MAC ที่คู่กัน (เช่น join 239.255.1.1 → ตั้ง NIC ให้รับ 01:00:5E:7F:01:01) — ต้องรองรับทั้งฝั่งผู้รับและฝั่ง interface ของ Router ที่หันหาผู้รับ</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>3 เวอร์ชัน</h3>
+        <ul style="margin:0">
+          <li><b>IGMPv1</b> (RFC 1112) — เก่ามาก แทบไม่ใช้แล้ว</li>
+          <li><b>IGMPv2</b> (RFC 2236) — ใช้กันทั่วไปในเครือข่าย multicast ส่วนใหญ่</li>
+          <li><b>IGMPv3</b> (RFC 3376) — ใช้กับ SSM</li>
+        </ul>
+        <p style="color:var(--ink-2);margin-top:10px">ข้อความ IGMP ห่อในแพ็กเก็ต IP ด้วย <b>protocol number 2</b> ตั้ง IP router alert option ไว้ (บอกให้ตรวจแพ็กเก็ตอย่างละเอียด) และตั้ง <b>TTL = 1</b> เพื่อให้ Router ท้องถิ่นประมวลผลเท่านั้นและไม่ส่งต่อออกไปไหน</p>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <caption>5 ชนิดข้อความของ IGMPv2</caption>
+          <thead><tr><th scope="col">ชนิด (Type)</th><th scope="col">หน้าที่</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">v2 Membership Report (0x16)</th><td>ที่เรียกกันว่า <b>IGMP join</b> — ผู้รับใช้เข้ากลุ่มหรือตอบ query ของ Router</td></tr>
+            <tr><th scope="row">v1 Membership Report (0x12)</th><td>ใช้เพื่อความเข้ากันได้ย้อนหลังกับ IGMPv1</td></tr>
+            <tr><th scope="row">v2 Leave Group (0x17)</th><td>ผู้รับใช้แจ้งว่าจะเลิกรับ stream ของกลุ่มนั้น</td></tr>
+            <tr><th scope="row">General Membership Query (0x11)</th><td>Router ส่งเป็นระยะไปที่ <b>224.0.0.1</b> ถามว่ายังมีสมาชิกใน subnet ไหม — ตั้งช่อง group address เป็น 0.0.0.0</td></tr>
+            <tr><th scope="row">Group Specific Query (0x11)</th><td>ส่งตอบกลับหลังได้รับ leave — ส่งไปที่ group address ที่ผู้รับขอออก</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="knob" style="margin-top:20px">
+      <span class="where c1">IGMPv2 Operation</span>
+      <h3>ลำดับเหตุการณ์ตั้งแต่เข้าจนออกจากกลุ่ม</h3>
+      <ol style="margin:0;padding-left:20px;color:var(--ink-2)">
+        <li><b>เข้ากลุ่ม:</b> ผู้รับส่ง unsolicited membership report (IGMP join) ให้ Router ท้องถิ่น เช่นกลุ่ม 239.1.1.1 → Router ส่ง <b>PIM join</b> ต่อขึ้นไปทางต้นทาง พอเริ่มได้รับ stream ก็ส่งลงมาให้ subnet ที่ผู้รับอยู่</li>
+        <li><b>ตรวจสอบเป็นระยะ:</b> Router ส่ง general query ไปที่ 224.0.0.1 โดยมีช่อง <b>max response time</b> ค่า default = <b>10 วินาที</b> (หน่วยของช่องนี้คือ 1/10 วินาที)</li>
+        <li><b>การกันคำตอบซ้ำ:</b> ผู้รับแต่ละเครื่องตั้งตัวจับเวลาสุ่มระหว่าง 0–10 วินาที พอหมดเวลาจึงส่ง report — <b>แต่ถ้าระหว่างรอได้ยินเครื่องอื่นส่ง report ของกลุ่มเดียวกันไปแล้ว ก็จะหยุดตัวจับเวลาและไม่ส่งซ้ำ</b></li>
+        <li><b>ออกจากกลุ่ม:</b> ถ้าเป็นเครื่องสุดท้ายที่ตอบ query ไป จะส่ง leave group ไปที่ <b>224.0.0.2</b> (all-routers) — <b>ถ้าไม่ใช่ก็ออกไปเงียบ ๆ ได้เลย</b>เพราะแปลว่ายังมีผู้รับรายอื่นอยู่</li>
+        <li><b>ยืนยันก่อนตัด:</b> Router ที่ได้รับ leave จะส่ง group-specific query ตามไป ถ้าไม่มีใครตอบเลยจึงลบสถานะ IGMP ของกลุ่มนั้นทิ้ง</li>
+      </ol>
+      <p class="why" style="margin:10px 0 0"><b>IGMP Querier Election:</b> ถ้ามี Router หลายตัวใน LAN เดียวกัน ต้องเลือกว่าใครเป็นคนส่ง query — แต่ละตัวส่ง general query โดยใช้ IP ของ interface ตัวเองเป็นต้นทางไปที่ 224.0.0.1 แล้วเทียบกัน <b>ตัวที่ IP ต่ำที่สุดชนะ</b> (สังเกตว่าเป็นกติกา "ต่ำชนะ" ต่างจาก DR ของ PIM ที่ใช้ "สูงชนะ" — ระวังสับสน)</p>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3>IGMPv3 — เลือกต้นทางได้</h3>
+        <p style="color:var(--ink-2);margin:0 0 10px">ปัญหาของ v2: ตอน join ผู้รับ<b>ระบุไม่ได้</b>ว่าอยากรับจากต้นทางไหน — v3 เพิ่ม <b>multicast source filtering</b> ทำให้เลือกได้ รองรับข้อความทุกชนิดของ v2 และเข้ากันได้ย้อนหลัง โดยเพิ่มข้อความชนิดใหม่ชื่อ <b>Version 3 Membership Report</b></p>
+        <ul style="margin:0">
+          <li><b>Include mode</b> — แจ้งเข้ากลุ่มพร้อมรายชื่อต้นทางที่<b>ต้องการ</b>รับ (include list)</li>
+          <li><b>Exclude mode</b> — แจ้งเข้ากลุ่มพร้อมรายชื่อต้นทางที่<b>ไม่ต้องการ</b>รับ (exclude list) แล้วรับจากต้นทางอื่นทั้งหมดที่ไม่อยู่ในรายการ</li>
+        </ul>
+      </div>
+      <div class="knob">
+        <span class="where c2">แก้ปัญหาที่ Layer 2</span>
+        <h3><Term id="igmpSnooping">IGMP Snooping</Term></h3>
+        <p class="why"><b>ต้นตอของปัญหา:</b> multicast MAC <b>ไม่เคยถูกใช้เป็น MAC ต้นทาง</b> สวิตช์จึงไม่มีทางเรียนรู้มันเข้า MAC table ได้เลย ผลคือมองเป็นเฟรมที่ไม่รู้จักแล้ว<b>ฟลัดออกทุกพอร์ต</b> — เปลืองแบนด์วิดท์ทุก LAN segment และผลักภาระให้ทุกเครื่องต้องคัดกรองเอง</p>
+        <p class="why" style="margin:0"><b>ทางแก้ (RFC 4541):</b> สวิตช์ "แอบดู" IGMP join ที่ผู้รับส่งผ่านไป แล้วสร้างตารางจับคู่ interface กับกลุ่ม — พอมีเฟรม multicast ของกลุ่มนั้นเข้ามา ก็<b>ส่งออกเฉพาะพอร์ตที่เคยมี join ของกลุ่มนั้น</b>เท่านั้น · อีกวิธีคือใส่ static MAC entry เอง แต่<b>ไม่แนะนำ</b>เพราะไม่ scale และปรับตามการเปลี่ยนแปลงอัตโนมัติไม่ได้</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="13" cy="5" r="2.5" fill="var(--violet)"/>
+        <circle cx="6" cy="21" r="2.5" fill="none" stroke="var(--violet)" stroke-width="1.6"/>
+        <circle cx="20" cy="21" r="2.5" fill="none" stroke="var(--violet)" stroke-width="1.6"/>
+        <path d="M13 7.5 L13 13 M13 13 L6 18.5 M13 13 L20 18.5" fill="none" stroke="var(--violet)" stroke-width="1.6"/>
+      </svg>
+      <h2><Term id="pim">Protocol Independent Multicast (PIM)</Term></h2>
+    </div>
+    <p class="sec-sub">IGMP จบแค่ระหว่างผู้รับกับ Router ตัวแรก — ต้องมี multicast routing protocol พา stream ข้ามเครือข่ายจากต้นทางมาถึง ซึ่ง Cisco รองรับเต็มรูปแบบเฉพาะ <b>PIM</b> · ที่ชื่อ "Protocol Independent" เพราะมัน<b>ใช้ตาราง unicast routing ของโปรโตคอลไหนก็ได้</b> (รวมถึง static route) เพื่อหาเส้นทางระหว่างต้นทางกับผู้รับ</p>
+
+    <div class="grid-2">
+      <div class="knob">
+        <span class="where c1">(S,G) — "S comma G"</span>
+        <h3><Term id="multicastSpt">Source Tree (SPT)</Term></h3>
+        <p class="why">ต้นไม้ที่มี<b>ต้นทางเป็นราก</b> แล้วแตกกิ่งลงมาถึงผู้รับ ใช้เส้นทางที่สั้นที่สุดจากต้นทางไปยังใบ จึงเรียกอีกชื่อว่า <b>Shortest Path Tree</b></p>
+        <p class="out">(10.1.1.2, 239.1.1.1)
+   ↑ S = ต้นทาง    ↑ G = group address</p>
+        <p class="why" style="margin:0">ได้เส้นทางที่สั้นที่สุดเสมอ แต่ต้องเก็บสถานะแยกทุกคู่ (ต้นทาง, กลุ่ม)</p>
+      </div>
+      <div class="knob">
+        <span class="where c2">(*,G) — "star comma G"</span>
+        <h3><Term id="rpt">Shared Tree (RPT)</Term></h3>
+        <p class="why">รากไม่ใช่ต้นทาง แต่เป็น Router ที่ถูกแต่งตั้งให้เป็น <b>Rendezvous Point (RP)</b> จึงเรียกว่า <b>RP Tree</b> — ส่งต่อทราฟฟิกตาม group address <b>โดยไม่สนใจว่าต้นทางคือใคร</b></p>
+        <p class="out">(*, 239.1.1.1)
+   ↑ * = ต้นทางใดก็ได้</p>
+        <p class="why" style="margin:0">เก็บสถานะน้อยกว่ามาก แต่เส้นทางอาจไม่สั้นที่สุดเพราะต้องอ้อมผ่าน RP</p>
+      </div>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>ศัพท์ PIM ที่ต้องแยกให้ออก</caption>
+        <thead><tr><th scope="col">คำ</th><th scope="col">ความหมาย</th></tr></thead>
+        <tbody>
+          <tr><th scope="row"><Term id="fhr">First-Hop Router (FHR)</Term></th><td>Router ที่ต่อกับ<b>ต้นทาง</b>ของ stream โดยตรง</td></tr>
+          <tr><th scope="row"><Term id="lhr">Last-Hop Router (LHR)</Term></th><td>Router ที่ต่อกับ<b>ผู้รับ</b>โดยตรง (เป็นคนรับ IGMP join)</td></tr>
+          <tr><th scope="row">Upstream / Downstream</th><td>ทิศทาง<b>ไปหาต้นทาง (หรือ RP)</b> / ทิศทาง<b>ไปหาผู้รับ</b></td></tr>
+          <tr><th scope="row">IIF (Incoming Interface)</th><td>interface ที่ทราฟฟิกของ stream นั้นเข้ามา — ต้องเป็น RPF interface เท่านั้น</td></tr>
+          <tr><th scope="row">OIF / <Term id="oil">OIL (Outgoing Interface List)</Term></th><td>รายการ interface ที่ต้องส่งสำเนาของ stream ออกไป</td></tr>
+          <tr><th scope="row"><Term id="mrib">MRIB</Term> / <Term id="mfib">MFIB</Term></th><td>ตารางเส้นทาง multicast / ตารางส่งต่อ multicast — คู่ขนานกับ RIB/FIB ของ unicast ที่เรียนในบทที่ 1 และ 6</td></tr>
+          <tr><th scope="row">Multicast State</th><td>ข้อมูล (S,G) หรือ (*,G) พร้อม IIF และ OIL ที่ Router เก็บไว้สำหรับ stream หนึ่ง ๆ</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3>5 โหมดการทำงานของ PIM</h3>
+        <ul style="margin:0">
+          <li><b>PIM Dense Mode (PIM-DM)</b></li>
+          <li><b>PIM Sparse Mode (PIM-SM)</b></li>
+          <li><b>PIM Sparse Dense Mode</b></li>
+          <li><b>PIM Source Specific Multicast (PIM-SSM)</b></li>
+          <li><b>PIM Bidirectional Mode (Bidir-PIM)</b></li>
+        </ul>
+        <p style="color:var(--ink-2);margin-top:10px">PIM-DM และ PIM-SM รวมกันเรียกว่า <b>Any-Source Multicast (ASM)</b></p>
+      </div>
+      <div class="card">
+        <h3>PIM Control Messages</h3>
+        <ul style="margin:0">
+          <li>ใช้ <b>IP protocol number 103</b></li>
+          <li>ส่งแบบ unicast (register และ register stop) หรือ multicast ไปที่ <b>224.0.0.13</b> (all PIM routers) ด้วย <b>TTL = 1</b></li>
+          <li><b>PIM hello</b> ส่งทุก <b>30 วินาที</b> ออกทุก interface ที่เปิด PIM เพื่อเรียนรู้เพื่อนบ้าน — และยังใช้<b>เลือก DR</b> กับเจรจาความสามารถเพิ่มเติมด้วย</li>
+          <li>Router ทุกตัวต้องบันทึกข้อมูล hello ที่ได้รับจากเพื่อนบ้าน PIM ทุกตัว</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="knob">
+        <span class="where c3">โหมดที่ 1</span>
+        <h3>PIM Dense Mode — Flood and Prune</h3>
+        <p class="why"><b>วิธีทำงาน:</b> ทราฟฟิกจากต้นทางถูก<b>ฟลัดไปทั้งเครือข่ายก่อน</b> — Router แต่ละตัวที่ได้รับผ่าน RPF interface จะส่งต่อให้เพื่อนบ้าน PIM-DM ทุกตัว ทำให้บางส่วนมาถึงทาง non-RPF interface (เช่น R3 ได้รับจาก R2) ซึ่งจะ<b>ถูกทิ้ง</b> จากนั้นค่อย <b>prune</b> กิ่งที่ไม่มีคนดูออก เหลือเป็น SPT</p>
+        <p class="why" style="margin:0"><b>ข้อเสียที่ต้องจำ:</b> ถึงทราฟฟิกจะหยุดไหลไปยัง Router ส่วนใหญ่แล้ว แต่สถานะ <b>(S,G) ยังคงค้างอยู่ในทุก Router</b> จนกว่าต้นทางจะหยุดส่ง — เหมาะเฉพาะเครือข่ายเล็กที่มีผู้รับอยู่ทุก subnet ซึ่ง<b>แทบไม่เกิดขึ้นจริง</b> จึง<b>ไม่แนะนำให้ใช้ในระบบ production</b> (แต่ตั้งง่ายจึงเหมาะกับห้องแล็บ)</p>
+      </div>
+      <div class="knob">
+        <span class="where c3">โหมดที่ 2</span>
+        <h3>PIM Sparse Mode — Explicit Join</h3>
+        <p class="why"><b>สมมติฐานตรงข้ามกับ DM:</b> ถือว่า<b>ไม่มีใครอยากได้ทราฟฟิกเลย</b>จนกว่าจะร้องขอมาอย่างชัดเจน ออกแบบมาสำหรับผู้รับที่กระจัดกระจาย แต่ใช้ได้ดีกับเครือข่ายหนาแน่นด้วย · ใช้ตาราง unicast ทำ RPF check เหมือน DM</p>
+        <p class="why" style="margin:0"><b>ลำดับการสร้าง 2 ต้นไม้:</b> (1) ต้นทางส่งให้ FHR → FHR ส่งต่อไปให้ RP ทำให้ RP รู้จักต้นทาง (2) ผู้รับส่ง IGMP join ให้ LHR → LHR ส่ง <b>PIM join (*,G)</b> ไปหา RP เกิด<b>shared tree</b>จาก RP ถึง LHR (3) RP ส่ง <b>PIM join (S,G)</b> ไปหา FHR เกิด <b>source tree</b> ระหว่างต้นทางกับ RP</p>
+      </div>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>SPT Switchover — พฤติกรรม default ที่ต้องรู้ <span class="tag">ออกสอบ</span></h4>
+      <p>PIM-SM อนุญาตให้ LHR <b>สลับจาก shared tree ไปใช้ SPT</b> ของต้นทางนั้นโดยตรง — บน Router Cisco นี่คือ<b>พฤติกรรมเริ่มต้น</b> และเกิดขึ้น<b>ทันที</b>หลังได้รับแพ็กเก็ต multicast ตัวแรกจาก RP ผ่าน shared tree (เพราะแพ็กเก็ตแรกนั้นเองที่ทำให้ LHR รู้ IP ของต้นทาง)</p>
+      <p style="margin:0"><b>จุดที่ข้อสอบชอบหลอก:</b> การสลับเกิดขึ้น<b>แม้ว่าเส้นทางที่สั้นที่สุดไปยังต้นทางจะผ่าน RP อยู่แล้วก็ตาม</b> — ตัวอย่างจากสไลด์: เส้นทางสั้นที่สุดคือ R1-R3 แต่ถ้าลิงก์นั้นถูกปิดหรือไม่มี เส้นทางสั้นที่สุดจะกลายเป็นผ่าน RP ซึ่งกรณีนั้น<b>ก็ยังเกิด SPT switchover อยู่ดี</b></p>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="knob">
+        <span class="where c1">กันทราฟฟิกซ้ำใน LAN</span>
+        <h3><Term id="pimDr">PIM Designated Router (DR)</Term></h3>
+        <p class="why">เมื่อมี PIM-SM Router หลายตัวใน LAN เดียวกัน ใช้ PIM hello เลือก DR เพื่อ<b>ไม่ให้ส่งทราฟฟิกซ้ำซ้อน</b>เข้า LAN หรือเข้า RP — ถ้าไม่มี DR ทุก LHR ในเซกเมนต์เดียวกันจะส่ง PIM join ขึ้นไปพร้อมกันหมด ทำให้ทราฟฟิกซ้ำมาถึง LAN</p>
+        <p class="why" style="margin:0"><b>กติกา:</b> ค่า DR priority default = <b>1</b> ทุกตัว ปรับให้สูงขึ้นเพื่อบังคับให้เป็น DR ได้ — ถ้า priority เท่ากันหมด ใช้ <b>IP สูงสุด</b>ใน subnet ตัดสิน (ตรงข้ามกับ IGMP querier ที่ใช้ IP ต่ำสุด) · <b>DR hold time</b> = 3.5 เท่าของ hello interval = <b>105 วินาที</b> ถ้าไม่ได้ hello เลยจนครบเวลาจะเลือก DR ใหม่ (ลด hello interval เพื่อให้สลับเร็วขึ้นได้)</p>
+      </div>
+      <div class="knob">
+        <span class="where c1">กันลูป</span>
+        <h3><Term id="rpf">Reverse Path Forwarding (RPF)</Term></h3>
+        <p class="why">อัลกอริทึมที่กันลูปและรับประกันว่าทราฟฟิก multicast มาถึงทาง interface ที่ถูกต้อง ทำงาน 3 ข้อ:</p>
+        <ul style="margin:0 0 10px;color:var(--ink-2);font-size:.9rem">
+          <li>ถ้า Router ได้รับแพ็กเก็ต multicast บน interface <b>เดียวกับที่มันใช้ส่ง unicast ไปหาต้นทาง</b> แปลว่ามาถูกทาง — นั่นคือ <b>RPF interface</b></li>
+          <li>ถ้ามาถูกทาง → ส่งต่อออกทุก interface ใน <b>OIL</b> ของ entry นั้น</li>
+          <li>ถ้า<b>ไม่ได้</b>มาทาง RPF interface → <b>ทิ้งทันที</b>เพื่อกันลูป</li>
+        </ul>
+        <p class="why" style="margin:0">PIM-SM ยังใช้ RPF lookup ตัดสินว่าจะส่ง join/prune ไปทางไหน: <b>(S,G) join ส่งไปทางต้นทาง</b> ส่วน <b>(*,G) join ส่งไปทาง RP</b></p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h3>PIM Forwarder — ใครเป็นคนส่ง join ขึ้นไปจริง</h3>
+      <p style="color:var(--ink-2);margin:0">เมื่อ R4 ส่ง PIM join ขึ้นไปหา RP (สมมติ R1 เป็น RP) มันส่งไปที่ที่อยู่ <b>224.0.0.13</b> ซึ่งแปลว่า<b>ทั้ง R2 และ R3 ได้รับข้อความนั้น</b> — แต่หนึ่งในช่องของ PIM join message มี <b>IP ของ upstream neighbor (RPF neighbor)</b> ระบุไว้ สมมติ R3 คือ RPF neighbor ก็จะมีแต่ R3 เท่านั้นที่ส่ง PIM join ต่อไปให้ R1 ส่วน R2 จะไม่ทำเพราะรู้ว่า join นั้นไม่ได้มีไว้สำหรับตัวเอง — ผลคือเกิด shared tree ระหว่าง R1, R3, R4 <b>โดยไม่มีทราฟฟิกซ้ำซ้อน</b></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="13" cy="13" r="5" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="2"/>
+        <path d="M13 3 L13 8 M13 18 L13 23 M3 13 L8 13 M18 13 L23 13" stroke="var(--coral)" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      <h2><Term id="rendezvousPoint">Rendezvous Points</Term></h2>
+    </div>
+    <p class="sec-sub">ใน PIM-SM <b>บังคับ</b>ว่าต้องมี Router อย่างน้อยหนึ่งตัวทำหน้าที่ RP — คือรากร่วมของ shared tree · กำหนดได้ 2 ทาง: ตั้งคงที่ในทุก Router หรือให้เรียนรู้อัตโนมัติผ่าน Auto-RP หรือ BSR</p>
+
+    <div class="grid-3">
+      <div class="knob">
+        <span class="where c1">วิธีที่ 1</span>
+        <h3>Static RP</h3>
+        <p class="why">ตั้งที่อยู่ของ RP ด้วยมือในทุก Router ของโดเมน multicast — ใช้แค่ 1-2 บรรทัดต่อเครื่อง เหมาะกับเครือข่ายเล็กหรือเครือข่ายที่ RP ไม่ค่อยเปลี่ยน</p>
+        <p class="why" style="margin:0"><b>ข้อเสีย:</b> ภาระการดูแลสูงมากในเครือข่ายใหญ่ — ทุก Router ต้องมีที่อยู่ RP <b>ตรงกันหมด</b> เปลี่ยนทีต้องไล่แก้ทุกเครื่อง ถ้ามีหลาย RP สำหรับคนละกลุ่มก็ต้องให้ทุก Router รู้ว่า RP ไหนดูแลกลุ่มไหน · <b>ที่สำคัญที่สุด: ถ้า RP ที่ตั้งไว้ล่ม ไม่มีกลไก failover ใด ๆ เลย</b> และไม่มีการแบ่งโหลดด้วย</p>
+      </div>
+      <div class="knob">
+        <span class="where c2">วิธีที่ 2 — ของ Cisco</span>
+        <h3>Auto-RP</h3>
+        <p class="why">กลไก<b>เฉพาะของ Cisco</b> ที่แจกจ่าย group-to-RP mapping อัตโนมัติ ทำงานด้วย 2 องค์ประกอบ: <b>Candidate RP (C-RP)</b> และ <b>RP Mapping Agent (MA)</b></p>
+        <ul style="margin:0 0 8px;color:var(--ink-2);font-size:.88rem">
+          <li>C-RP ประกาศความสมัครใจเป็น RP ไปที่ <b>224.0.1.39</b> (Cisco-RP-Announce) — ในข้อความมีช่วงกลุ่ม default 224.0.0.0/4, ที่อยู่ของ C-RP และ hold time (= 3 เท่าของ announce interval)</li>
+          <li>MA เข้าร่วมกลุ่ม 224.0.1.39 เพื่อรับประกาศ เก็บลง group-to-RP mapping cache แล้วประกาศผลไปที่ <b>224.0.1.40</b> (Cisco-RP-Discovery) ทุก <b>60 วินาที</b> หรือเมื่อมีการเปลี่ยนแปลง</li>
+          <li>Router ที่เปิด PIM ทุกตัวเข้าร่วม 224.0.1.40 เพื่อเก็บ mapping ไว้ใน cache ส่วนตัว</li>
+        </ul>
+        <p class="why" style="margin:0"><b>ถ้ามีหลาย C-RP เสนอช่วงกลุ่มเดียวกัน → ตัวที่ IP สูงสุดชนะ</b> · ข้อดี: ใช้หลาย RP ต่างช่วงกลุ่มได้ง่าย แบ่งโหลดได้ วาง RP ตามตำแหน่งผู้ใช้ได้ และกันความผิดพลาดจากการตั้ง static ที่ไม่ตรงกัน</p>
+      </div>
+      <div class="knob">
+        <span class="where c3">วิธีที่ 3 — มาตรฐานเปิด</span>
+        <h3>PIM Bootstrap Router (BSR)</h3>
+        <p class="why">กลไก<b>ไม่ผูกกับผู้ผลิต</b> ตาม RFC 5059 ให้การค้นหาและแจกจ่าย RP แบบอัตโนมัติที่ทนต่อความล้มเหลว — ทำหน้าที่เดียวกับ Auto-RP แต่<b>เป็นส่วนหนึ่งของสเปก PIM Version 2</b> เอง</p>
+        <p class="why" style="margin:0 0 8px"><b>RP set</b> ที่แจกจ่ายประกอบด้วย 5 ส่วน: ช่วงกลุ่ม multicast, RP priority, ที่อยู่ RP, hash mask length และ SM/Bidir flag</p>
+        <p class="why" style="margin:0"><b>วิธีทำงาน:</b> BSR ที่ถูกเลือกรับข้อความ candidate RP advertisement จาก C-RP ทุกตัวในโดเมน เก็บลง mapping cache แล้วส่งรายการ C-RP ทั้งหมดออกทุก interface ที่เปิด PIM ทุก <b>60 วินาที</b> โดยถูก flood ต่อกันแบบ hop-by-hop จนถึงทุก Router — ทำให้ทุกตัวเห็นที่อยู่ของ C-RP ทั้งหมดในเครือข่าย</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="grid-2">
+      <div class="exam">
+        <h4>ช่องว่างที่ต้องรู้ <span class="tag">แจ้งเตือน</span></h4>
+        <p>MidEx ระบุหัวข้อเหล่านี้ไว้ในขอบเขตบทนี้ แต่สไลด์ต้นฉบับครอบคลุมไม่ครบ:</p>
+        <ul>
+          <li><b>PIM Sparse-Dense Mode</b> — สไลด์ระบุแค่<b>ชื่อ</b>ในรายการ 5 โหมด ไม่มีคำอธิบายการทำงานเลย</li>
+          <li><b>Source-Specific Multicast (SSM)</b> — มีแค่ชิ้นส่วนกระจัดกระจาย: ชื่อโหมด PIM-SSM, ช่วงที่อยู่ 232.0.0.0/8 และข้อความว่า IGMPv3 ถูกใช้โดย SSM — <b>ไม่มีหัวข้ออธิบายการทำงานของ SSM โดยตรง</b></li>
+          <li><b>Multicast Source Discovery Protocol (MSDP)</b> — <b>ไม่ปรากฏในสไลด์เลยแม้แต่คำเดียว</b></li>
+        </ul>
+        <p style="margin:0">ไม่ได้เขียนหัวข้อเหล่านี้ขึ้นมาเองเพื่อความถูกต้อง — แนะนำให้หาเอกสารเพิ่มเติมแยกต่างหาก โดยเฉพาะ MSDP ที่ขาดไปทั้งหมด</p>
+      </div>
+      <div class="card">
+        <h3>สรุปคำศัพท์บทนี้</h3>
+        <ul>
+          <li><b>224.0.0.0/4</b> — ช่วง Class D ของ multicast · <b>01:00:5E</b> — 24 บิตแรกของ multicast MAC เสมอ</li>
+          <li><b>IGMP</b> — ผู้รับใช้เข้า/ออกกลุ่ม · <b>IGMP Snooping</b> — สวิตช์แอบดูเพื่อไม่ต้องฟลัด</li>
+          <li><b>(S,G) SPT</b> — ต้นทางเป็นราก สั้นที่สุด · <b>(*,G) RPT</b> — RP เป็นราก สถานะน้อยกว่า</li>
+          <li><b>FHR / LHR</b> — Router ที่ติดต้นทาง / ที่ติดผู้รับ</li>
+          <li><b>RPF</b> — กันลูปด้วยการเช็คว่าเข้ามาถูก interface ไหม</li>
+          <li><b>RP</b> — รากร่วมของ shared tree กำหนดได้ 3 วิธี (Static / Auto-RP / BSR)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Internetwork Chapter 13 · ตัวอย่างและตัวเลขอ้างอิงจากสไลด์ต้นฉบับ (Figure 13-2 ถึง 13-6, 13-10, 13-11, 13-15 ถึง 13-20, 13-23, Table 13-2/13-3/13-4) · แหล่งอ้างอิง: Chapter 13 slide deck, MidEx exam scope Chapter 13
+  </footer>
+
 </Layout>

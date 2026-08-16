@@ -1,0 +1,405 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+const chapters = [
+  { n: 1, slug: "ch1", t: "Packet Forwarding", m: "MidEx บทที่ 1" },
+  { n: 2, slug: "ch2", t: "Spanning Tree", m: "MidEx บทที่ 2" },
+  { n: 3, slug: "ch3", t: "Advanced STP", m: "MidEx บทที่ 3" },
+  { n: 4, slug: "ch4", t: "MST", m: "MidEx บทที่ 4" },
+  { n: 5, slug: "ch5", t: "VTP/DTP + EtherChannel", m: "MidEx บทที่ 5-6" },
+  { n: 6, slug: "ch6", t: "IP Routing Essentials", m: "MidEx บทที่ 7" },
+  { n: 7, slug: "ch7", t: "EIGRP", m: "MidEx บทที่ 8" },
+  { n: 8, slug: "ch8", t: "OSPF", m: "MidEx บทที่ 9" },
+  { n: 9, slug: "ch9", t: "Advanced OSPF", m: "MidEx บทที่ 9" },
+  { n: 10, slug: "ch10", t: "OSPFv3", m: "MidEx บทที่ 9" },
+  { n: 11, slug: "ch11", t: "BGP", m: "MidEx บทที่ 11" },
+  { n: 12, slug: "ch12", t: "Advanced BGP", m: "MidEx บทที่ 12" },
+  { n: 13, slug: "ch13", t: "Multicast", m: "MidEx บทที่ 13" },
+];
+---
+<Layout title="บทสวดก่อนสอบ" description="บทสวดขอให้สอบดี พร้อมแผ่นสรุปรวบยอดทุกบทในขอบเขต MidEx — ตารางเทียบสูง/ต่ำชนะ, timer, AD, LSA, BGP best path และกับดักที่ออกสอบบ่อย">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--gold)">Internetwork · ก่อนเข้าห้องสอบ</p>
+    <h1>บทสวดขอให้สอบดี</h1>
+    <p class="deck">อ่านมาครบ 13 บทแล้ว เหลืออีกนิดเดียว — หน้านี้มีสองส่วน: <b>บทสวดตั้งสติ</b> สำหรับก่อนเข้าห้องสอบ และ <b>แผ่นสรุปรวบยอด</b> ที่รีดเอาเฉพาะสิ่งที่ออกสอบบ่อยที่สุดจากทุกบทมาไว้หน้าเดียว อ่านรอบสุดท้ายได้ใน 10 นาที</p>
+    <div class="credit-bar">
+      <span>13 บทในขอบเขต MidEx</span><span>ปรนัย 115 ข้อ</span><span>ข้อ 101-115 เติมคำ</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="pray">
+      <p class="pray-label">ตั้งนะโม 3 จบ</p>
+      <p class="pray-text">นะโม ตัสสะ ภะคะวะโต<br/>อะระหะโต สัมมาสัมพุทธัสสะ</p>
+      <p class="pray-note">(ว่า 3 ครั้ง)</p>
+      <div class="pray-rule"></div>
+      <p class="pray-wish">ขอให้สติมาเต็ม ความจำแม่นยำ<br/>อ่านโจทย์ครบทุกตัวอักษร ไม่ตกหล่น<br/>สิ่งที่อ่านมาผุดขึ้นมาตอนที่ต้องใช้<br/>มือไม่สั่น ใจไม่ตก ทำได้เต็มที่ที่ฝึกมา</p>
+      <p class="pray-foot">— ที่เหลือคือของจริงที่ทบทวนมาแล้ว เลื่อนลงไปดูอีกรอบ —</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M13 3 L16 10 L23 10 L17.5 14.5 L19.5 22 L13 17.5 L6.5 22 L8.5 14.5 L3 10 L10 10 Z" fill="none" stroke="var(--gold)" stroke-width="1.6" stroke-linejoin="round"/>
+      </svg>
+      <h2>ตารางที่ช่วยได้มากที่สุด — สูงชนะ หรือ ต่ำชนะ</h2>
+    </div>
+    <p class="sec-sub">นี่คือจุดที่คนพลาดมากที่สุด เพราะแต่ละโปรโตคอลใช้กติกาไม่เหมือนกันเลย — จำเป็นภาพรวมทีเดียวจบ</p>
+
+    <div class="grid-2">
+      <div class="tablewrap">
+        <table>
+          <caption>ค่า <b>ต่ำ</b> กว่าชนะ</caption>
+          <tbody>
+            <tr><th scope="row">STP Bridge Priority</th><td>ต้องเป็นทวีคูณของ <b>4096</b></td></tr>
+            <tr><th scope="row">STP Port Priority / Cost</th><td>ทวีคูณของ 16 (port priority)</td></tr>
+            <tr><th scope="row">LACP System Priority</th><td><b>ไม่ต้อง</b>ทวีคูณ 4096 — ใส่เลขอะไรก็ได้</td></tr>
+            <tr><th scope="row">LACP Port Priority</th><td>default 32768</td></tr>
+            <tr><th scope="row">Administrative Distance</th><td>ต่ำ = น่าเชื่อกว่า</td></tr>
+            <tr><th scope="row">Metric ทุกโปรโตคอล</th><td>เทียบได้เฉพาะภายในโปรโตคอลเดียวกัน</td></tr>
+            <tr><th scope="row">BGP MED</th><td>เทียบได้เฉพาะเมื่อมาจาก ASN เดียวกัน</td></tr>
+            <tr><th scope="row">BGP Router ID (ขั้น 11)</th><td>ต่ำชนะ</td></tr>
+            <tr><th scope="row">BGP Neighbor Address (ขั้น 13)</th><td>ต่ำชนะ · iBGP เท่านั้น</td></tr>
+            <tr><th scope="row">IGMP Querier</th><td>IP <b>ต่ำ</b>สุดชนะ</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <caption>ค่า <b>สูง</b> กว่าชนะ (มีน้อย จำให้ครบ)</caption>
+          <tbody>
+            <tr><th scope="row">OSPF Interface Priority</th><td>เลือก DR/BDR · 0 = ไม่ร่วมเลือกเลย</td></tr>
+            <tr><th scope="row">OSPF RID (ตอนตัดสิน DR)</th><td>ถ้า priority เท่ากัน <b>RID สูง</b>ชนะ</td></tr>
+            <tr><th scope="row">BGP Weight</th><td>ขั้นที่ 1 · Cisco เท่านั้น · ไม่ประกาศให้ใคร</td></tr>
+            <tr><th scope="row">BGP Local Preference</th><td>ขั้นที่ 2 · default 100</td></tr>
+            <tr><th scope="row">PIM DR Priority</th><td>default 1 · เท่ากันใช้ <b>IP สูง</b>สุด</td></tr>
+            <tr><th scope="row">Auto-RP Candidate RP</th><td>IP <b>สูง</b>สุดชนะ</td></tr>
+            <tr><th scope="row">VTP Configuration Revision</th><td><b>สูงกว่าถูกเชื่อว่าใหม่กว่า</b> — ต้นเหตุหายนะ</td></tr>
+          </tbody>
+        </table>
+        <div class="fixnote" style="background:var(--gold-soft);margin-top:14px">
+          <b style="color:var(--gold)">คู่ที่หลอกกันบ่อยที่สุด:</b> <b>OSPF DR</b> ใช้ priority สูงชนะ + RID สูงชนะ — แต่ <b>BGP best path ขั้น 11</b> ใช้ RID <b>ต่ำ</b>ชนะ · และ <b>IGMP Querier</b> ใช้ IP ต่ำ แต่ <b>PIM DR</b> ใช้ IP สูง สองตัวนี้อยู่บทเดียวกันด้วย
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="13" cy="13" r="10" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+        <path d="M13 7 L13 13 L17 16" stroke="var(--coral)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      </svg>
+      <h2>Timer ทุกตัวในที่เดียว</h2>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col">โปรโตคอล</th><th scope="col">Hello / ส่งทุก</th><th scope="col">ตายเมื่อ</th><th scope="col">หมายเหตุ</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">STP</th><td>Hello 2 วิ</td><td>Max Age 20 วิ</td><td>Forward Delay 15 วิ (Listening + Learning = 30 วิ)</td></tr>
+          <tr><th scope="row">EIGRP</th><td>5 วิ (60 วิบนลิงก์ช้า T1 ลงไป)</td><td>Hold = <b>3 เท่า</b> ของ hello</td><td>15 วิ / 180 วิ</td></tr>
+          <tr><th scope="row">OSPF</th><td>10 วิ (Broadcast, P2P)<br/>30 วิ (Non-broadcast, P2MP)</td><td>Dead = <b>4 เท่า</b> ของ hello</td><td>40 วิ / 120 วิ · ต้องตรงกันทั้งสองฝั่ง</td></tr>
+          <tr><th scope="row">BGP</th><td>Keepalive 60 วิ</td><td>Hold 180 วิ</td><td>ไม่มี hello — ใช้ KEEPALIVE แทน</td></tr>
+          <tr><th scope="row">PIM</th><td>Hello 30 วิ</td><td>DR hold = <b>3.5 เท่า</b> = 105 วิ</td><td>ส่งไปที่ 224.0.0.13 TTL=1</td></tr>
+          <tr><th scope="row">LACP</th><td>30 วิ (normal) · 1 วิ (<code>rate fast</code>)</td><td>3 รอบ = 90 วิ / 3 วิ</td><td>ต้องตั้งตรงกันทั้งสองฝั่ง</td></tr>
+          <tr><th scope="row">VTP</th><td>Summary advertisement 300 วิ</td><td>—</td><td>หรือส่งทันทีเมื่อ VLAN เปลี่ยน</td></tr>
+          <tr><th scope="row">IGMP</th><td>General query เป็นระยะ</td><td>Max response 10 วิ</td><td>ผู้รับสุ่มเวลา 0-10 วิก่อนตอบ</td></tr>
+          <tr><th scope="row">Auto-RP / BSR</th><td>ประกาศทุก 60 วิ</td><td>Hold = 3 เท่าของ announce interval</td><td>224.0.1.39 / 224.0.1.40</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M4 20 L4 6 L20 6" fill="none" stroke="var(--slate)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="4" cy="20" r="2" fill="var(--slate)"/><circle cx="12" cy="13" r="2" fill="var(--slate)"/><circle cx="20" cy="6" r="2" fill="var(--slate)"/>
+      </svg>
+      <h2>ลำดับการตัดสินใจ — จำเป็นลำดับ ไม่ใช่จำเป็นก้อน</h2>
+    </div>
+
+    <div class="grid-3">
+      <div class="knob">
+        <span class="where c1">บทที่ 2</span>
+        <h3>STP เลือก Root Bridge</h3>
+        <ol style="margin:0;padding-left:20px;color:var(--ink-2);font-size:.9rem">
+          <li>Bridge Priority ต่ำสุด</li>
+          <li>ถ้าเท่ากัน → MAC Address ต่ำสุด</li>
+        </ol>
+        <p class="why" style="margin:10px 0 0"><b>เลือก Root Port:</b> Root Path Cost ต่ำสุด → Sender Bridge ID ต่ำสุด → Sender Port Priority ต่ำสุด → Sender Port ID ต่ำสุด</p>
+      </div>
+      <div class="knob">
+        <span class="where c2">บทที่ 6</span>
+        <h3>Router ติดตั้งเส้นทาง</h3>
+        <ol style="margin:0;padding-left:20px;color:var(--ink-2);font-size:.9rem">
+          <li><b>Prefix Length</b> — ยาวกว่าชนะเสมอ</li>
+          <li><b>AD</b> — ต่ำกว่าชนะ</li>
+          <li><b>Metric</b> — ต่ำกว่าชนะ</li>
+        </ol>
+        <p class="why" style="margin:10px 0 0">คาถา: <b>"ยาวก่อน แล้วค่อยเชื่อ แล้วค่อยวัด"</b></p>
+      </div>
+      <div class="knob">
+        <span class="where c3">บทที่ 9</span>
+        <h3>OSPF เลือกเส้นทาง</h3>
+        <ol style="margin:0;padding-left:20px;color:var(--ink-2);font-size:.9rem">
+          <li><b>Intra-area</b> (O)</li>
+          <li><b>Interarea</b> (O IA)</li>
+          <li><b>External</b></li>
+        </ol>
+        <p class="why" style="margin:10px 0 0"><b>Intra-area ชนะเสมอ แม้ metric จะสูงกว่า</b> — เทียบ metric เฉพาะเมื่ออยู่ระดับเดียวกันเท่านั้น</p>
+      </div>
+    </div>
+
+    <div class="knob" style="margin-top:20px">
+      <span class="where c1">บทที่ 12 · ออกสอบแน่</span>
+      <h3>BGP Best-Path 13 ขั้นตอน</h3>
+      <p class="out">W  L  L  A  A  O  M  E  I  O  R  C  N</p>
+      <div class="tablewrap" style="margin-top:10px">
+        <table>
+          <tbody>
+            <tr><th scope="row">1. <b>W</b>eight</th><td>สูงชนะ · Cisco · ไม่ประกาศ</td><th scope="row">8. <b>e</b>BGP &gt; iBGP</th><td>eBGP &gt; confed &gt; iBGP</td></tr>
+            <tr><th scope="row">2. <b>L</b>ocal Preference</th><td>สูงชนะ · default 100</td><th scope="row">9. <b>I</b>GP metric</th><td>ต่ำชนะ (ไปถึง next-hop)</td></tr>
+            <tr><th scope="row">3. <b>L</b>ocally originated</th><td>network &gt; aggregate &gt; รับมา</td><th scope="row">10. <b>O</b>ldest eBGP</th><td>เก่ากว่าชนะ</td></tr>
+            <tr><th scope="row">4. <b>A</b>IGP</th><td>มีชนะไม่มี</td><th scope="row">11. <b>R</b>outer ID</th><td><b>ต่ำ</b>ชนะ</td></tr>
+            <tr><th scope="row">5. <b>A</b>S_Path</th><td><b>สั้น</b>ชนะ</td><th scope="row">12. <b>C</b>luster list</th><td>สั้นชนะ</td></tr>
+            <tr><th scope="row">6. <b>O</b>rigin</th><td>IGP (i) &gt; EGP (e) &gt; Incomplete (?)</td><th scope="row">13. <b>N</b>eighbor address</th><td>ต่ำชนะ · iBGP เท่านั้น</td></tr>
+            <tr><th scope="row">7. <b>M</b>ED</th><td>ต่ำชนะ · ต้อง ASN เดียวกัน</td><td colspan="2" style="color:var(--ink-3)">ก่อนเข้า 13 ขั้น: <b>Longest prefix match ตัดสินก่อนเสมอ</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="why" style="margin:10px 0 0">คาถาไทย 13 คำ: <b>หนักแน่น · ชอบมาก · ของเราเอง · เอไอจีพี · ทางสั้น · เกิดที่ไหน · เมดต่ำ · นอกดีกว่าใน · ไอจีพีใกล้ · เก่ากว่า · อาร์ไอดีเล็ก · คลัสเตอร์สั้น · เพื่อนบ้านต่ำ</b></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M4 13 L11 13 M15 13 L22 13" stroke="var(--violet)" stroke-width="2" stroke-linecap="round"/>
+        <path d="M11 9 L15 13 L11 17" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h2>รูปแบบซ้ำที่ใช้ตอบได้หลายข้อ</h2>
+    </div>
+
+    <div class="grid-2">
+      <div class="exam">
+        <h4>"รอฟัง + รอฟัง = ไม่เกิดอะไรเลย"</h4>
+        <p>กติกาเดียวกันปรากฏ 3 ที่ ต้องมีฝ่ายใดฝ่ายหนึ่ง "เอ่ยชวน" ก่อนเสมอ:</p>
+        <ul style="margin:0">
+          <li><b>DTP</b> — dynamic auto + dynamic auto → <b>ไม่เป็น Trunk</b> (นี่คือ default ของสวิตช์หลายรุ่น)</li>
+          <li><b>PAgP</b> — auto + auto → <b>ไม่เกิด Bundle</b></li>
+          <li><b>LACP</b> — passive + passive → <b>ไม่เกิด Bundle</b></li>
+        </ul>
+      </div>
+      <div class="exam">
+        <h4>"ต้องตรงกันทั้งสองฝั่ง ไม่งั้นพัง"</h4>
+        <ul style="margin:0">
+          <li><b>EtherChannel</b> — speed, duplex, port type/mode, native VLAN, allowed VLAN, MTU (ยกเว้น LACP port priority ที่ไม่ต้องตรง)</li>
+          <li><b>OSPF adjacency</b> — MTU, Area ID, hello/dead timer, authentication, area type flag, DR enablement, subnet เดียวกัน (v2), RID ต้องไม่ซ้ำ</li>
+          <li><b>LACP rate</b> — fast/normal ต้องตรงกัน</li>
+          <li><b>OSPF network type</b> — เปลี่ยนแล้วต้องแก้ทั้งสองปลาย</li>
+          <li><b>OSPF reference bandwidth</b> — ต้องตั้งเหมือนกันทุก Router ในโดเมน</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="tablewrap">
+        <table>
+          <caption>Administrative Distance — ท่องให้ขึ้นใจ</caption>
+          <tbody>
+            <tr><th scope="row">Connected</th><td>0</td><th scope="row">OSPF</th><td>110</td></tr>
+            <tr><th scope="row">Static</th><td>1</td><th scope="row">IS-IS</th><td>115</td></tr>
+            <tr><th scope="row">EIGRP summary</th><td>5</td><th scope="row">RIP</th><td>120</td></tr>
+            <tr><th scope="row">eBGP</th><td><b>20</b></td><th scope="row">EIGRP external</th><td>170</td></tr>
+            <tr><th scope="row">EIGRP internal</th><td><b>90</b></td><th scope="row">iBGP</th><td><b>200</b></td></tr>
+          </tbody>
+        </table>
+        <p style="color:var(--ink-2);font-size:.85rem;margin-top:8px">OSPF discard route (summary) = 110 internal / 254 external</p>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <caption>ที่อยู่ Multicast ที่ต้องจำ</caption>
+          <tbody>
+            <tr><th scope="row">224.0.0.1 / .2</th><td>ทุก host / ทุก Router</td></tr>
+            <tr><th scope="row">224.0.0.5 / .6</th><td>OSPF ทุกตัว / OSPF DR</td></tr>
+            <tr><th scope="row">224.0.0.9 / .10</th><td>RIPv2 / EIGRP</td></tr>
+            <tr><th scope="row">224.0.0.13</th><td><b>PIM</b></td></tr>
+            <tr><th scope="row">224.0.0.18 / .22</th><td>VRRP / IGMPv3</td></tr>
+            <tr><th scope="row">224.0.1.39 / .40</th><td>Auto-RP Announce / Discovery</td></tr>
+            <tr><th scope="row">232.0.0.0/8</th><td>SSM</td></tr>
+            <tr><th scope="row">239.0.0.0/8</th><td>Admin-scoped (เทียบ RFC 1918)</td></tr>
+            <tr><th scope="row">FF02::5 / ::6</th><td>OSPFv3 ทุกตัว / OSPFv3 DR</td></tr>
+            <tr><th scope="row">01:00:5E</th><td>24 บิตแรกของ multicast MAC เสมอ</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="3" y="4" width="7" height="7" rx="1.5" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+        <rect x="10" y="11" width="7" height="7" rx="1.5" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+        <rect x="17" y="18" width="6" height="6" rx="1.5" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+      </svg>
+      <h2>LSA และศัพท์เฉพาะที่ถามแบบเติมคำ</h2>
+    </div>
+
+    <div class="grid-2">
+      <div class="tablewrap">
+        <table>
+          <caption>OSPF LSA — v2 (เลข) เทียบ v3 (hex)</caption>
+          <thead><tr><th scope="col">v2</th><th scope="col">ชื่อ</th><th scope="col">v3</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">1</th><td>Router — ไม่ออกนอก Area</td><td>0x2001</td></tr>
+            <tr><th scope="row">2</th><td>Network — DR สร้าง ไม่ออกนอก Area</td><td>0x2002</td></tr>
+            <tr><th scope="row">3</th><td>Summary → v3 เรียก <b>Interarea Prefix</b></td><td>0x2003</td></tr>
+            <tr><th scope="row">4</th><td>ASBR Summary → v3 เรียก <b>Interarea Router</b></td><td>0x2004</td></tr>
+            <tr><th scope="row">5</th><td>AS External (redistribute)</td><td>0x4005</td></tr>
+            <tr><th scope="row">7</th><td>NSSA External</td><td>0x2007</td></tr>
+            <tr><th scope="row">—</th><td><b>Link</b> (ใหม่ใน v3)</td><td>0x0008</td></tr>
+            <tr><th scope="row">—</th><td><b>Intra-area Prefix</b> (ใหม่ใน v3)</td><td>0x2009</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <caption>รหัสสถานะ EtherChannel · EIGRP · Multicast</caption>
+          <tbody>
+            <tr><th scope="row">Po (SU)</th><td>Layer2 + ใช้งานได้ปกติ</td></tr>
+            <tr><th scope="row">(P) / (H) / (I)</th><td>ส่งข้อมูลจริง / Hot-standby / Individual</td></tr>
+            <tr><th scope="row">(M)</th><td>สมาชิก active ไม่ถึง <code>min-links</code></td></tr>
+            <tr><th scope="row">EIGRP FD / RD</th><td>metric ต่ำสุดของเรา / ที่เพื่อนบ้านรายงาน</td></tr>
+            <tr><th scope="row">Feasibility Condition</th><td><b>RD &lt; FD</b> → เป็น Feasible Successor ได้</td></tr>
+            <tr><th scope="row">EIGRP P / A</th><td>Passive (ปกติ) / Active (กำลังคำนวณใหม่)</td></tr>
+            <tr><th scope="row">(S,G) / (*,G)</th><td>Source Tree (SPT) / Shared Tree (RPT)</td></tr>
+            <tr><th scope="row">FHR / LHR</th><td>Router ติดต้นทาง / ติดผู้รับ</td></tr>
+            <tr><th scope="row">O / O IA</th><td>OSPF intra-area / interarea (v3 ใช้ O / OI)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M13 2.5 L23.5 21 L2.5 21 Z" fill="none" stroke="var(--blk)" stroke-width="1.9" stroke-linejoin="round"/>
+        <line x1="13" y1="10" x2="13" y2="15" stroke="var(--blk)" stroke-width="2" stroke-linecap="round"/><circle cx="13" cy="18" r="1.2" fill="var(--blk)"/>
+      </svg>
+      <h2>กับดัก 10 ข้อที่ออกสอบบ่อยที่สุด</h2>
+    </div>
+
+    <div class="cascade">
+      <div class="rung"><b>1. VTP Revision Number</b> — สวิตช์เก่าที่มีเลขสูงกว่าเสียบเข้ามา จะลบ VLAN ทั้งโดเมน · ป้องกันโดยเปลี่ยนชื่อ domain แล้วเปลี่ยนกลับ หรือตั้ง transparent ก่อนเสียบ</div>
+      <div class="rung"><b>2. DTP ไม่ปลอดภัย</b> — พอร์ตที่เป็น auto/desirable ถูกหลอกให้เป็น trunk ได้ · แก้ด้วย <code>switchport mode trunk</code> + <code>switchport nonegotiate</code></div>
+      <div class="rung"><b>3. EtherChannel hash ผิด</b> — ต่อกับ Router ที่มี MAC เดียว แล้วใช้ src-mac/dst-mac → วิ่งสายเดียวตลอด · แก้เป็น src-dst-ip หรือ src-dst-port</div>
+      <div class="rung"><b>4. Directly attached static route บน Ethernet</b> — Router ต้อง ARP ทุกปลายทาง กิน CPU · ใช้ได้ปลอดภัยเฉพาะสาย P2P Serial</div>
+      <div class="rung"><b>5. Recursive static route ผ่าน default route ไม่ได้</b> — next-hop ต้อง resolve ได้จากเส้นทางเจาะจง ไม่ใช่ 0.0.0.0/0</div>
+      <div class="rung"><b>6. Intra-area ชนะ interarea เสมอ</b> — แม้ metric จะสูงกว่ามาก OSPF ก็ยังเลือก intra-area</div>
+      <div class="rung"><b>7. Discontiguous Area 0</b> — ABR ห้ามสร้าง Type 3 ต่อจาก Type 3 ที่รับมาจาก Area ที่ไม่ใช่ Backbone · แก้ด้วยทำให้ Area 0 ต่อเนื่อง</div>
+      <div class="rung"><b>8. OSPF reference bandwidth 100 Mbps</b> — ทำให้ FastEthernet, GigE และ 10-GigE ได้ cost = 1 เท่ากันหมด · แก้ด้วย <code>auto-cost reference-bandwidth</code> ให้ตรงกันทุกเครื่อง</div>
+      <div class="rung"><b>9. BGP network statement ไม่ได้เปิด BGP บน interface</b> — มันแค่ระบุ prefix ที่จะใส่ลง Loc-RIB · และ community ไม่ถูกส่งจนกว่าจะสั่ง <code>send-community</code></div>
+      <div class="rung"><b>10. SPT switchover ของ PIM-SM เกิดโดย default</b> — เกิดทันทีหลังแพ็กเก็ตแรก แม้เส้นทางสั้นที่สุดจะผ่าน RP อยู่แล้วก็ตาม</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M5 13 L11 19 L21 7" fill="none" stroke="var(--fwd)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h2>เช็คลิสต์ 13 บท — กดเข้าไปทวนได้เลย</h2>
+    </div>
+    <p class="sec-sub">MidEx แบ่งเป็น 13 บท ครอบคลุมทั้งหมดแล้ว — QoS (บทที่ 14) และ Overview (บทที่ 0) <b>ไม่อยู่ในขอบเขต MidEx</b></p>
+
+    <div class="chk">
+      {chapters.map((c) => (
+        <a class="chk-item" href={`${base}/${c.slug}`}>
+          <span class="chk-n">{c.n}</span>
+          <span class="chk-body">
+            <span class="chk-t">{c.t}</span>
+            <span class="chk-m">{c.m}</span>
+          </span>
+        </a>
+      ))}
+    </div>
+
+    <div class="fixnote" style="background:var(--slate-soft);margin-top:20px">
+      <b style="color:var(--slate)">หัวข้อที่ MidEx ระบุแต่ไม่มีในสไลด์ต้นฉบับ</b> (เขียนเองไม่ได้เพราะไม่มีแหล่งอ้างอิง — ถ้าอาจารย์ออกจริงต้องหาเอกสารเพิ่ม): Private VLANs · Route Filtering/Redistribution ระดับ IP Routing · EIGRP config/Named Mode/Authentication · OSPF Stub/NSSA, Virtual Links, Authentication, Fast Convergence, Graceful Restart · BGP Route Reflectors/Confederations/Multipath · PIM Sparse-Dense รายละเอียด · SSM รายละเอียด · MSDP ทั้งหมด
+    </div>
+  </section>
+
+  <section>
+    <div class="pray pray-end">
+      <p class="pray-wish" style="margin:0">อ่านมาถึงตรงนี้ได้ แปลว่าเตรียมมาดีพอแล้ว<br/><b>หายใจลึก ๆ อ่านโจทย์ให้ครบ แล้วลุยเลย</b></p>
+      <p class="pray-foot" style="margin:14px 0 0">โชคดีนะ 🍀</p>
+    </div>
+  </section>
+
+  <footer>
+    Internetwork · หน้ารวบยอดก่อนสอบ · สรุปจากบทที่ 1-13 ทั้งหมดในเว็บนี้ ซึ่งอ้างอิงสไลด์ต้นฉบับ CCNP Enterprise: Core Networking และขอบเขต MidEx
+  </footer>
+
+  <style>
+    .pray{
+      background:var(--gold-soft);
+      border:1px solid var(--gold);
+      border-radius:14px;
+      padding:34px 28px;
+      text-align:center;
+    }
+    .pray-label{
+      font-family:var(--mono);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;
+      color:var(--gold);font-weight:700;margin:0 0 16px;
+    }
+    .pray-text{
+      font-family:var(--serif);
+      font-size:1.5rem;line-height:1.9;
+      color:var(--ink);margin:0;
+    }
+    .pray-note{font-size:.82rem;color:var(--ink-3);margin:10px 0 0}
+    .pray-rule{
+      width:60px;height:1px;background:var(--gold);
+      margin:24px auto;opacity:.5;
+    }
+    .pray-wish{
+      font-size:1.02rem;line-height:2;color:var(--ink);margin:0;
+    }
+    .pray-foot{font-size:.85rem;color:var(--ink-3);margin:20px 0 0}
+    .pray-end{background:var(--slate-soft);border-color:var(--slate)}
+
+    .chk{
+      display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+      gap:10px;
+    }
+    .chk-item{
+      display:flex;align-items:center;gap:12px;
+      text-decoration:none;
+      border:1px solid var(--rule-soft);border-radius:10px;
+      padding:12px 14px;background:var(--card);
+      transition:border-color .15s, transform .15s;
+    }
+    .chk-item:hover{border-color:var(--coral);transform:translateY(-1px)}
+    .chk-n{
+      font-family:var(--mono);font-size:1.05rem;font-weight:700;
+      color:var(--coral);width:24px;flex:none;text-align:right;
+    }
+    .chk-body{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .chk-t{font-size:.92rem;color:var(--ink);font-weight:700;line-height:1.25}
+    .chk-m{font-size:.72rem;color:var(--ink-3)}
+
+    @media (max-width:640px){
+      .pray{padding:26px 18px}
+      .pray-text{font-size:1.2rem}
+    }
+  </style>
+
+</Layout>

@@ -1,7 +1,439 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import ComingSoon from "../components/ComingSoon.astro";
+import Term from "../components/Term.astro";
 ---
-<Layout title="Advanced BGP" description="เทคนิค BGP ขั้นสูง เช่น Route Reflector, Confederation, และการปรับแต่ง Path Attribute">
-  <ComingSoon n={12} title="Advanced BGP" pages={71} accent="var(--violet)" blurb="เทคนิค BGP ขั้นสูง เช่น Route Reflector, Confederation, และการปรับแต่ง Path Attribute" />
+<Layout title="Advanced BGP" description="บทที่ 12 — Multihoming, Transit Routing, Conditional Matching (ACL/Prefix List/Regex), Route Maps, Route Filtering, BGP Communities และ 13 ขั้นตอน Best-Path Algorithm">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--slate)">Internetwork · Chapter 12 of 14</p>
+    <h1>Advanced BGP</h1>
+    <p class="deck">บทที่ 11 ทำให้ BGP ใช้งานได้ บทนี้ทำให้ BGP <b>ทำตามที่เราต้องการ</b> — เลือกได้ว่าจะรับ/ส่งเส้นทางไหน แก้ attribute ยังไง และที่สำคัญที่สุด: เข้าใจ 13 ขั้นตอนที่ BGP ใช้ตัดสินว่าเส้นทางไหนคือ best path</p>
+    <div class="credit-bar">
+      <span>Multihoming</span><span>Prefix List / Regex</span><span>Route Map</span><span>Communities</span><span>13-Step Best Path</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="grid-2">
+      <div class="card">
+        <h3>เชื่อมจากที่รู้แล้ว</h3>
+        <ul>
+          <li>จากบทที่ 11 เรารู้แล้วว่า BGP มี PA 4 ประเภท, 3 ตาราง (Adj-RIB-In → Loc-RIB → Adj-RIB-Out) และ policy ถูกประมวลผลตอนเส้นทางเข้า/ออกจาก Loc-RIB</li>
+          <li>จากบทที่ 9 เรารู้แล้วว่า OSPF กรองเส้นทางด้วย prefix list และ distribute list — เครื่องมือชุดเดียวกันนี้ใช้กับ BGP ได้เช่นกัน แต่มีพลังมากกว่ามาก</li>
+          <li>สิ่งที่ยังไม่เคยพูดถึง: ถ้ามีหลายเส้นทางไปปลายทางเดียวกัน BGP ตัดสินยังไง (สปอยล์: มีถึง 13 ขั้นตอน ไม่ใช่แค่เทียบ metric)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>สิ่งที่บทนี้ครอบคลุม</h3>
+        <ul>
+          <li><b>BGP Multihoming</b> — ออกแบบสำรอง 4 แบบ และกับดัก Transit Routing</li>
+          <li><b>Conditional Matching</b> — ACL, Prefix List, Regular Expression</li>
+          <li><b>Route Maps</b> — 4 องค์ประกอบ, ตรรกะ AND/OR, set actions</li>
+          <li><b>Route Filtering</b> — 4 วิธีกรองเส้นทางบน BGP peer</li>
+          <li><b>BGP Communities</b> — แท็กเส้นทางเพื่อส่งต่อ policy ข้าม AS</li>
+          <li><b>Best-Path Algorithm</b> — 13 ขั้นตอนตามลำดับ</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="13" cy="6" r="3.5" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
+        <circle cx="6" cy="19" r="3.5" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
+        <circle cx="20" cy="19" r="3.5" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
+        <line x1="11" y1="8.5" x2="8" y2="16" stroke="var(--slate)" stroke-width="1.5"/>
+        <line x1="15" y1="8.5" x2="18" y2="16" stroke="var(--slate)" stroke-width="1.5"/>
+      </svg>
+      <h2><Term id="bgpMultihoming">BGP Multihoming</Term></h2>
+    </div>
+    <p class="sec-sub">องค์กรต้องออกแบบให้ไม่มี <b>SPOF</b> (Single Point of Failure) — วิธีง่ายที่สุดคือเพิ่มวงจรที่สอง การเพิ่มวงจรพร้อมสร้าง BGP session ที่สองนี่เองเรียกว่า BGP Multihoming</p>
+
+    <div class="tablewrap">
+      <table>
+        <caption>4 สถานการณ์การออกแบบ — ยิ่งลงไปยิ่งทนทานขึ้น</caption>
+        <thead><tr><th scope="col">แบบ</th><th scope="col">โครงสร้าง</th><th scope="col">กันอะไรได้ / ยังพังตรงไหน</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">1</th><td>ISP เดียว, Router เดียว, 2 วงจร</td><td>กันสายขาดได้ — แต่ถ้า <b>Router พัง</b> หรือเครือข่ายของ SP1 มีปัญหา เครือข่ายล่มทั้งหมด</td></tr>
+          <tr><th scope="row">2</th><td>ISP เดียว, 2 Router</td><td>กันสายขาดได้ — แต่ถ้า <b>R1 พัง</b> หรือเครือข่ายของ SP1 มีปัญหา ยังล่มอยู่ดี</td></tr>
+          <tr><th scope="row">3</th><td>คนละ ISP</td><td>กันได้ทั้งสายขาดและ SP ฝั่งใดฝั่งหนึ่งล่ม + เลือกเส้นทางที่ดีที่สุดได้ด้วย best-path algorithm — แต่ถ้า <b>R1 พัง</b> ยังล่ม</td></tr>
+          <tr><th scope="row">4</th><td>คนละ ISP + R1/R2 สร้าง <b>iBGP session</b> ระหว่างกัน</td><td><b>ครบที่สุด</b> — กันสายขาด, กัน SP ล่ม, เพิ่มประสิทธิภาพเส้นทาง และกันความล้มเหลวภายในเครือข่ายตัวเองได้ด้วย</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>กับดักที่ใหญ่ที่สุดของ Multihoming: กลายเป็น <Term id="transitRouting">Transit AS</Term> โดยไม่ตั้งใจ <span class="tag">ออกสอบ</span></h4>
+      <p><b>ระดับอินเทอร์เน็ต:</b> พอต่อกับ SP มากกว่าหนึ่งราย องค์กร (สมมติ AS 500) เสี่ยงกลายเป็นทางผ่านของคนอื่น — ผู้ใช้ที่ต่อกับ SP3 (AS 300) อาจ route ผ่านเครือข่ายองค์กรเพื่อไปหาเซิร์ฟเวอร์ที่ SP4 (AS 400) <b>เพราะ AS_Path สั้นกว่า</b>การอ้อมผ่าน SP1 และ SP2 — ผลคือลิงก์ peering ขององค์กรถูกใช้จนเต็มโดยทราฟฟิกที่ไม่ใช่ของตัวเองเลย</p>
+      <p><b>ระดับสาขา:</b> ในภาพการออกแบบ multihome ที่ทุก Router ตั้ง local preference ให้ชอบ MPLS SP2 มากกว่า SP1 — พอเกิดเหตุขัดข้อง Router สาขา R41 อาจกลายเป็นทางผ่านระหว่าง Site 3 กับ Site 5 ทำให้ (1) วงจรของสาขานั้นถูกใช้จนล้น (2) เส้นทาง<b>เดาไม่ได้และไม่สมมาตร</b> — ทราฟฟิกขาไปผ่าน R41 แต่ขากลับไปคนละทาง ทำให้ troubleshoot ยากมาก</p>
+      <p style="margin:0"><b>ทางแก้ทั้งสองระดับ:</b> ตั้ง <b>outbound route policy</b> ให้ประกาศเฉพาะเส้นทางของตัวเองออกไป — สาขาต้อง<b>ไม่ประกาศสิ่งที่เรียนรู้มาจาก WAN</b> ประกาศเฉพาะเครือข่ายฝั่ง LAN ของตัวเองเท่านั้น (หมายเหตุ: transit routing ที่ Data Center หรือจุดที่วางแผนไว้แล้วเป็นเรื่องปกติในองค์กร เพราะคำนวณแบนด์วิดท์รองรับไว้ล่วงหน้า)</p>
+    </div>
+    <p style="color:var(--ink-2);font-size:.9rem;margin-top:10px">ศัพท์ที่ควรรู้: <b>Symmetric</b> = ทราฟฟิกไป-กลับใช้เส้นทางเดียวกัน (troubleshoot ง่าย) · <b>Asymmetric</b> = ไป-กลับคนละทาง · <b>Deterministic</b> = เส้นทางถูกกำหนดไว้ล่วงหน้าและคาดเดาได้ ซึ่งเป็นเป้าหมายของการออกแบบที่ดี</p>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M4 6 L22 6 L14 15 L14 22 L11 22 L11 15 Z" fill="none" stroke="var(--coral)" stroke-width="1.8" stroke-linejoin="round"/>
+      </svg>
+      <h2>Conditional Matching — 3 วิธีเลือก prefix</h2>
+    </div>
+    <p class="sec-sub">การแก้ทีละ neighbor หรือทีละ interface ไม่ยืดหยุ่นพอ — ต้องมีวิธี "เลือกกลุ่ม prefix ตามเงื่อนไข" ก่อนถึงจะเอาไปใช้กรองหรือแก้ค่าได้</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>1. Access Control List (ACL)</h3>
+        <p style="color:var(--ink-2);margin:0 0 10px">เดิม ACL มีไว้กรองแพ็กเก็ตเข้า/ออก interface เหมือน firewall — ปัจจุบันใช้จำแนกแพ็กเก็ตให้ฟีเจอร์อื่นด้วย เช่น QoS หรือระบุเครือข่ายใน routing protocol ประกอบด้วย <b>ACE</b> (Access Control Entry) แต่ละบรรทัดที่ระบุ action (permit/deny) + เงื่อนไข</p>
+        <ul style="margin:0">
+          <li><b>Standard</b> (1–99, 1300–1999) — ระบุแพ็กเก็ตจาก<b>ต้นทางอย่างเดียว</b></li>
+          <li><b>Extended</b> (100–199, 2000–2699) — ระบุจากต้นทาง ปลายทาง โปรโตคอล พอร์ต หรือรวมกัน</li>
+          <li><b>Named ACL</b> — ตั้งชื่อสื่อความหมายได้ ใช้ได้ทั้งสองแบบ และ<b>เป็นที่นิยมกว่า</b></li>
+        </ul>
+        <p style="color:var(--blk);margin-top:10px"><b>ลำดับสำคัญมาก</b> — วาง ACE ผิดลำดับทำให้เกิดผลที่ไม่ตั้งใจได้</p>
+      </div>
+      <div class="knob">
+        <span class="where c1">กับดักที่ต้องจำ</span>
+        <h3>Extended ACL ตีความต่างกันระหว่าง IGP กับ BGP</h3>
+        <p class="why"><b>กับ IGP</b> (EIGRP/OSPF/IS-IS): ช่อง source = ระบุ network, ช่อง destination = ระบุ <b>prefix length ที่สั้นที่สุด</b>ที่ยอมรับ</p>
+        <p class="out">permit ip host 172.16.0.0 host 255.240.0.0
+  → ทุก network ในช่วง 172.16.0.0/12
+permit ip host 172.16.0.0 host 255.255.0.0
+  → ทุก network ในช่วง 172.16.0.0/16</p>
+        <p class="why"><b>กับ BGP</b>: ช่อง source = เทียบกับ<b>ส่วน network</b> ของเส้นทาง, ช่อง destination = เทียบกับ <b>network mask</b></p>
+        <p class="out">permit ip 10.0.0.0 0.0.0.0 255.255.0.0 0.0.0.0
+  → เฉพาะ 10.0.0.0/16 เท่านั้น
+permit ip 172.16.0.0 0.0.255.255 255.255.255.0 0.0.0.255
+  → 172.16.x.x ที่มี prefix length /24 ถึง /32</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h3>2. <Term id="prefixList">Prefix List</Term> — วิธีที่วิศวกรส่วนใหญ่ชอบมากกว่า</h3>
+      <p style="color:var(--ink-2);margin:0 0 10px"><b>Prefix match specification</b> ประกอบด้วยสองส่วน: <b>high-order bit pattern</b> (บางเอกสารเรียก address หรือ network) และ <b>high-order bit count</b> (บางเอกสารเรียก mask length) ซึ่งกำหนดว่าจะเทียบกี่บิตแรกของ pattern</p>
+      <p style="color:var(--ink-2);margin:0 0 10px">พลังที่แท้จริงมาจากพารามิเตอร์ความยาว ทำให้เลือกหลาย network ที่มี prefix length ต่างกันได้ในบรรทัดเดียว:</p>
+      <ul style="margin:0 0 10px">
+        <li><code>le</code> = น้อยกว่าหรือเท่ากับ (&lt;=)</li>
+        <li><code>ge</code> = มากกว่าหรือเท่ากับ (&gt;=)</li>
+      </ul>
+      <pre style="margin:0 0 10px">ip prefix-list NAME [seq n] (permit / deny) bit-pattern/bit-count [ge value] [le value]
+ipv6 prefix-list NAME [seq n] (permit / deny) bit-pattern/bit-count [ge value] [le value]</pre>
+      <p style="color:var(--ink-2);margin:0">ประมวลผลจาก<b>บนลงล่างตามลำดับ</b> เจอ match แรกก็จบ — sequence number เพิ่มทีละ 5 อัตโนมัติโดยเริ่มที่ 5 — <b>กฎที่ IOS/IOS XE บังคับ:</b> <code>high-order bit count &lt; ge-value &lt;= le-value</code> เสมอ</p>
+    </div>
+
+    <div class="knob" style="margin-top:20px">
+      <span class="where c2">ตัวอย่างจากสไลด์</span>
+      <h3>อ่าน Prefix Match ให้ออก</h3>
+      <p class="why"><b>ตัวอย่าง 1 (Figure 12-7):</b> bit pattern <code>10.168.0.0</code>, bit count <code>13</code>, ต้องการ length <code>ge 24</code> → เทียบ 13 บิตแรกของ 10.168.0.0 แล้วรับเฉพาะ prefix ที่ยาวตั้งแต่ /24 ขึ้นไป</p>
+      <p class="why" style="margin:0"><b>ตัวอย่าง 2 (Figure 12-8):</b> bit pattern <code>10.0.0.0</code>, bit count <code>8</code>, length ระหว่าง 22–26 → <code>10.0.0.0/8</code> <b>ไม่ match</b> (prefix สั้นเกินไป), <code>10.0.0.0/24</code> <b>match</b> (bit pattern ตรงและความยาวอยู่ในช่วง), <code>10.0.0.0/30</code> <b>ไม่ match</b> (ยาวเกินช่วง) — สรุป: prefix ใดก็ตามที่ octet แรกเป็น 10 และความยาวอยู่ระหว่าง 22–26 จะ match หมด · ถ้าต้องการเจาะจง prefix length เดียวที่ยาวกว่า bit count ให้ตั้ง <code>ge-value</code> เท่ากับ <code>le-value</code></p>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3>3. <Term id="regex">Regular Expression (regex)</Term></h3>
+        <p style="color:var(--ink-2);margin:0 0 10px">บางครั้งการ match ด้วย prefix ซับซ้อนเกินไป — ถ้าอยากระบุ "ทุกเส้นทางจากองค์กรหนึ่ง" ใช้ AS_Path จะตรงกว่า regex ช่วย parse ในกองข้อมูล ASN ที่มีถึง 4,294,967,295 หมายเลข</p>
+        <p style="color:var(--ink-2);margin:0 0 10px">ค้นตาราง BGP ด้วย <code>show bgp afi safi regexp regex-pattern</code></p>
+        <p style="color:var(--ink-2);margin:0"><b>สัญลักษณ์:</b> <code>^</code> ต้นสตริง · <code>$</code> ท้ายสตริง · <code>_</code> ช่องว่าง · <code>+</code> หนึ่งครั้งขึ้นไป · <code>?</code> ศูนย์หรือหนึ่งครั้ง · <code>[ ]</code> ตัวอักษรเดียวหรือช่วง · <code>-</code> ระบุช่วง</p>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <caption>Regex ที่เจอบ่อยที่สุด — ต้องแยกให้ออก</caption>
+          <thead><tr><th scope="col">Pattern</th><th scope="col">ความหมาย</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>^$</code></th><td>เส้นทางที่<b>เกิดในเครื่องนี้เอง</b> (AS_Path ว่าง)</td></tr>
+            <tr><th scope="row"><code>^200_</code></th><td>เฉพาะเส้นทางจาก AS <b>เพื่อนบ้าน</b> 200</td></tr>
+            <tr><th scope="row"><code>_200$</code></th><td>เฉพาะเส้นทางที่<b>กำเนิด</b>จาก AS 200</td></tr>
+            <tr><th scope="row"><code>_200_</code></th><td>เฉพาะเส้นทางที่<b>ผ่าน</b> AS 200</td></tr>
+            <tr><th scope="row"><code>^[0-9]+ [0-9]+ [0-9]+?</code></th><td>เส้นทางที่มี AS_Path ไม่เกิน 3 รายการ</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="3" y="3" width="20" height="20" rx="4" fill="none" stroke="var(--violet)" stroke-width="1.8"/>
+        <line x1="8" y1="9" x2="18" y2="9" stroke="var(--violet)" stroke-width="1.8"/>
+        <line x1="8" y1="14" x2="18" y2="14" stroke="var(--violet)" stroke-width="1.8"/>
+        <line x1="8" y1="19" x2="14" y2="19" stroke="var(--violet)" stroke-width="1.8"/>
+      </svg>
+      <h2><Term id="routeMap">Route Maps</Term></h2>
+    </div>
+    <p class="sec-sub">Route map กรองเส้นทางได้เหมือน ACL <b>แต่ทำได้มากกว่า</b> — เพิ่มหรือแก้ไข attribute ได้ด้วย เป็นองค์ประกอบหลักในการปรับ routing policy แยกทีละ neighbor ของ BGP (ต้องถูกอ้างอิงจาก routing protocol ถึงจะมีผล)</p>
+
+    <div class="knob">
+      <span class="where c1">4 องค์ประกอบ</span>
+      <h3>โครงสร้างและกฎ default</h3>
+      <pre>route-map NAME (permit / deny) (sequence-number)
+ match ...     ← เงื่อนไขการเลือก
+ set ...       ← การกระทำเสริม</pre>
+      <ol style="margin:10px 0 0;padding-left:20px;color:var(--ink-2)">
+        <li><b>Sequence number</b> — กำหนดลำดับการประมวลผล (ถ้าไม่ระบุ เพิ่มทีละ <b>10</b> อัตโนมัติ)</li>
+        <li><b>Conditional matching criteria</b> — ระบุคุณสมบัติของ prefix (network, PA, next hop ฯลฯ) — <b>ถ้าไม่ใส่ match เลย หมายถึง match ทุก prefix</b></li>
+        <li><b>Processing action</b> — permit หรือ deny (ถ้าไม่ระบุ ค่า default คือ <b>permit</b>)</li>
+        <li><b>Optional action</b> — แก้ไข/เพิ่ม/ลบคุณสมบัติของเส้นทาง ขึ้นกับว่าถูกอ้างอิงยังไง</li>
+      </ol>
+      <p class="why" style="margin:10px 0 0">การประมวลผล<b>หยุดทันที</b>หลังทำ optional action เสร็จเมื่อเจอ match แรก</p>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="tablewrap">
+        <table>
+          <caption>คำสั่ง <code>match</code> ที่ใช้บ่อย</caption>
+          <thead><tr><th scope="col">คำสั่ง</th><th scope="col">เลือกจากอะไร</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>match as-path</code></th><td>regex บน AS_Path (AS path ACL หมายเลข 1–500)</td></tr>
+            <tr><th scope="row"><code>match ip address</code></th><td>เงื่อนไขใน ACL</td></tr>
+            <tr><th scope="row"><code>match ip address prefix-list</code></th><td>เงื่อนไขใน prefix list</td></tr>
+            <tr><th scope="row"><code>match local-preference</code></th><td>ค่า Local Preference</td></tr>
+            <tr><th scope="row"><code>match metric</code></th><td>metric แบบเป๊ะ เป็นช่วง หรือมีค่าเบี่ยงเบนที่ยอมรับได้</td></tr>
+            <tr><th scope="row"><code>match tag</code></th><td>ตัวเลข tag (0–4294967295) ที่ Router อื่นตั้งไว้</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <caption>คำสั่ง <code>set</code> ที่ใช้บ่อย</caption>
+          <thead><tr><th scope="col">คำสั่ง</th><th scope="col">แก้อะไร</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>set as-path prepend</code></th><td>เติม AS_Path ให้ยาวขึ้น (ทำให้เส้นทางน่าสนใจน้อยลง)</td></tr>
+            <tr><th scope="row"><code>set ip next-hop</code></th><td>ตั้ง next-hop — BGP ใช้ keyword <code>peer-address</code> หรือ <code>self</code></td></tr>
+            <tr><th scope="row"><code>set local-preference</code></th><td>ค่า Local Preference (0–4294967295)</td></tr>
+            <tr><th scope="row"><code>set metric</code></th><td>แก้หรือตั้ง metric (ใส่ +value / -value ได้)</td></tr>
+            <tr><th scope="row"><code>set origin</code></th><td>ตั้ง origin เป็น igp หรือ incomplete</td></tr>
+            <tr><th scope="row"><code>set weight</code></th><td>ค่า Weight (0–65535)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>ตรรกะ OR vs AND ที่สับสนบ่อยที่สุด <span class="tag">ออกสอบ</span></h4>
+      <p><b>หลาย "ตัวแปร" ใน match ตัวเดียวกัน = OR</b> — ถ้าใน sequence เดียวมีหลาย ACL/prefix list/tag ใน match ชนิดเดียวกัน แค่<b>ตัวใดตัวหนึ่ง</b>ตรงก็ผ่าน<br/><span style="color:var(--ink-2)">ตัวอย่าง: sequence 10 มี ACL-ONE และ ACL-TWO → prefix ผ่านแค่อันใดอันหนึ่งก็พอ</span></p>
+      <p><b>หลาย "ตัวเลือก match" คนละชนิด = AND</b> — ถ้าใน sequence เดียวมี match คนละชนิด (เช่น match ACL + match metric) ต้องผ่าน<b>ทั้งหมด</b>ถึงจะเข้าเงื่อนไข<br/><span style="color:var(--ink-2)">ตัวอย่าง: sequence 10 ต้อง match ACL-ONE <b>และ</b> metric อยู่ระหว่าง 500–600 ถ้าไม่ครบทั้งสองจะไม่ผ่าน และถูก deny ถ้าไม่มี sequence อื่นที่ permit</span></p>
+      <p style="margin:0"><b>กับดักพิเศษ — deny ใน match:</b> คำสั่ง deny ที่อยู่ใน<b>ส่วน match</b> (เช่นใน ACL ที่ถูกอ้างอิง) จะถูกแยกออกและ<b>ไม่นับเป็น match</b>ของ sequence นั้นเลย — ตัวอย่างจากสไลด์: prefix 172.16.1.0/24 ถูก deny โดย ACL-ONE แปลว่ามัน "ไม่ match" ใน sequence 10 และ 20 จึงไม่ต้องพิจารณา action เลย แล้วไปตกที่ sequence 30 ซึ่งไม่มี match clause (= match ทุกอย่าง) จึงผ่านและถูกตั้ง metric เป็น 20</p>
+    </div>
+
+    <div class="fixnote" style="background:var(--slate-soft);margin-top:20px">
+      <b style="color:var(--slate)">keyword <code>continue</code>:</b> ปกติ route map หยุดที่ match แรก — ใส่ <code>continue</code> เพื่อให้ประมวลผล sequence ถัดไปต่อได้ ตัวอย่างจากสไลด์: prefix 192.168.1.1 match ทั้ง sequence 10, 20, 30 แต่เพราะใส่ <code>continue</code> แค่ที่ sequence 10 จึงประมวลผล 20 ต่อ แล้ว<b>หยุด</b>ที่ 20 (เพราะ 20 ไม่มี continue) ผลคือ metric = 20 และ next-hop = 10.12.1.1 — <b>หมายเหตุจากสไลด์เอง:</b> ไม่ค่อยมีคนใช้เพราะทำให้ troubleshoot ยากขึ้นมาก
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M4 4 L22 4 M4 10 L18 10 M4 16 L14 16 M4 22 L10 22" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <h2>BGP Route Filtering — 4 วิธี</h2>
+    </div>
+    <p class="sec-sub">ISP มักติดตั้ง route filter บน peering ที่ต่อกับลูกค้าเสมอ เพื่อให้แน่ใจว่ามีแต่เส้นทางของลูกค้าเท่านั้นที่ผ่าน — ป้องกันลูกค้ากลายเป็น transit AS โดยไม่ตั้งใจ · <b>ทั้ง 4 วิธีมี implicit deny</b> สำหรับ prefix ที่ไม่ได้ permit ไว้</p>
+
+    <div class="grid-2">
+      <div class="knob">
+        <span class="where c1">วิธีที่ 1</span>
+        <h3><Term id="distributeListBgp">Distribute List</Term> — ผ่าน ACL</h3>
+        <pre>neighbor 10.12.1.2 distribute-list ACL-ALLOW in</pre>
+        <p class="why" style="margin:0">รูปแบบ <code>neighbor ip-address distribute-list (acl-number / acl-name) (in / out)</code> ใต้ address family — <b>อย่าลืม</b>ว่า extended ACL สำหรับ BGP ใช้ช่อง source เทียบ network และช่อง destination เทียบ network mask (ตามที่อธิบายไว้ด้านบน) ตัวอย่างจากสไลด์: 100.64.2.192/26 ถูกปฏิเสธเพราะ prefix length ไม่ตรงกับ ACE ตัวที่สอง</p>
+      </div>
+      <div class="knob">
+        <span class="where c1">วิธีที่ 2</span>
+        <h3>Prefix List</h3>
+        <pre>neighbor 10.12.1.2 prefix-list RFC1918 in</pre>
+        <p class="why" style="margin:0">รูปแบบ <code>neighbor ip-address prefix-list prefix-list-name (in / out)</code> — ตัวอย่างจากสไลด์ใช้กรองให้เหลือเฉพาะเส้นทางในช่วง RFC 1918 ผลคือ 100.64.2.0/25, 100.64.2.192/26 และ 100.64.3.0/25 ถูกกรองออกทั้งหมดเพราะไม่อยู่ในเงื่อนไข</p>
+      </div>
+      <div class="knob">
+        <span class="where c2">วิธีที่ 3</span>
+        <h3><Term id="asPathAcl">AS Path ACL</Term> — ผ่าน regex</h3>
+        <pre>ip as-path access-list 1 permit ^$
+!
+neighbor 10.12.1.1 filter-list 1 out</pre>
+        <p class="why" style="margin:0">IOS รองรับ AS path ACL ได้ถึง <b>500</b> รายการ รูปแบบ <code>ip as-path access-list acl-number (deny / permit) regex-query</code> แล้วผูกด้วย <code>neighbor ip-address filter-list acl-number (in / out)</code> — <b>ตัวอย่างสำคัญ:</b> ใช้ <code>^$</code> เพื่อประกาศเฉพาะเส้นทางที่กำเนิดในเครื่องเอง นี่คือวิธีมาตรฐานในการ<b>ไม่ให้ตัวเองกลายเป็น transit AS</b> — ยืนยันผลได้จากการที่เส้นทางที่ประกาศออกไปไม่มี AS_Path เลย</p>
+      </div>
+      <div class="knob">
+        <span class="where c2">วิธีที่ 4</span>
+        <h3>Route Map — ทรงพลังที่สุด</h3>
+        <pre>neighbor 10.12.1.2 route-map RM-IN in</pre>
+        <p class="why" style="margin:0">รูปแบบ <code>neighbor ip-address route-map route-map-name (in / out)</code> — ต่างจาก 3 วิธีแรกตรงที่<b>แก้ไข path attribute ได้ด้วย</b> ไม่ใช่แค่ permit/deny ใช้คนละ route map สำหรับแต่ละทิศทางได้ (<b>best practice</b> คือแยก policy ขาเข้ากับขาออกของทุก neighbor)</p>
+      </div>
+    </div>
+
+    <div class="knob" style="margin-top:20px">
+      <span class="where c3">ตัวอย่างจากสไลด์ — Route Map 4 ขั้น</span>
+      <h3>รวมทุกเครื่องมือเข้าด้วยกัน</h3>
+      <ol style="margin:0 0 10px;padding-left:20px;color:var(--ink-2)">
+        <li>ปฏิเสธเส้นทางในช่วง 192.168.0.0/16 ด้วย prefix list</li>
+        <li>เส้นทางที่กำเนิดจาก AS 65200 และอยู่ในช่วง 100.64.0.0/10 → ตั้ง local preference = 222</li>
+        <li>เส้นทางจาก AS 65200 ที่ไม่เข้าเงื่อนไขข้อ 2 → ตั้ง weight = 65200</li>
+        <li>เส้นทางที่เหลือทั้งหมด → ปล่อยผ่านตามปกติ</li>
+      </ol>
+      <p class="why" style="margin:0"><b>ผลลัพธ์:</b> 192.168.2.2/32 และ 192.168.3.3/32 ถูกทิ้ง (ส่วน 192.168.1.1/32 ยังอยู่เพราะเป็นเส้นทางที่เครื่องนี้สร้างเอง ไม่ได้ผ่าน policy ขาเข้า) · 100.64.2.0/25 และ 100.64.2.192/26 ได้ local preference 222 · 10.12.1.0/24 และ 10.23.1.0/24 ได้ weight 65200 · ที่เหลือไม่ถูกแก้ไข</p>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h3>Clearing BGP Connections — เปลี่ยน policy แล้วต้องรีเฟรช</h3>
+      <p style="color:var(--ink-2);margin:0 0 10px">แก้ policy แล้วอาจต้อง refresh session ถึงจะมีผล มี 2 วิธี:</p>
+      <ul style="margin:0">
+        <li><b>Hard reset</b> — ตัด session ทิ้ง ลบเส้นทางของ peer ออกหมด <b>รบกวนมากที่สุด</b> · <code>clear ip bgp ip-address</code></li>
+        <li><b>Soft reset</b> — แค่ทำให้ cache เป็นโมฆะแล้วขอ advertisement ชุดเต็มจาก peer ใหม่ · <code>clear ip bgp ip-address soft</code> หรือแบบเจาะจง address family: <code>clear bgp afi safi (ip-address / *) soft [in | out]</code></li>
+      </ul>
+      <p style="color:var(--ink-2);margin-top:10px">ใช้ <code>*</code> แทน IP เพื่อล้างทุก session — <b>ข้อดีของ soft reset แบบเจาะจง family:</b> ลดจำนวนเส้นทางที่ต้องแลกเปลี่ยนใหม่เมื่อ peer เดียวตั้งไว้หลาย address family</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M13 3 L16 10 L23 10 L17.5 14.5 L19.5 22 L13 17.5 L6.5 22 L8.5 14.5 L3 10 L10 10 Z" fill="none" stroke="var(--slate)" stroke-width="1.6" stroke-linejoin="round"/>
+      </svg>
+      <h2><Term id="bgpCommunity">BGP Communities</Term></h2>
+    </div>
+    <p class="sec-sub">แท็กที่ติดไปกับเส้นทาง เพื่อให้ Router ต้นน้ำและปลายน้ำเอาไปใช้ตัดสิน routing policy ได้ — เป็น <b>optional transitive</b> attribute จึงเดินทางข้าม AS ได้ และเพิ่ม/ลบ/แก้ได้ทีละ Router ตลอดทาง</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>รูปแบบตัวเลข</h3>
+        <ul style="margin:0">
+          <li>เป็นเลข <b>32 บิต</b> แสดงได้ 2 แบบ: เลขเต็ม (0–4,294,967,295) หรือเลข 16 บิตสองตัวคั่นด้วยโคลอน <code>(0–65535):(0–65535)</code> ซึ่งเรียกว่า <b>new format</b></li>
+          <li><b>Private community</b> มีธรรมเนียมว่า 16 บิตแรก = AS ที่สร้าง community นั้น, 16 บิตหลัง = รูปแบบที่ AS นั้นกำหนดเอง</li>
+          <li>RFC 4360 (ปี 2006) เพิ่ม <b>extended format</b> ที่ให้โครงสร้างสำหรับข้อมูลหลายประเภท นิยมใช้กับบริการ VPN — ส่วน RFC 8092 รองรับ community ที่ใหญ่กว่า 32 บิต (นอกขอบเขตวิชานี้)</li>
+        </ul>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <caption>3 Well-Known Communities ที่ทุก Router รองรับ</caption>
+          <thead><tr><th scope="col">ชื่อ</th><th scope="col">ความหมาย</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Internet</th><td>ระบุว่าเส้นทางนี้ควรถูกประกาศออกอินเทอร์เน็ต — Router ขอบสามารถอนุญาตเฉพาะเส้นทางที่มี community นี้ออกไปได้ (<b>ไม่กรองอัตโนมัติ</b> ต้องทำเองด้วย outbound route map)</td></tr>
+            <tr><th scope="row">No_Advertise</th><td><b>ห้ามประกาศต่อให้ BGP peer ใด ๆ ทั้งสิ้น</b> ไม่ว่า iBGP หรือ eBGP</td></tr>
+            <tr><th scope="row">No_Export</th><td>ห้ามประกาศต่อให้ <b>eBGP peer</b> — แต่ยัง<b>ประกาศให้ iBGP peer ได้</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>Community ไม่ถูกส่งโดย default <span class="tag">ออกสอบ</span></h4>
+      <p>Router IOS และ IOS XE <b>ไม่ประกาศ BGP community ให้ peer โดยอัตโนมัติ</b> — ต้องเปิดทีละ neighbor ด้วยคำสั่ง <code>neighbor ip-address send-community [standard | extended | both]</code> ใต้ address family (ถ้าไม่ระบุ keyword จะส่งแบบ standard เป็นค่าเริ่มต้น)</p>
+      <p style="margin:0">อีกคำสั่งที่ควรเปิดไว้: <code>ip bgp-community new-format</code> ระดับ global config เพื่อให้แสดงผลเป็นรูปแบบ <code>65300:333</code> ที่อ่านง่าย แทนที่จะเป็นเลขทศนิยมยาว ๆ</p>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="knob">
+        <span class="where c3">Match ด้วย Community</span>
+        <h3>Community List</h3>
+        <pre>ip community-list 100 permit 333:333
+!
+route-map COMMUNITY-CHECK deny 10
+ match community 100
+route-map COMMUNITY-CHECK permit 20
+ set weight 111</pre>
+        <p class="why" style="margin:0">รูปแบบ <code>ip community-list (1-500 / standard name / expanded name) (permit / deny) community-pattern</code> — <b>Standard</b> หมายเลข 1–99 match well-known community หรือเลข private (<code>as-number:16-bit</code>) · <b>Expanded</b> หมายเลข 100–500 ใช้ regex ได้ · ตัวอย่างจากสไลด์: ปฏิเสธเส้นทางที่มี community 333:333 แล้วตั้ง weight 111 ให้ที่เหลือ ผลคือ 10.23.1.0/24 ถูกทิ้ง</p>
+      </div>
+      <div class="knob">
+        <span class="where c3">Set ด้วย Community</span>
+        <h3>keyword <code>additive</code> สำคัญมาก</h3>
+        <pre>set community 10:23              ← เขียนทับของเดิมทั้งหมด
+set community 3:0 3:3 10:10 additive  ← เพิ่มเข้าไปโดยไม่ลบของเดิม</pre>
+        <p class="why" style="margin:0">คำสั่ง <code>set community bgp-community [additive]</code> — <b>โดย default การตั้ง community จะเขียนทับของเดิมทิ้งทั้งหมด</b> ต้องใส่ <code>additive</code> ถึงจะเก็บของเดิมไว้ · ตัวอย่างจากสไลด์: 10.23.1.0/24 เดิมมี 333:333 และ 65300:333 พอสั่ง <code>set community 10:23</code> โดยไม่ใส่ additive ทั้งสองค่าเดิม<b>หายไป</b> เหลือแค่ 10:23 ส่วน 10.3.3.0/24 ที่ใช้ additive ยังเก็บ community เดิมไว้ครบ</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M4 22 L4 4 M4 22 L22 22" stroke="var(--coral)" stroke-width="2" stroke-linecap="round"/>
+        <rect x="7" y="14" width="3" height="6" fill="var(--coral)"/>
+        <rect x="12" y="9" width="3" height="11" fill="var(--coral)"/>
+        <rect x="17" y="5" width="3" height="15" fill="var(--coral)"/>
+      </svg>
+      <h2>BGP Best-Path Algorithm — 13 ขั้นตอน</h2>
+    </div>
+    <p class="sec-sub">หัวใจของบทนี้ — BGP ประกาศ<b>เฉพาะ best path เท่านั้น</b>ให้เพื่อนบ้าน และติดตั้งเฉพาะ best path ลง RIB · BGP คำนวณ best path ใหม่เมื่อเกิด 4 เหตุการณ์: next-hop เปลี่ยนสถานะการเข้าถึง, interface ที่ต่อกับ eBGP peer ล่ม, การ redistribution เปลี่ยน, หรือได้รับ/ถอนเส้นทางใหม่</p>
+
+    <div class="exam">
+      <h4>ก่อนถึง 13 ขั้นตอน — Longest Match มาก่อนเสมอ <span class="tag">ออกสอบ</span></h4>
+      <p>Router <b>ดู prefix length ก่อนเป็นอันดับแรกเสมอ</b> (กฎเดียวกับบทที่ 6) — prefix ที่ยาวกว่าชนะทันทีโดยไม่ต้องแตะ 13 ขั้นตอนเลย · 13 ขั้นตอนใช้ตัดสิน<b>เฉพาะเมื่อ prefix length เท่ากัน</b>เท่านั้น</p>
+      <p style="margin:0"><b>เทคนิคใช้ประโยชน์จากกฎนี้:</b> องค์กรที่มี 100.64.0.0/16 แต่ใช้จริงแค่ 2 subnet — ถ้าประกาศ /24 ทั้งสองตัวออกทุก Router จะคุมไม่ได้ว่าทราฟฟิกเข้าทางไหน และการปรับ PA ก็ไม่ช่วยเพราะ SP อาจมี policy ที่เพิกเฉยต่อ PA ของเรา · <b>วิธีที่การันตีได้จริง:</b> ประกาศ summary /16 ออก<b>ทั้งสอง</b> Router แล้วประกาศ prefix ที่ยาวกว่า (/24) ออกเฉพาะ Router ที่ต้องการให้รับทราฟฟิกของ subnet นั้น — Longest match บังคับให้ทราฟฟิกเข้าตามที่ออกแบบไว้อย่างแน่นอน</p>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>13 ขั้นตอนตามลำดับ — หยุดทันทีที่มีผู้ชนะ</caption>
+        <thead><tr><th scope="col">#</th><th scope="col">Attribute</th><th scope="col">ใครชนะ</th><th scope="col">หมายเหตุสำคัญ</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">1</th><td><Term id="bgpWeight">Weight</Term></td><td><b>สูง</b>กว่าชนะ</td><td>Cisco คิดเอง 16 บิต (0–65,535) — <b>มีผลเฉพาะในเครื่องนั้น ไม่ประกาศให้ใคร</b> มีผลกับทราฟฟิก<b>ขาออก</b>เท่านั้น</td></tr>
+          <tr><th scope="row">2</th><td><Term id="localPreference">Local Preference</Term></td><td><b>สูง</b>กว่าชนะ</td><td>Well-known discretionary 32 บิต default = <b>100</b> — ประกาศภายใน AS ได้แต่<b>ไม่ข้ามไป eBGP peer</b> ใช้คุมทางออกจาก AS</td></tr>
+          <tr><th scope="row">3</th><td>Locally Originated</td><td>ของตัวเองชนะ</td><td>ลำดับ: (1) ประกาศเองด้วย network (2) aggregate เอง (3) รับมาจาก peer</td></tr>
+          <tr><th scope="row">4</th><td>AIGP</td><td>มีชนะไม่มี</td><td>Optional non-transitive — ให้ BGP ตัดสินใจจาก metric ของ IGP ได้ ใช้ได้เมื่อทุก AS อยู่ใต้การควบคุมเดียวกัน</td></tr>
+          <tr><th scope="row">5</th><td>Shortest AS_Path</td><td><b>สั้น</b>กว่าชนะ</td><td>การทำ <code>as-path prepend</code> ทำให้ยาวขึ้น = แพ้ — ใช้คุมทราฟฟิก<b>ขาเข้า</b>โดย prepend ตอนประกาศออก และคุม<b>ขาออก</b>โดย prepend ตอนรับเข้า</td></tr>
+          <tr><th scope="row">6</th><td>Origin Type</td><td>IGP &gt; EGP &gt; Incomplete</td><td>Well-known mandatory — <code>network</code> statement ให้ origin = <b>i (IGP)</b>, redistribute ให้ = <b>? (Incomplete)</b> ซึ่งแพ้ที่สุด</td></tr>
+          <tr><th scope="row">7</th><td><Term id="med">MED</Term></td><td><b>ต่ำ</b>กว่าชนะ</td><td>Non-transitive 32 บิต ตั้งอัตโนมัติจาก metric ของ IGP — <b>เทียบได้เฉพาะเมื่อเส้นทางมาจาก ASN เดียวกัน</b> · RFC 4451: prefix ที่ไม่มี MED ให้ถือว่าเป็น 0 (ได้เปรียบ)</td></tr>
+          <tr><th scope="row">8</th><td>eBGP over iBGP</td><td>eBGP ชนะ</td><td>ลำดับ: eBGP &gt; confederation member AS &gt; iBGP</td></tr>
+          <tr><th scope="row">9</th><td>Lowest IGP Metric</td><td><b>ต่ำ</b>กว่าชนะ</td><td>เทียบ cost ของ IGP ที่ใช้ไปถึง next-hop ของ BGP</td></tr>
+          <tr><th scope="row">10</th><td>Oldest eBGP Path</td><td>เก่ากว่าชนะ</td><td>เพื่อความเสถียร — <b>ข้อเสีย:</b> ทำให้ผลลัพธ์เดาไม่ได้จากมุมมองการออกแบบ</td></tr>
+          <tr><th scope="row">11</th><td>Router ID</td><td><b>ต่ำ</b>กว่าชนะ</td><td>RID ของ eBGP Router ที่ประกาศมา — ถ้ามาจาก route reflector ให้ใช้ originator ID แทน</td></tr>
+          <tr><th scope="row">12</th><td>Minimum Cluster List Length</td><td><b>สั้น</b>กว่าชนะ</td><td>Cluster list เป็น non-transitive attribute ที่ route reflector <b>ต่อเพิ่ม</b> (ไม่เขียนทับ) ด้วย cluster ID ของตัวเอง ใช้กันลูป — พูดง่าย ๆ คือเลือกเส้นที่ผ่าน iBGP hop น้อยที่สุด</td></tr>
+          <tr><th scope="row">13</th><td>Lowest Neighbor Address</td><td><b>ต่ำ</b>กว่าชนะ</td><td>ขั้นสุดท้าย — <b>ใช้เฉพาะกับ iBGP peering</b> เพราะ eBGP ตัดสินจบไปแล้วที่ขั้น 10 (oldest path)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid-3" style="margin-top:20px">
+      <div class="card">
+        <h3>วิธีจำ 3 ตัวแรก</h3>
+        <p style="color:var(--ink-2);margin:0"><b>W-L-L</b> = <b>W</b>eight → <b>L</b>ocal Preference → <b>L</b>ocally originated — สามตัวแรกล้วนเป็นเรื่อง "ของตัวเอง" ทั้งหมด (ตั้งเอง, ชอบเอง, สร้างเอง) พอพ้นสามตัวนี้ถึงจะเริ่มดูข้อมูลจากภายนอก</p>
+      </div>
+      <div class="card">
+        <h3>ขาเข้า vs ขาออก</h3>
+        <p style="color:var(--ink-2);margin:0"><b>คุมทราฟฟิกขาออก</b> (เราเลือกทางออกเอง) → ใช้ Weight หรือ Local Preference<br/><b>คุมทราฟฟิกขาเข้า</b> (บังคับให้คนอื่นเลือกทางเข้าหาเรา) → ใช้ AS_Path prepend หรือ MED หรือเทคนิค longest match ด้านบน</p>
+      </div>
+      <div class="card">
+        <h3>ตัวไหน "สูงชนะ" ตัวไหน "ต่ำชนะ"</h3>
+        <p style="color:var(--ink-2);margin:0"><b>สูงชนะ:</b> Weight, Local Preference (สองตัวแรกพอดี)<br/><b>ต่ำ/สั้นชนะ:</b> AS_Path, MED, IGP metric, RID, Cluster list, Neighbor address — ที่เหลือเกือบทั้งหมด</p>
+      </div>
+    </div>
+
+    <div class="knob" style="margin-top:20px">
+      <span class="where c1">ตัวอย่างจากสไลด์ — อ่านผลจริง</span>
+      <h3>เห็นการตัดสินทีละขั้น</h3>
+      <p class="why"><b>Example 12-29 (ชนะที่ขั้น 2):</b> prefix 172.16.1.0/24 บน R2 มีสองเส้นทาง — ไม่มีการตั้ง weight จึงตกไปที่ local preference เส้นทางผ่าน AS 65300 ชนะเพราะมี local preference = 333</p>
+      <p class="why"><b>Example 12-30 (ชนะที่ขั้น 5):</b> ไม่มี weight, local preference เท่ากัน → เทียบ AS_Path เส้นทางที่สองผ่าน AS 65100 มีความยาว 1 ชนะเส้นทางแรกที่ยาว 2 (65300 65300)</p>
+      <p class="why"><b>Example 12-31 (ชนะที่ขั้น 6):</b> เส้นทางที่สองผ่าน AS 65100 ชนะเพราะมี origin = IGP ส่วนเส้นทางแรกมี origin = incomplete ซึ่งแพ้ที่สุด</p>
+      <p class="why" style="margin:0"><b>Example 12-32 (ชนะที่ขั้น 7):</b> R2 peer กับ AS 65300 เท่านั้น (เงื่อนไขที่ทำให้ MED ใช้เทียบได้) เส้นทางแรกมี MED = 0 ชนะเส้นทางที่สองที่มี MED = 33 เพราะต่ำกว่า</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="grid-2">
+      <div class="exam">
+        <h4>ช่องว่างที่ต้องรู้ <span class="tag">แจ้งเตือน</span></h4>
+        <p>MidEx ระบุหัวข้อ <b>"BGP Route Reflectors และ Confederations"</b> กับ <b>"BGP Multipath"</b> ไว้ในขอบเขตบทนี้ แต่สไลด์ต้นฉบับครอบคลุม<b>ไม่ครบ</b>:</p>
+        <ul>
+          <li><b>Route Reflector</b> — สไลด์พูดถึงแค่ผ่าน ๆ ในบริบทของ originator ID (ขั้นที่ 11) และ cluster list (ขั้นที่ 12) ของ best-path algorithm <b>ไม่มี</b>หัวข้ออธิบายแนวคิดหรือการตั้งค่าเลย</li>
+          <li><b>Confederations</b> — สไลด์ระบุชัดเจนว่า <i>"BGP confederations are beyond the scope of the CCNP and CCIE Enterprise Core"</i> มีแค่ชื่อโผล่ในลำดับความสำคัญของขั้นที่ 8</li>
+          <li><b>BGP Multipath</b> — <b>ไม่ปรากฏในสไลด์เลย</b>แม้แต่คำเดียว</li>
+        </ul>
+        <p style="margin:0">ไม่ได้เขียนหัวข้อเหล่านี้ขึ้นมาเองเพื่อความถูกต้อง — แนะนำให้หาเอกสารเพิ่มเติมเฉพาะสามหัวข้อนี้แยกต่างหาก</p>
+      </div>
+      <div class="card">
+        <h3>สรุปคำศัพท์บทนี้</h3>
+        <ul>
+          <li><b>Multihoming / Transit Routing</b> — ต่อหลายทางเพื่อสำรอง / กับดักการกลายเป็นทางผ่านให้คนอื่น</li>
+          <li><b>Prefix List</b> — เลือก prefix ด้วย bit pattern + ge/le</li>
+          <li><b>Regex / AS Path ACL</b> — เลือกเส้นทางจากรูปแบบ AS_Path</li>
+          <li><b>Route Map</b> — match + set ที่ทำได้ทั้งกรองและแก้ attribute</li>
+          <li><b>BGP Community</b> — แท็กเส้นทางข้าม AS ต้องเปิด send-community เอง</li>
+          <li><b>13-Step Best Path</b> — Weight → LocPrf → Local → AIGP → AS_Path → Origin → MED → ...</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Internetwork Chapter 12 · ตัวอย่างและตัวเลขอ้างอิงจากสไลด์ต้นฉบับ (Figure 12-3/12-7/12-8/12-12, Example 12-17/12-18/12-26/12-29 ถึง 12-32, Table 12-3/12-4/12-6/12-7/12-8) · แหล่งอ้างอิง: Chapter 12 slide deck, MidEx exam scope Chapter 12
+  </footer>
+
 </Layout>
