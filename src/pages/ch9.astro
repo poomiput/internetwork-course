@@ -1,7 +1,332 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import ComingSoon from "../components/ComingSoon.astro";
+import Term from "../components/Term.astro";
 ---
-<Layout title="Advanced OSPF" description="การปรับแต่ง OSPF ขั้นสูง เช่น Area type ต่าง ๆ, Route summarization, และ Authentication">
-  <ComingSoon n={9} title="Advanced OSPF" pages={48} accent="var(--coral)" blurb="การปรับแต่ง OSPF ขั้นสูง เช่น Area type ต่าง ๆ, Route summarization, และ Authentication" />
+<Layout title="Advanced OSPF" description="บทที่ 9 — Area, ABR, LSA Type 1-3, Discontiguous Network, OSPF Path Selection, Route Summarization, และ Route Filtering">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--slate)">Internetwork · Chapter 9 of 14</p>
+    <h1>Advanced OSPF</h1>
+    <p class="deck">บทที่ 8 ตั้งค่า OSPF ให้เพื่อนบ้านคุยกันได้แล้ว บทนี้ขยับไปดู "หลาย Area" พร้อมกัน — ทำไมต้องแบ่ง Area, LSA แต่ละชนิดพกอะไรข้ามระหว่าง Area, และ Router เลือกเส้นทางยังไงเมื่อรู้จักปลายทางเดียวกันจากหลาย Area</p>
+    <div class="credit-bar">
+      <span>Area 0 Backbone</span><span>ABR</span><span>LSA Type 1/2/3</span><span>Interarea Summarization</span><span>Route Filtering</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="grid-2">
+      <div class="card">
+        <h3>เชื่อมจากที่รู้แล้ว</h3>
+        <ul>
+          <li>จากบทที่ 8 เรารู้แล้วว่า OSPF เก็บ LSA ทุกตัวไว้ใน LSDB แล้วรัน SPF สร้าง SPT ของตัวเอง และ Area 0 เป็น Backbone ที่ Area อื่นต้องเชื่อมเข้ามาหา</li>
+          <li>สิ่งที่ยังไม่เคยพูดถึง: ทำไมต้องแบ่ง Area เลย ในเมื่อ Link-State ควรรู้ topology ทั้งหมดอยู่แล้ว — และถ้า Router ตัวหนึ่งอยู่หลาย Area พร้อมกัน มันส่งเส้นทางข้าม Area ยังไง</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>สิ่งที่บทนี้ครอบคลุม</h3>
+        <ul>
+          <li><b>Areas</b> — เหตุผลที่ต้องแบ่ง, ABR, Area ID, Intra-area/Interarea/External Route</li>
+          <li><b>Link-State Announcements</b> — LSA 6 ชนิด เจาะลึก Type 1/2/3</li>
+          <li><b>Discontiguous Networks</b> — ทำไม Area 0 ต้องต่อเนื่องกันเป็นผืนเดียว</li>
+          <li><b>OSPF Path Selection</b> — ลำดับความสำคัญ Intra-area &gt; Interarea &gt; External</li>
+          <li><b>Summarization of Routes</b> — สรุปเส้นทางที่ ABR</li>
+          <li><b>Route Filtering</b> — 3 วิธี กรองเส้นทางบน Link-State Protocol</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="13" cy="13" r="10" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
+        <circle cx="13" cy="13" r="4" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="1.5"/>
+      </svg>
+      <h2>Areas — ทำไมต้องแบ่ง</h2>
+    </div>
+    <p class="sec-sub">OSPF Area คือการจัดกลุ่ม Router interface เชิงตรรกะ — สมาชิกภาพถูกกำหนดที่ระดับ<b>interface</b> (ไม่ใช่ทั้ง Router) และ interface หนึ่งอยู่ได้แค่ Area เดียวเท่านั้น Router ทุกตัวใน Area เดียวกันต้องมี LSDB เหมือนกันเป๊ะ</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>ต้นทุนของ Single Area ที่ใหญ่เกินไป</h3>
+        <ul style="margin:0">
+          <li>ลิงก์ขยับนิดเดียวก็ต้องรัน SPF เต็มรูปแบบทั้ง Area</li>
+          <li>LSDB บวมจนจัดการยาก กิน memory มาก</li>
+          <li>SPF ใช้เวลานานขึ้นตามขนาด LSDB</li>
+          <li>ไม่มีการสรุปเส้นทาง (summarization) เกิดขึ้นเลย</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>สิ่งที่การแบ่ง Area แก้ให้</h3>
+        <p style="color:var(--ink-2);margin:0">Area หนึ่ง<b>ซ่อน topology</b> ของตัวเองจาก Area อื่น แต่ยังทำให้เครือข่ายภายในมองเห็นได้จาก Area อื่น — ลด LSDB ต่อ Area ให้เล็กลง คำนวณ SPF เร็วขึ้น และลดการ flood LSA เมื่อลิงก์ขยับ ข้อควรระวัง: การออกแบบต้องคิดถึง Router ที่<b>เล็กและช้าที่สุด</b>ใน Area นั้นเป็นตัวตั้ง</p>
+      </div>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>Router อยู่สอง Area ไม่ได้แปลว่าเส้นทางไหลข้ามกันเอง <span class="tag">ออกสอบ</span></h4>
+      <p>แค่ Router ตัวหนึ่งมี interface อยู่ทั้ง Area 1 และ Area 2 <b>ไม่ได้หมายความว่า</b>เส้นทางจาก Area 1 จะถูกส่งเข้า Area 2 โดยอัตโนมัติ — routing ระหว่าง Area ต้องอาศัยกลไก LSA Type 3 โดยเฉพาะ (ดูหัวข้อถัดไป) ไม่ใช่แค่การมี Router ร่วม Area เฉย ๆ</p>
+    </div>
+
+    <div class="figwrap" style="margin-top:20px">
+      <figure>
+        <svg viewBox="0 0 780 320" role="img" aria-label="ตัวอย่างจากสไลด์: หก Router แบ่งเป็นสาม Area โดย R1 R2 R3 R4 อยู่ Area 1234 ทางซ้าย R4 และ R5 เป็น ABR เชื่อม Area 1234 และ Area 56 เข้ากับ Area 0 ตรงกลาง ส่วน R5 และ R6 อยู่ Area 56 ทางขวา Router ใน Area 1234 มองเห็นเส้นทางจาก Area 0 และ Area 56 ผ่าน ABR เท่านั้น">
+          <rect x="20" y="90" width="280" height="150" rx="10" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <text x="160" y="80" text-anchor="middle" font-size="13" font-weight="700" fill="var(--slate)">Area 1234</text>
+          <rect x="45" y="110" width="70" height="40" rx="6" fill="var(--card)" stroke="var(--ink-2)" stroke-width="1.8"/>
+          <text x="80" y="134" text-anchor="middle" font-size="12" font-weight="700">R1</text>
+          <rect x="45" y="180" width="70" height="40" rx="6" fill="var(--card)" stroke="var(--ink-2)" stroke-width="1.8"/>
+          <text x="80" y="204" text-anchor="middle" font-size="12" font-weight="700">R2</text>
+          <rect x="140" y="110" width="70" height="40" rx="6" fill="var(--card)" stroke="var(--ink-2)" stroke-width="1.8"/>
+          <text x="175" y="134" text-anchor="middle" font-size="12" font-weight="700">R3</text>
+          <rect x="140" y="180" width="70" height="40" rx="6" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="2"/>
+          <text x="175" y="204" text-anchor="middle" font-size="12" font-weight="700">R4 (ABR)</text>
+
+          <rect x="330" y="120" width="120" height="80" rx="10" fill="var(--gold-soft)" stroke="var(--gold)" stroke-width="2"/>
+          <text x="390" y="105" text-anchor="middle" font-size="13" font-weight="700" fill="var(--gold)">Area 0 (Backbone)</text>
+
+          <rect x="480" y="90" width="280" height="150" rx="10" fill="var(--violet-soft)" stroke="var(--violet)" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <text x="620" y="80" text-anchor="middle" font-size="13" font-weight="700" fill="var(--violet)">Area 56</text>
+          <rect x="500" y="145" width="70" height="40" rx="6" fill="var(--card)" stroke="var(--coral)" stroke-width="2"/>
+          <text x="535" y="169" text-anchor="middle" font-size="12" font-weight="700">R5 (ABR)</text>
+          <rect x="600" y="145" width="70" height="40" rx="6" fill="var(--card)" stroke="var(--ink-2)" stroke-width="1.8"/>
+          <text x="635" y="169" text-anchor="middle" font-size="12" font-weight="700">R6</text>
+
+          <line x1="210" y1="200" x2="330" y2="170" stroke="var(--rule)" stroke-width="2"/>
+          <line x1="450" y1="160" x2="500" y2="165" stroke="var(--rule)" stroke-width="2"/>
+
+          <text x="390" y="270" text-anchor="middle" font-size="11.5" fill="var(--ink-2)">R4 และ R5 เป็น ABR — เชื่อม Area ตัวเองเข้ากับ Area 0 โดยตรง</text>
+          <text x="390" y="290" text-anchor="middle" font-size="11.5" fill="var(--ink-2)">Area 1234 ↔ Area 56 ต้องวิ่งผ่าน Area 0 เสมอ ไม่มีทางลัดตรงถึงกัน</text>
+        </svg>
+        <figcaption>topology อ้างอิงจากสไลด์ (Figure 9-3) — ใช้ต่อเนื่องตลอดบทนี้สำหรับตัวอย่าง Route type, LSA Type 3 และ Summarization</figcaption>
+      </figure>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3><Term id="abr">Area Border Router (ABR)</Term> และ Area ID</h3>
+        <p style="color:var(--ink-2);margin:0 0 10px">Area 0 คือ <Term id="backboneArea">Backbone Area</Term> — Area พิเศษที่ทุก Area ต้องเชื่อมเข้ามาหาโดยตรงเสมอ ABR คือ Router ที่เชื่อมทั้ง Area 0 และ Area อื่นอย่างน้อยหนึ่งตัว มีหน้าที่ประกาศเส้นทางข้าม Area (สร้าง LSA Type 3 — ดูหัวข้อถัดไป) — จากภาพ R4 และ R5 คือ ABR</p>
+        <p style="color:var(--ink-2);margin:0">Area ID เป็นเลข 32 บิต เขียนได้ทั้งแบบ decimal (0-4,294,967,295) หรือ dotted-decimal (0.0.0.0-255.255.255.255) — สอง Router ตั้งคนละรูปแบบกันได้และยังฟอร์ม adjacency กันได้ปกติ (ค่าจริงในหน่วยความจำเหมือนกัน แค่การพิมพ์ต่างกัน) OSPF hello จะประกาศ Area ID เป็น dotted-decimal เสมอไม่ว่าตอนตั้งค่าจะพิมพ์แบบไหน</p>
+      </div>
+      <div class="knob">
+        <span class="where c2">show ip route (จากตัวอย่าง R1)</span>
+        <h3>Intra-area vs Interarea vs External</h3>
+        <p class="out">O     10.24.1.0/29 [110/2] via ... (intra-area, Area 1234)
+O IA  10.56.1.0/24 [110/67] via ... (interarea, ผ่าน Area 0)</p>
+        <p class="why" style="margin:0"><Term id="intraAreaRoute">Intra-area route</Term> คือเส้นทางที่เรียนรู้จาก Router ใน Area เดียวกัน (แสดงเป็น <code>O</code>) — <Term id="interareaRoute">Interarea route</Term> คือเส้นทางที่เรียนรู้ผ่าน ABR จาก Area อื่น (แสดงเป็น <code>O IA</code>) — ส่วน <b>External route</b> คือเส้นทางที่มาจากนอกโดเมน OSPF ผ่านการทำ Redistribution</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="3" y="4" width="7" height="7" rx="1.5" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+        <rect x="10.5" y="10.5" width="7" height="7" rx="1.5" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+        <rect x="18" y="17" width="7" height="7" rx="1.5" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+      </svg>
+      <h2>Link-State Announcements — LSA 6 ชนิด</h2>
+    </div>
+    <p class="sec-sub">Router flood LSA ออกทุก interface ที่เปิด OSPF ทุกครั้งที่เพิ่ม/ลบ link ที่เชื่อมตรง — LSA พกรายชื่อ network ทั้งหมดที่ Router ตัวนั้นประกาศ</p>
+
+    <div class="tablewrap">
+      <table>
+        <caption>6 ชนิด LSA สำหรับ IPv4 (สังเกตว่าเลข Type กระโดดข้าม 6 ไป — ไม่ได้พิมพ์ตก)</caption>
+        <thead><tr><th scope="col">Type</th><th scope="col">ชื่อ</th><th scope="col">หน้าที่</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">1</th><td><Term id="routerLsa">Router LSA</Term></td><td>ประกาศ link ที่เกิดขึ้นภายใน Area นั้น</td></tr>
+          <tr><th scope="row">2</th><td>Network LSA</td><td>ประกาศ multi-access segment ที่มี DR</td></tr>
+          <tr><th scope="row">3</th><td><Term id="summaryLsa">Summary LSA</Term></td><td>ประกาศ network prefix ที่มาจาก Area อื่น</td></tr>
+          <tr><th scope="row">4</th><td>ASBR Summary LSA</td><td>ประกาศ summary LSA เฉพาะสำหรับ ASBR ตัวหนึ่ง</td></tr>
+          <tr><th scope="row">5</th><td>AS External LSA</td><td>ประกาศเส้นทางที่ผ่าน redistribution เข้ามา</td></tr>
+          <tr><th scope="row">7</th><td>NSSA External LSA</td><td>ประกาศเส้นทาง redistribution ภายใน NSSA</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--ink-2);font-size:.9rem;margin-top:10px">หัวข้อนี้เจาะลึกเฉพาะ Type 1, 2, 3 เพราะเป็นชุดที่ใช้สร้าง SPT สำหรับ intra-area และ interarea route โดยตรง — Type 4/5/7 เกี่ยวข้องกับ external route/redistribution ซึ่งมีรายละเอียดเพิ่มเติมนอกเหนือขอบเขตบทนี้</p>
+
+    <div class="card" style="margin-top:20px">
+      <h3>ส่วนประกอบของทุก LSA</h3>
+      <ul style="margin:0">
+        <li><b>LSA Type</b>, <b>Advertising Router</b> — ใครสร้าง LSA นี้</li>
+        <li><b>Age</b> — นับเพิ่มทีละ 1 วินาที ถ้าเกิน 1800 วินาที (30 นาที) เจ้าของต้องส่ง LSA ใหม่รีเซ็ต age เป็น 0 — ถ้า age ถึง 3600 วินาทีถือว่า LSA <b>ใช้ไม่ได้แล้ว</b></li>
+        <li><b>Sequence Number</b> — เลข 32 บิต แก้ปัญหาความล่าช้าในการ flood ที่อาจทำให้ LSA มาไม่เรียงลำดับ</li>
+      </ul>
+      <p style="color:var(--ink-2);margin-top:10px">Router ทุกตัวใน Area เดียวกันมีชุด LSA เหมือนกันเป๊ะ — ยกเว้น ABR ที่ต้องเก็บชุด LSA แยกกันของแต่ละ Area ที่ตัวเองเป็นสมาชิกอยู่</p>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3>Type 1 (Router) และ Type 2 (Network)</h3>
+        <p style="color:var(--ink-2);margin:0 0 10px"><b>Type 1</b> — ทุก Router สร้างเสมอ มีหนึ่งรายการต่อหนึ่ง link ที่เปิด OSPF พกค่า RID, Age, Sequence, จำนวน link และ Link ID — ดูด้วย <code>show ip ospf database router</code> — <b>ไม่ถูก flood ออกนอก Area ต้นทาง</b> ทำให้ topology ภายใน Area มองไม่เห็นจากภายนอกเลย</p>
+        <p style="color:var(--ink-2);margin:0"><b>Type 2</b> — DR เป็นคนสร้างเสมอ ระบุ Router ทุกตัวที่อยู่บน multi-access segment นั้น ถ้าไม่มีการเลือก DR เลย Type 2 จะไม่ปรากฏใน LSDB — ดูด้วย <code>show ip ospf database network</code> — ไม่ flood ออกนอก Area เช่นกัน</p>
+      </div>
+      <div class="knob">
+        <span class="where c1">Type 3 — พกเมตริกข้าม Area</span>
+        <h3>Metric ของ Type 3 คำนวณต่อกันเป็นทอด</h3>
+        <p class="why">ABR ตัวสุดท้ายที่ประกาศ prefix คือ "Advertising Router" ของ Type 3 นั้น เมตริกคำนวณสองแบบ: ถ้าสร้างจาก Type 1 = total metric ถึง Router ต้นทาง ถ้าสร้างต่อจาก Type 3 ของ Area 0 = metric ถึง ABR บวกกับ metric เดิมใน Type 3 นั้น</p>
+        <p class="out">R5 (ABR) → 10.56.1.0/24 : Type 3 metric = 2 (มุมมองจาก R4)
+R4 (ABR) → 10.56.1.0/24 : Type 3 metric = 2 (ส่งต่อเข้า Area 1234)
+R3 มองเห็น: metric ถึง R4 = 65, บวก Type 3 metric 2 → รวม = 67</p>
+        <p class="why" style="margin:0">จุดสำคัญ: R3 <b>ไม่รู้เลย</b>ว่า 10.56.1.0/24 อยู่ติดกับ ABR โดยตรงหรืออยู่อีกหลาย hop ข้างใน Area 56 — Type 3 LSA ซ่อนรายละเอียดนั้นไว้หมด รู้แค่ผลรวม metric สุดท้าย</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M4 4 L22 22 M22 4 L4 22" stroke="var(--blk)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <h2><Term id="discontiguousNetwork">Discontiguous Networks</Term></h2>
+    </div>
+    <p class="sec-sub">เกิดเมื่อทราฟฟิกระหว่าง Area ต้องวิ่ง "ผ่าน" Area ที่ไม่ใช่ Backbone แทนที่จะผ่าน Area 0 เสมอ</p>
+
+    <div class="card">
+      <h3>ทำไมมันพัง</h3>
+      <p style="color:var(--ink-2);margin:0">ตัวอย่างจากสไลด์: R3 (ABR ระหว่าง Area 34 กับ Area 0) แปลง Type 1 LSA ของ 10.34.1.0/24 จาก Area 34 เป็น Type 3 เข้า Area 0 แล้ว R2 เอา Type 3 นั้นมาสร้าง Type 3 อีกทีเข้า Area 23 — ดูเหมือนเส้นทางไหลข้าม Area 23 ได้ปกติ แต่ถ้าคิดต่อว่าเส้นทางนี้จะไหลจาก Area 23 เข้า Area 0 แล้วกระจายต่อไป Area 12 ด้วย — <b>ความคิดนี้ผิด</b></p>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>3 กฎที่ ABR ใช้ตัดสินใจสร้าง Type 3 LSA</caption>
+        <tbody>
+          <tr><td>Type 1 LSA ที่รับจาก Area ใด ๆ → สร้าง Type 3 เข้า Backbone และเข้า Area ที่ไม่ใช่ Backbone ได้</td></tr>
+          <tr><td>Type 3 LSA ที่รับจาก Area 0 → สร้าง Type 3 ใหม่เข้า Area ที่ไม่ใช่ Backbone ได้</td></tr>
+          <tr><th scope="row" style="font-weight:400">Type 3 LSA ที่รับจาก Area ที่ไม่ใช่ Backbone → ใส่เข้า LSDB ของ Area ต้นทางเท่านั้น <b>ห้ามสร้าง Type 3 ต่อไปให้ Area อื่น</b> (รวมถึง Area 0 ที่ถูกแบ่งเป็นเสี่ยง ๆ ด้วย)</th></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p style="color:var(--ink-2);font-size:.9rem;margin-top:10px">กฎข้อที่ 3 นี่เองคือตัวห้าม R2 ส่ง Type 3 ที่ได้จาก Area 23 ต่อเข้า Area 0/Area 12 — <b>ทางแก้ที่ง่ายที่สุด</b>: ทำให้ Area 0 เชื่อมต่อกันเป็นผืนเดียวจริง ๆ เสมอ ไม่ขาดตอน (สไลด์กล่าวถึง virtual link และ GRE tunnel ว่าเป็นทางแก้เชิงเทคนิคอีกแบบ แต่ไม่ได้อธิบายรายละเอียดในบทนี้ — ในสถานการณ์จริง Area 0 ขาดตอนมักเกิดจาก hardware ล่ม)</p>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M4 20 L4 6 L20 6" fill="none" stroke="var(--gold)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="4" cy="20" r="2" fill="var(--gold)"/><circle cx="20" cy="6" r="2" fill="var(--gold)"/>
+        <circle cx="12" cy="13" r="2" fill="var(--gold)"/>
+      </svg>
+      <h2>OSPF Path Selection</h2>
+    </div>
+    <p class="sec-sub">Router ทุกตัวรัน Dijkstra SPF ด้วยตรรกะเดียวกันหมด — ลำดับความสำคัญคือ <b>Intra-area &gt; Interarea &gt; External</b> เสมอ ไม่ว่าตัวเลข metric จะเป็นเท่าไหร่</p>
+
+    <div class="exam">
+      <h4>Intra-area ชนะ Interarea แม้ metric สูงกว่า <span class="tag">ออกสอบ</span></h4>
+      <p>ตัวอย่างจากสไลด์ (Figure 9-14): R1 มีสองทางไปหา 10.4.4.0/24 — ทางหนึ่งผ่าน Ethernet ที่เร็วกว่าแต่เป็น interarea อีกทางผ่าน Serial ที่ช้ากว่าแต่เป็น intra-area R1 <b>เลือกทางผ่าน Serial</b> (metric 111) แม้จะช้ากว่า เพราะกฎ Intra-area ชนะ Interarea เสมอโดยไม่สนใจ metric เลย</p>
+      <p style="margin:0">ถ้ามีหลายเส้นทางระดับเดียวกัน (เช่น intra-area ด้วยกันทั้งคู่) — ตอนนั้นถึงจะเทียบ metric กัน metric ต่ำสุดชนะ ถ้าเท่ากันเป๊ะติดตั้งทั้งคู่เป็น ECMP</p>
+    </div>
+
+    <div class="knob" style="margin-top:20px">
+      <span class="where c2">Interarea + ECMP</span>
+      <h3>เมื่อ Level เดียวกัน ถึงจะสู้กันด้วย Metric</h3>
+      <p class="why">ตัวอย่างจากสไลด์ (Figure 9-15): R1 คำนวณเส้นทางไป R6 — เส้น R1-R3-R5-R6 total metric 35 ชนะเส้น R1-R2-R4-R6 metric 40 (ทั้งคู่เป็น interarea เท่ากัน จึงเทียบ metric ตรง ๆ ได้) ถ้า metric เท่ากันเป๊ะทั้งสองเส้นจะถูกติดตั้งเป็น <Term id="ospfEcmp">ECMP</Term> พร้อมกัน — ค่า default สูงสุดคือ 4 เส้นทางต่อปลายทาง</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="3" y="4" width="8" height="6" rx="1.5" fill="none" stroke="var(--violet)" stroke-width="1.8"/>
+        <rect x="3" y="16" width="8" height="6" rx="1.5" fill="none" stroke="var(--violet)" stroke-width="1.8"/>
+        <path d="M11 7 L18 7 L18 19 L11 19" fill="none" stroke="var(--violet)" stroke-width="1.5"/>
+        <rect x="18" y="10" width="7" height="6" rx="1.5" fill="var(--violet-soft)" stroke="var(--violet)" stroke-width="1.8"/>
+      </svg>
+      <h2>Summarization of Routes</h2>
+    </div>
+    <p class="sec-sub">ยิ่งเครือข่ายใหญ่ (โดยเฉพาะฝั่ง ISP ที่มี Router เป็นพัน) การสรุปเส้นทางยิ่งสำคัญ — จำนวน Router/Network เท่าเดิม แต่ Type 1/Type 2 LSA ที่ละเอียดยิบถูกแทนที่ด้วย Type 3 ตัวเดียวที่เรียบง่ายกว่ามาก</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>ตัวอย่างจากสไลด์: 4 LSA เหลือ 1</h3>
+        <p style="color:var(--ink-2);margin:0">ใน Area 1234 มี Type 1 LSA 3 ตัว + Type 2 LSA 1 ตัวสำหรับ network 10.123.1.0/24 — พอออกไปนอก Area 1234 ทั้งหมดนี้เหลือแค่ <b>Type 3 LSA ตัวเดียว</b> นี่คือตัวอย่างรูปธรรมของการลด LSA ผ่านการแบ่ง Area</p>
+      </div>
+      <div class="card">
+        <h3>ทำไมช่วยเรื่อง Convergence</h3>
+        <p style="color:var(--ink-2);margin:0">ถ้าไม่สรุป: ลิงก์ภายใน Area 1 ขยับ → Area 0 ต้องรับรู้และรัน SPF สำหรับทุก prefix ย่อยที่เปลี่ยน ถ้าสรุปเป็น aggregate เดียว (เช่น 10.1.0.0/18) แล้ว: ลิงก์ภายในขยับแค่ Area 1 เท่านั้นที่ต้องรัน SPF ใหม่ — <b>Area 0 ไม่ถูกกระทบเลย</b> เพราะ prefix ย่อยไม่เคยถูกประกาศออกไปนอก Area 1 ตั้งแต่แรก</p>
+      </div>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>กฎของ <Term id="interareaSummarization">Interarea Summarization</Term></caption>
+        <tbody>
+          <tr><td>ทำงานเฉพาะกับ <b>Type 1 LSA</b> เท่านั้น (ผูกกับ source area หนึ่งเสมอ)</td></tr>
+          <tr><td>เมื่อ Type 1 ที่อยู่ในช่วงสรุปมาถึง ABR → ABR สร้าง Type 3 ของ aggregate แทน แล้ว<b>ระงับ</b> Type 3 ของ prefix ย่อยทั้งหมด</td></tr>
+          <tr><td>ไม่กระทบ Type 1 ใน source area เลย — ภายใน Area ต้นทางยังเห็น prefix ย่อยปกติทุกอย่าง สรุปแค่ตอนออกไปสู่ Area อื่น</td></tr>
+          <tr><td>ปกติตั้งค่าให้สรุปตอนเส้นทางกำลังเข้า Backbone จาก Area ที่ไม่ใช่ Backbone</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="knob" style="margin-top:20px">
+      <span class="where c1">ของจริงจากสไลด์ — R2 (ABR)</span>
+      <h3>Interarea Summarization Config</h3>
+      <pre>router ospf 1
+ area 1 range 172.16.0.0 255.255.0.0 cost 45</pre>
+      <p class="why">คำสั่ง <code>area area-id range network subnet-mask [advertise | not-advertise] [cost metric]</code> ใต้ OSPF process บน ABR — <code>advertise</code> คือค่า default (ไม่ใส่ก็ได้) ส่วน <code>cost</code> ตั้ง metric ตายตัวให้ summary route นั้น</p>
+      <p class="out">ก่อนสรุป (R3):  172.16.1.0/24 [110/3]  172.16.2.0/24 [110/x]  172.16.3.0/24 [110/x]
+หลังสรุป (R3):  172.16.0.0/16 [110/46]   ← เห็นแค่ก้อนเดียว, prefix ย่อยหายไปหมด</p>
+      <p class="why" style="margin:0">ถ้าไม่ระบุ <code>cost</code> เอง ค่า default ของ Summary LSA คือ metric ที่<b>ต่ำที่สุด</b>ในบรรดา prefix ย่อยทั้งหมดในช่วงนั้น และ ABR จะตรวจสอบซ้ำทุกครั้งที่ prefix ย่อยเพิ่ม/หาย — ถ้าเจอ metric ต่ำกว่าเดิม อัปเดต summary ทันที เหมือนพฤติกรรมของ EIGRP summarization ที่เคยเห็นในบทที่ 7</p>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h3>Discard Route — ตัวกันลูปที่แถมมาอัตโนมัติ</h3>
+      <p style="color:var(--ink-2);margin:0">ABR ที่ทำ Interarea Summarization จะติดตั้ง <b>Discard Route</b> ชี้ไป Null0 ที่ครอบคลุมช่วง aggregate ทั้งหมดโดยอัตโนมัติ — ป้องกัน routing loop ในกรณีที่บางส่วนของช่วง summary ไม่มี prefix จริงอยู่ใน RIB เลย (แพ็กเก็ตที่หลงมาจะถูกทิ้งแทนที่จะวนกลับไปกลับมา) AD ของ Discard Route คือ <b>110</b> สำหรับ internal route และ <b>254</b> สำหรับ external route</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M4 6 L22 6 L14 15 L14 22 L11 22 L11 15 Z" fill="none" stroke="var(--slate)" stroke-width="1.8" stroke-linejoin="round"/>
+      </svg>
+      <h2>Route Filtering</h2>
+    </div>
+    <p class="sec-sub">Protocol แบบ Vector กรองง่าย — กรองตรง ๆ ตอนส่ง update ไปเพื่อนบ้าน แต่ OSPF ต่างออกไป: ทุก Router ใน Area เดียวกันต้องมี LSDB เหมือนกันเป๊ะ จะไปกรองภายใน Area เฉย ๆ ไม่ได้ (จะทำให้ LSDB ไม่ตรงกันซึ่งผิดกติกา) — การกรองของ OSPF จึงมักเกิดที่ <b>ABR ตอนเส้นทางข้าม Area</b> เป็นหลัก</p>
+
+    <div class="grid-3">
+      <div class="knob">
+        <span class="where c1">ง่ายที่สุด แต่จำกัด</span>
+        <h3>1. Filtering ผ่าน Summarization</h3>
+        <pre>area 12 range 172.16.0.0 255.255.0.0 not-advertise</pre>
+        <p class="why" style="margin:0">ใช้ <code>not-advertise</code> แทน <code>cost</code> — ไม่สร้าง Type 3 ให้ช่วงนี้เลย prefix ย่อยเห็นได้แค่ใน Area ต้นทางเท่านั้น ข้อจำกัด: กรองได้ทั้งช่วงพร้อมกัน เลือกกรองบาง Area ปลายทางแบบเจาะจงไม่ได้ (เช่น "อยากให้เห็นใน Area 0 แต่ไม่เห็นใน Area 34" ทำแบบนี้ไม่ได้)</p>
+      </div>
+      <div class="knob">
+        <span class="where c2">เจาะจงทิศทาง+Area</span>
+        <h3>2. Area Filtering</h3>
+        <pre>area 34 filter-list prefix MYLIST in</pre>
+        <p class="why" style="margin:0">คำสั่ง <code>area area-id filter-list prefix prefix-list-name {'{'}in | out{'}'}</code> บน ABR — เส้นทางต้นฉบับยังถูกติดตั้งใน LSDB ของ Area ต้นทางและ RIB ของ ABR เองตามปกติ แค่ถูกกรองตอนสร้าง/รับ Type 3 เข้า/ออก Area ที่ระบุ — แก้ข้อจำกัดของวิธีที่ 1 ได้ เลือกทิศทางและ Area ปลายทางได้ละเอียดกว่า</p>
+      </div>
+      <div class="knob">
+        <span class="where c3">เฉพาะ Router ตัวเดียว</span>
+        <h3>3. Local Distribute List</h3>
+        <pre>distribute-list prefix MYLIST in</pre>
+        <p class="why" style="margin:0">คำสั่ง <code>distribute-list {'{'}acl | prefix-list | route-map{'}'} in</code> ใต้ OSPF process — LSDB ยังเหมือนเดิมทุก Router ใน Area (ไม่ผิดกติกา Link-State) แค่<b>ห้ามติดตั้งเข้าตัว RIB ท้องถิ่น</b>ของ Router ตัวนั้นเท่านั้น เหมาะกับกรณีที่อยากซ่อนเส้นทางจาก Router บางตัวโดยเฉพาะ ไม่ใช่ทั้ง Area</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="grid-2">
+      <div class="exam">
+        <h4>ช่องว่างที่ต้องรู้ <span class="tag">แจ้งเตือน</span></h4>
+        <p>MidEx ระบุหัวข้อ <b>"OSPF Special Area Types (Stub, NSSA)", "Virtual Links", "OSPF Authentication", "OSPF Fast Convergence"</b> และ <b>"OSPF Graceful Restart"</b> ไว้ในขอบเขต Advanced OSPF แต่เนื้อหาเหล่านี้<b>ไม่ปรากฏ</b>ในสไลด์ต้นฉบับ Chapter 9 เลย (สไลด์ชุดนี้เน้น Area/LSA/Summarization/Filtering เท่านั้น) สไลด์เพียงกล่าวถึง "virtual link" ผ่าน ๆ หนึ่งประโยคตอนพูดเรื่อง Discontiguous Network โดยไม่มีรายละเอียดการตั้งค่าเลย — ไม่ได้เขียนหัวข้อเหล่านี้ขึ้นมาเองเพื่อความถูกต้อง แนะนำให้หาสไลด์/เอกสารเพิ่มเติมแยกต่างหาก นอกจากนี้ ASBR ในฐานะ "Router Type" ก็ยังไม่ถูกอธิบายเป็นคำนิยามตรง ๆ (มีแค่ชื่อโผล่ในคำอธิบาย Type 4 LSA) และ OSPFv3 (IPv6) ยังไม่ได้ครอบคลุมในบทนี้เช่นกัน</p>
+      </div>
+      <div class="card">
+        <h3>สรุปคำศัพท์บทนี้</h3>
+        <ul>
+          <li><b>ABR</b> — Router ที่เชื่อม Area 0 กับ Area อื่นอย่างน้อยหนึ่งตัว</li>
+          <li><b>Intra-area / Interarea</b> — เส้นทางในเชื่อม Area เดียวกัน / ผ่าน ABR ข้าม Area</li>
+          <li><b>Router LSA (Type 1) / Summary LSA (Type 3)</b> — พก topology ภายใน Area / พก metric สรุปข้าม Area</li>
+          <li><b>Discontiguous Network</b> — Area 0 ขาดตอน ทำให้ route ข้าม Area พังตามกฎ ABR</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Internetwork Chapter 9 · ตัวอย่าง topology และตัวเลขอ้างอิงจากสไลด์ต้นฉบับ (Figure 9-3, 9-10, 9-11, 9-14, 9-15, 9-19–9-21) · แหล่งอ้างอิง: Chapter 9 slide deck, MidEx exam scope
+  </footer>
+
 </Layout>

@@ -218,4 +218,49 @@ export const terms = {
     full: "",
     def: "เลข 32 บิตที่ไม่ซ้ำกันในโดเมน OSPF ใช้เป็นฐานสร้าง topology ทั้งหมด — ตั้งค่าคงที่ได้ด้วย router-id แล้วสั่ง clear ip ospf process เพื่อให้มีผลจริง",
   },
+  abr: {
+    term: "Area Border Router (ABR)",
+    full: "",
+    def: "Router ที่เชื่อมทั้ง Area 0 (Backbone) และ Area อื่นอย่างน้อยหนึ่งตัวพร้อมกัน มีหน้าที่แปลง Type 1 LSA ของ Area หนึ่งให้เป็น Type 3 LSA ประกาศเข้า Area อื่น",
+  },
+  backboneArea: {
+    term: "Backbone Area",
+    full: "",
+    def: "Area 0 — Area พิเศษที่ทุก OSPF Area ต้องเชื่อมเข้ามาหาโดยตรงเสมอ เส้นทางระหว่าง Area ที่ไม่ใช่ Backbone ต้องวิ่งผ่าน Area 0 เท่านั้น",
+  },
+  intraAreaRoute: {
+    term: "Intra-area Route",
+    full: "",
+    def: "เส้นทางที่ Router เรียนรู้จาก Router อื่นภายใน Area เดียวกัน แสดงในตาราง routing ด้วยตัวอักษร O — OSPF ให้ความสำคัญกับเส้นทางประเภทนี้สูงสุดเสมอ ไม่ว่า metric จะเป็นเท่าไหร่",
+  },
+  interareaRoute: {
+    term: "Interarea Route",
+    full: "",
+    def: "เส้นทางที่ Router เรียนรู้ผ่าน ABR จาก Area อื่น แสดงในตาราง routing ด้วย O IA — มีความสำคัญรองจาก Intra-area route เสมอ",
+  },
+  routerLsa: {
+    term: "Router LSA (Type 1)",
+    full: "",
+    def: "LSA ที่ทุก OSPF Router สร้างเสมอ มีหนึ่งรายการต่อหนึ่ง link ที่เปิด OSPF ใช้สร้างโครงสร้าง topology ภายใน Area — ไม่ถูก flood ออกนอก Area ต้นทาง",
+  },
+  summaryLsa: {
+    term: "Summary LSA (Type 3)",
+    full: "",
+    def: "LSA ที่ ABR สร้างเพื่อประกาศ network prefix จาก Area หนึ่งเข้าไปยังอีก Area หนึ่ง พกแค่ metric รวมสุดท้าย ไม่พกรายละเอียด topology ภายในของ Area ต้นทาง",
+  },
+  discontiguousNetwork: {
+    term: "Discontiguous Network",
+    full: "",
+    def: "สถานการณ์ที่ทราฟฟิกระหว่าง Area ต้องพยายามวิ่งผ่าน Area ที่ไม่ใช่ Backbone แทนที่จะผ่าน Area 0 — เกิดปัญหาเพราะ ABR ห้ามสร้าง Type 3 LSA ต่อจาก Type 3 ที่รับมาจาก Area อื่นที่ไม่ใช่ Area 0 ทางแก้พื้นฐานคือทำให้ Area 0 เชื่อมต่อกันเป็นผืนเดียวเสมอ",
+  },
+  ospfEcmp: {
+    term: "OSPF Equal-Cost Multipathing",
+    full: "",
+    def: "การติดตั้งหลายเส้นทางที่ metric เท่ากันเป๊ะพร้อมกันในระดับความสำคัญเดียวกัน (intra-area ด้วยกัน หรือ interarea ด้วยกัน) ค่า default สูงสุดคือ 4 เส้นทางต่อปลายทาง",
+  },
+  interareaSummarization: {
+    term: "Interarea Summarization",
+    full: "",
+    def: "การที่ ABR สรุปหลาย Type 1 LSA ในช่วงที่กำหนดให้เหลือเป็น Type 3 LSA ตัวเดียวก่อนประกาศออกนอก Area ต้นทาง ลดขนาด LSDB และจำกัดผลกระทบของ SPF เมื่อลิงก์ภายใน Area ขยับ",
+  },
 };
