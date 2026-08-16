@@ -1,7 +1,256 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import ComingSoon from "../components/ComingSoon.astro";
+import Term from "../components/Term.astro";
 ---
-<Layout title="EIGRP" description="Enhanced Interior Gateway Routing Protocol — โปรโตคอล routing แบบ distance-vector ขั้นสูงของ Cisco">
-  <ComingSoon n={7} title="EIGRP" pages={33} accent="var(--coral)" blurb="Enhanced Interior Gateway Routing Protocol — โปรโตคอล routing แบบ distance-vector ขั้นสูงของ Cisco" />
+<Layout title="EIGRP" description="บทที่ 7 — EIGRP ตัวเดียวลงลึก: Successor/Feasible Successor, DUAL, Metric Formula, Timer, และ Route Summarization">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--slate)">Internetwork · Chapter 7 of 14</p>
+    <h1>EIGRP Deep Dive</h1>
+    <p class="deck">บทที่ 6 พูดถึง Enhanced Distance Vector แบบภาพรวม บทนี้ลงรายละเอียดเฉพาะ EIGRP ตัวเดียว: มันคุยกับเพื่อนบ้านยังไง คำนวณ metric ยังไง ตรวจจับสายขาดและ converge ใหม่ยังไง</p>
+    <div class="credit-bar">
+      <span>DUAL</span><span>Successor / Feasible Successor</span><span>Wide Metrics</span><span>Variance</span><span>Route Summarization</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="grid-2">
+      <div class="card">
+        <h3>เชื่อมจากที่รู้แล้ว</h3>
+        <ul>
+          <li>จากบทที่ 6 เรารู้แล้วว่า EIGRP เป็น <b>Hybrid/Enhanced Distance Vector</b> — ใช้ DUAL คำนวณ, ส่ง hello สร้างความสัมพันธ์เพื่อนบ้านแบบ link-state, ส่งเฉพาะส่วนที่เปลี่ยนไม่ส่งทั้งตาราง, และรองรับทั้ง equal-cost และ unequal-cost load balancing</li>
+          <li>สิ่งที่ยังไม่เคยพูดถึง: EIGRP รู้ได้ยังไงว่าเส้นทางไหนเป็น "ตัวหลัก" เส้นไหนเป็น "ตัวสำรองที่ใช้ได้ทันทีไม่ต้องคำนวณใหม่" — และตัวเลข metric อย่าง 3328, 5632 ที่เห็นในบทที่ 6 มาจากสูตรไหน</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>สิ่งที่บทนี้ครอบคลุม</h3>
+        <ul>
+          <li><b>EIGRP Fundamentals</b> — Successor, Feasible Successor, Feasibility Condition, Topology Table, Packet Types</li>
+          <li><b>Path Metric Calculation</b> — Classic Formula, K values, Wide Metrics, Variance</li>
+          <li><b>Failure Detection and Timers</b> — Hello/Hold Timer, Convergence, Query/Reply Process</li>
+          <li><b>Route Summarization</b> — สรุปเส้นทางตาม interface</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="7" cy="7" r="4" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
+        <circle cx="19" cy="7" r="4" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
+        <circle cx="13" cy="19" r="4" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
+        <line x1="9.5" y1="9.5" x2="16.5" y2="16.5" stroke="var(--slate)" stroke-width="1.5"/>
+        <line x1="16.5" y1="9.5" x2="9.5" y2="16.5" stroke="var(--slate)" stroke-width="1.5"/>
+      </svg>
+      <h2>EIGRP Fundamentals</h2>
+    </div>
+    <p class="sec-sub">Router หนึ่งตัวรัน EIGRP process แยกได้หลายตัวพร้อมกัน แต่ละ process ผูกกับ <Term id="asEigrp">Autonomous System</Term> ของตัวเอง — Router ที่อยู่ AS เดียวกันเท่านั้นที่จะแลกเปลี่ยนเส้นทางกัน และต้องใช้สูตรคำนวณ metric แบบเดียวกันด้วย</p>
+
+    <div class="tablewrap">
+      <table>
+        <caption>ศัพท์หลักของ EIGRP — ต้องแยกให้ออกว่าคำไหนคือ "เส้นทาง" คำไหนคือ "ตัวเลข" คำไหนคือ "Router"</caption>
+        <thead><tr><th scope="col">คำศัพท์</th><th scope="col">ความหมาย</th></tr></thead>
+        <tbody>
+          <tr><th scope="row"><Term id="successorRoute">Successor Route</Term></th><td>เส้นทางที่มี metric ต่ำที่สุดไปยังปลายทาง — ถูกติดตั้งใน RIB จริง</td></tr>
+          <tr><th scope="row"><Term id="successor">Successor</Term></th><td>Router ตัวถัดไป (next-hop) ตัวแรกของ Successor Route</td></tr>
+          <tr><th scope="row"><Term id="feasibleDistance">Feasible Distance (FD)</Term></th><td>ค่า metric ของเส้นทางที่ต่ำที่สุดไปถึงปลายทาง (คือ metric ของ Successor Route นั่นเอง)</td></tr>
+          <tr><th scope="row"><Term id="reportedDistance">Reported Distance (RD)</Term></th><td>ระยะที่เพื่อนบ้าน "รายงาน" มาให้ — ค่านี้คือ FD ของฝั่งเพื่อนบ้านเอง ไม่ใช่ของเรา</td></tr>
+          <tr><th scope="row"><Term id="feasibilityCondition">Feasibility Condition</Term></th><td>เงื่อนไขที่เส้นทางสำรองต้องผ่านก่อนถูกเก็บเป็น Feasible Successor: RD ของเพื่อนบ้านต้อง<b>น้อยกว่า</b> FD ที่เราคำนวณเอง — รับประกันว่าเส้นสำรองนั้นไม่มีทางวนกลับมาหาเราเอง (loop-free)</td></tr>
+          <tr><th scope="row"><Term id="feasibleSuccessor">Feasible Successor</Term></th><td>เส้นทางที่ผ่าน Feasibility Condition แล้ว ถูกเก็บไว้เป็นตัวสำรอง — สลับมาใช้ได้ <b>ทันที</b> โดยไม่ต้องคำนวณ DUAL ใหม่เมื่อ Successor ล่ม</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="figwrap" style="margin-top:20px">
+      <figure>
+        <svg viewBox="0 0 720 260" role="img" aria-label="ตัวอย่างจากสไลด์: R1 ต้องการไปที่เครือข่าย 10.4.4.0/24 มีสองเส้นทาง เส้นทางผ่าน R3 คือ R1 ไป R3 ไป R4 มี Feasible Distance 3328 ซึ่งเป็น Successor Route ส่วน R3 รายงาน Reported Distance ของตัวเองว่า 3072 อีกเส้นทางคือ R1 ไป R4 โดยตรง ซึ่ง R4 รายงาน Reported Distance 2816 มายัง R1 และ R2 เนื่องจาก 2816 น้อยกว่า Feasible Distance 3328 เส้นทางนี้จึงผ่าน Feasibility Condition กลายเป็น Feasible Successor">
+          <rect x="40" y="100" width="120" height="50" rx="8" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/>
+          <text x="100" y="130" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)">R1</text>
+
+          <rect x="300" y="30" width="120" height="50" rx="8" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="2"/>
+          <text x="360" y="60" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)">R3</text>
+
+          <rect x="560" y="100" width="120" height="50" rx="8" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="2"/>
+          <text x="620" y="123" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)">R4</text>
+          <text x="620" y="140" text-anchor="middle" font-size="9.5" fill="var(--ink-2)">10.4.4.0/24</text>
+
+          <line x1="160" y1="115" x2="300" y2="60" stroke="var(--fwd)" stroke-width="3"/>
+          <line x1="420" y1="55" x2="560" y2="115" stroke="var(--fwd)" stroke-width="3"/>
+          <text x="360" y="20" text-anchor="middle" font-size="12" font-weight="700" fill="var(--fwd)">Successor Route: R1→R3→R4 — FD = 3328</text>
+          <text x="360" y="95" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">R3 รายงาน RD ของตัวเอง = 3072</text>
+
+          <line x1="160" y1="140" x2="560" y2="140" stroke="var(--gold)" stroke-width="3" stroke-dasharray="6 4"/>
+          <text x="360" y="180" text-anchor="middle" font-size="12" font-weight="700" fill="var(--gold)">Feasible Successor: R1→R4 — RD = 2816</text>
+          <text x="360" y="200" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">2816 &lt; 3328 → ผ่าน Feasibility Condition</text>
+
+          <rect x="230" y="220" width="260" height="30" rx="6" fill="var(--card)" stroke="var(--rule)" stroke-width="1.5"/>
+          <text x="360" y="240" text-anchor="middle" font-size="11" fill="var(--ink)">Successor = R3 (next-hop ตัวแรกของ Successor Route)</text>
+        </svg>
+        <figcaption>ตัวเลขจากสไลด์ต้นฉบับ (Figure 7-3): ถ้า R1↔R3 ล่ม เส้นทางผ่าน R4 (RD 2816) จะถูกเลื่อนเป็น Successor <b>ทันที</b> โดยไม่ต้องรอ DUAL คำนวณใหม่ เพราะผ่าน Feasibility Condition ไว้ล่วงหน้าแล้ว</figcaption>
+      </figure>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3><Term id="topologyTable">Topology Table</Term> — จุดที่ทำให้ EIGRP ไม่ใช่ Distance Vector "แท้"</h3>
+        <p style="color:var(--ink-2);margin:0 0 10px">Distance Vector ทั่วไปรู้แค่เส้นทางที่ดีที่สุดเส้นเดียว แต่ EIGRP เก็บ Topology Table แยกจาก Routing Table — เป็นส่วนหนึ่งของ DUAL ที่เก็บทุก prefix ที่ประกาศเข้ามาในระบบ AS พร้อม:</p>
+        <ul style="margin:0">
+          <li>Network prefix</li>
+          <li>เพื่อนบ้านทุกตัวที่เคยประกาศ prefix นี้เข้ามา</li>
+          <li>Metric จากแต่ละเพื่อนบ้าน (RD, hop count)</li>
+          <li>ค่าดิบที่ใช้คำนวณ metric (load, reliability, delay, minimum bandwidth)</li>
+        </ul>
+        <p style="color:var(--ink-2);margin:10px 0 0">ตรวจสอบด้วย <code>show ip eigrp topology</code> — จะเห็นทั้ง Successor และ Feasible Successor พร้อมกัน</p>
+      </div>
+      <div class="knob">
+        <span class="where c1">5 ชนิด Packet</span>
+        <h3>EIGRP Packet Types</h3>
+        <table style="width:100%;font-size:.85rem;border-collapse:collapse">
+          <thead><tr><th style="text-align:left;padding:4px 6px">Type</th><th style="text-align:left;padding:4px 6px">หน้าที่</th></tr></thead>
+          <tbody>
+            <tr><td style="padding:4px 6px"><b>Hello</b></td><td style="padding:4px 6px">ค้นหา + ตรวจสุขภาพเพื่อนบ้าน</td></tr>
+            <tr><td style="padding:4px 6px"><b>Request</b></td><td style="padding:4px 6px">ขอข้อมูลเจาะจงจากเพื่อนบ้าน</td></tr>
+            <tr><td style="padding:4px 6px"><b>Update</b></td><td style="padding:4px 6px">ส่งข้อมูลเส้นทาง/reachability</td></tr>
+            <tr><td style="padding:4px 6px"><b>Query</b></td><td style="padding:4px 6px">ถามหาเส้นทางใหม่ตอน converge</td></tr>
+            <tr><td style="padding:4px 6px"><b>Reply</b></td><td style="padding:4px 6px">ตอบกลับ Query</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M4 20 L10 8 L15 15 L22 4" fill="none" stroke="var(--coral)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h2>Path Metric Calculation</h2>
+    </div>
+    <p class="sec-sub">EIGRP มี 2 สูตร: <b>Classic Metric</b> (ของเดิม) กับ <b>Wide Metric</b> (ของใหม่ รองรับลิงก์ความเร็วสูง) — ทั้งสองสูตรใช้ค่าถ่วงน้ำหนัก K1-K5 (Wide เพิ่ม K6) กำหนดว่าปัจจัยไหนถูกนำมาคิดคำนวณบ้าง</p>
+
+    <div class="knob">
+      <span class="where c2">ค่า Default</span>
+      <h3>Classic Metric Formula — เหลือแค่ Bandwidth + Delay</h3>
+      <p class="why">EIGRP ใช้ <Term id="kValues">K Values</Term> (K1-K5) กำหนดว่าปัจจัยไหนถูกนำมาคิดคำนวณบ้างและมีน้ำหนักเท่าไหร่ — ค่า default คือ K1=K3=1, K2=K4=K5=0 ทำให้สูตรเต็มยุบเหลือแค่สองปัจจัย: <b>Bandwidth</b> (ลิงก์ที่ช้าที่สุดในเส้นทาง สเกลเทียบกับ 10 Gbps) และ <b>Delay</b> (ผลรวม delay ตลอดเส้นทาง หน่วย 10 μs) คูณผลลัพธ์ด้วย 256 เพื่อขยายจาก 24 บิตเป็น 32 บิต (มาจากสูตร IGRP เดิม)</p>
+      <p class="out" style="margin:0">Metric = (Bandwidth_scaled + Delay_scaled) × 256</p>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>Default EIGRP Interface Metric (Classic) — ยิ่งช้ายิ่งเลขสูง</caption>
+        <thead><tr><th scope="col">ชนิด Interface</th><th scope="col">ความเร็ว (kbps)</th><th scope="col">Delay</th><th scope="col">Metric</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Serial</th><td>64</td><td>20,000 μs</td><td>40,512,000</td></tr>
+          <tr><th scope="row">T1</th><td>1,544</td><td>20,000 μs</td><td>2,170,031</td></tr>
+          <tr><th scope="row">Ethernet</th><td>10,000</td><td>1,000 μs</td><td>281,600</td></tr>
+          <tr><th scope="row">FastEthernet</th><td>100,000</td><td>100 μs</td><td>28,160</td></tr>
+          <tr><th scope="row">GigabitEthernet</th><td>1,000,000</td><td>10 μs</td><td>2,816</td></tr>
+          <tr><th scope="row">10 GigabitEthernet</th><td>10,000,000</td><td>10 μs</td><td>512</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>ทำไมต้องมี <Term id="wideMetric">Wide Metric</Term> <span class="tag">ออกสอบ</span></h4>
+      <p>สูตร Classic วัด bandwidth เป็นกิโลไบต์/วินาที ซึ่งไม่พอสำหรับลิงก์เร็วมาก ๆ — ตัวอย่างจากสไลด์: GigabitEthernet (2816) กับ 10-GigE (512) ยังแยกกันได้ แต่พอเทียบ 11-GigE กับ 20-GigE ทั้งคู่กลับได้ metric <b>256 เท่ากันเป๊ะ</b> เพราะสูตร Classic ไม่มีความละเอียดพอจะแยกลิงก์ที่เร็วกว่า 10 Gbps ออกจากกัน</p>
+      <p style="margin:0"><b>ทางแก้:</b> Wide Metric สเกลค่าด้วยตัวคูณ 65,535 แทน รองรับความเร็วได้สูงสุดถึง 655 Tbps และเพิ่ม K6 สำหรับปัจจัยใหม่ในอนาคต (เช่น jitter, energy) — ตั้ง K1=K3=1, K2=K4=K5=K6=0 จะได้ค่าที่ backward-compatible กับ Classic เป๊ะ ทำให้ Router รุ่นเก่ากับใหม่คุยกันรู้เรื่อง (EIGRP ตรวจจับเองว่าเพื่อนบ้านใช้ metric แบบไหน แล้ว unscale ให้อัตโนมัติ)</p>
+    </div>
+
+    <div class="knob" style="margin-top:20px">
+      <span class="where c3">ต่อเนื่องจากบทที่ 6</span>
+      <h3><Term id="varianceValue">Variance</Term> — คำนวณตัวคูณสำหรับ Unequal-Cost Load Balancing</h3>
+      <p class="why">ใช้ตัวเลขเดียวกับตัวอย่างบทที่ 6: Successor R1-R2-R3 metric 3328, Feasible Successor R1-R4-R3 metric 5632 — คำถามคือต้องตั้ง <code>variance</code> เท่าไหร่ถึงจะรวมเส้นที่สองเข้ามาด้วย</p>
+      <pre>ตัวคูณที่ต้องการ = FS metric ÷ Successor metric = 5632 ÷ 3328 = 1.69 → ปัดขึ้นเป็น 2
+
+router eigrp 100
+ variance 2</pre>
+      <p class="why" style="margin:0">ตรวจสอบ: Variance Value = FD × ตัวคูณ = 3328 × 2 = 6656 — เพราะ FS metric (5632) <b>น้อยกว่า</b> Variance Value (6656) เส้นทางนี้จึงถูกติดตั้งเพิ่มเข้าไปใน RIB คู่กับ Successor ยืนยันด้วย <code>show ip route</code></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="13" cy="13" r="10" fill="none" stroke="var(--gold)" stroke-width="1.8"/>
+        <path d="M13 7 L13 13 L17 16" stroke="var(--gold)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      </svg>
+      <h2>Failure Detection and Timers</h2>
+    </div>
+    <p class="sec-sub"><Term id="helloPackets">Hello Packet</Term> มีหน้าที่สองอย่าง: ค้นหาเพื่อนบ้านใหม่ และเช็คว่าเพื่อนบ้านเดิมยังอยู่ไหม — ควบคุมด้วยสองตัวจับเวลา</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3><Term id="helloTimer">Hello Timer</Term> และ Hold Timer</h3>
+        <ul style="margin:0">
+          <li><b>Hello Timer</b> — ความถี่ในการส่ง hello ค่า default 5 วินาที (60 วินาทีบน interface ความเร็วต่ำ เช่น T1 ลงไป)</li>
+          <li><b>Hold Timer</b> — เวลาที่ยังถือว่าเพื่อนบ้าน "ใช้งานได้" ค่า default = Hello Timer × 3 ถ้าครบเวลาแล้วไม่ได้รับ hello เลย EIGRP จะประกาศเพื่อนบ้านตายและแจ้ง DUAL ว่ามีการเปลี่ยน topology</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Convergence — สองเส้นทางที่ต่างกันมาก</h3>
+        <p style="color:var(--ink-2);margin:0"><b>ถ้ามี Feasible Successor รออยู่:</b> เลื่อนขึ้นเป็น Successor ทันที ไม่ต้องคำนวณ DUAL ใหม่ — เร็วมาก แค่ส่ง update บอกเพื่อนบ้านตาม metric ใหม่</p>
+        <p style="color:var(--ink-2);margin:10px 0 0"><b>ถ้าไม่มี Feasible Successor:</b> ต้องคำนวณ DUAL ใหม่ทั้งหมด — สถานะ route เปลี่ยนจาก <b>Passive (P)</b> เป็น <b>Active (A)</b> ในตาราง Topology</p>
+      </div>
+    </div>
+
+    <div class="knob" style="margin-top:20px">
+      <span class="where c1">Active State</span>
+      <h3>กระบวนการ Query/Reply เมื่อไม่มี Feasible Successor</h3>
+      <ol style="margin:0;padding-left:20px;color:var(--ink-2)">
+        <li>Router ที่เจอ topology change ส่ง <b>Query</b> ไปทุกเพื่อนบ้าน โดยตั้งค่า delay ของ prefix นั้นเป็น infinity เพื่อบอกว่ากำลัง active</li>
+        <li>เพื่อนบ้านที่ได้รับ Query ทำหนึ่งในสามอย่าง: (ก) ตอบว่าไม่มีเส้นทางไปปลายทางนี้ (ข) ถ้า Query ไม่ได้มาจาก Successor ของตัวเอง — เพิกเฉยค่า infinity แล้วตอบ attribute ปกติกลับไป (ค) ถ้า Query มาจาก Successor ของตัวเอง — ตั้งสถานะ active ของตัวเองด้วย แล้วส่ง Query ต่อไปยังเพื่อนบ้านของตัวเองอีกที (propagate ต่อเป็นทอด ๆ)</li>
+        <li>การ propagate หยุดที่ <b>Query Boundary</b> — จุดที่ Router ตอบแบบ (ก) หรือ (ข) โดยไม่ต้อง mark active ต่อ</li>
+        <li>เมื่อ Router ต้นทางได้รับ Reply ครบจากทุก Query ที่ส่งออกไป — DUAL เสร็จสมบูรณ์ เปลี่ยนสถานะกลับเป็น Passive แล้วส่ง Reply ต่อขึ้นไปให้ Router ต้นทางของมันเองอีกที (ถ้ามี)</li>
+      </ol>
+      <p class="why" style="margin-top:10px">ทำไมต้องมี Feasible Successor ให้ได้มากที่สุด: ทุกครั้งที่ route ต้อง active คือการยอมเสียเวลาเดิน Query/Reply หลายทอด — บั่นทอน convergence time ทั้งเครือข่าย นี่คือเหตุผลที่ Route Summarization (หัวข้อถัดไป) ช่วยได้มาก เพราะยิ่งเครือข่ายใหญ่ ยิ่งมีโอกาสที่ route จะ active บ่อยและกระจายวงกว้าง</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="3" y="4" width="8" height="6" rx="1.5" fill="none" stroke="var(--violet)" stroke-width="1.8"/>
+        <rect x="3" y="16" width="8" height="6" rx="1.5" fill="none" stroke="var(--violet)" stroke-width="1.8"/>
+        <path d="M11 7 L18 7 L18 19 L11 19" fill="none" stroke="var(--violet)" stroke-width="1.5"/>
+        <rect x="18" y="10" width="7" height="6" rx="1.5" fill="var(--violet-soft)" stroke="var(--violet)" stroke-width="1.8"/>
+      </svg>
+      <h2><Term id="summarizationEigrp">Route Summarization</Term></h2>
+    </div>
+    <p class="sec-sub">ยิ่ง AS ใหญ่ขึ้น convergence ยิ่งช้าลง (จากหัวข้อก่อนหน้า — ยิ่งมี Router เยอะ ยิ่งมีโอกาส Query/Reply กระจายไกล) — การสรุปเส้นทางเป็นลำดับชั้นคือทางแก้หลัก</p>
+
+    <div class="card">
+      <h3>หลักการ: สรุปที่ระดับ Interface</h3>
+      <ul style="margin:0">
+        <li>EIGRP สรุปเส้นทางแบบ<b>ผูกกับ interface</b> ไม่ใช่ผูกกับทั้ง process — ตั้งค่า summary aggregate บน interface ที่ต้องการ</li>
+        <li>Prefix ย่อยที่อยู่ภายใต้ aggregate จะถูก "ระงับ" (suppress) ไม่ประกาศออกไปตรง ๆ อีกต่อไป มีแค่ตัว summary เท่านั้นที่ถูกประกาศแทน</li>
+        <li>Summary จะยังไม่ถูกประกาศจนกว่าจะมี prefix จริงที่ตรงกับช่วงนั้นอยู่ในตาราง (ไม่ประกาศ summary ที่ไม่มีอะไรอยู่ข้างใน)</li>
+        <li>ทำได้ที่จุดไหนของ topology ก็ได้ ไม่จำเป็นต้องเป็นขอบ AS เท่านั้น</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="grid-2">
+      <div class="exam">
+        <h4>ช่องว่างที่ต้องรู้ <span class="tag">แจ้งเตือน</span></h4>
+        <p>MidEx ระบุหัวข้อ <b>"การกำหนดค่า EIGRP สำหรับ IPv4/IPv6", "EIGRP Named Mode Configuration"</b> และ <b>"EIGRP Authentication"</b> อยู่ในขอบเขตของบทนี้ แต่เนื้อหาเหล่านี้<b>ไม่ปรากฏ</b>ในสไลด์ต้นฉบับ Chapter 7 เลย — สไลด์ชุดนี้เป็นเนื้อหาเชิงแนวคิด (DUAL, Metric, Timer, Summarization) ล้วน ๆ ไม่มีตัวอย่าง <code>router eigrp</code> หรือ command จริงแม้แต่บรรทัดเดียว จึงไม่ได้เขียนคำสั่งเหล่านี้ขึ้นมาเองเพื่อความถูกต้อง แนะนำให้หาสไลด์/เอกสารเพิ่มเติมเฉพาะหัวข้อการตั้งค่าแยกต่างหาก</p>
+      </div>
+      <div class="card">
+        <h3>สรุปคำศัพท์บทนี้</h3>
+        <ul>
+          <li><b>Successor / FD</b> — เส้นทางหลักที่ติดตั้งจริง / metric ของมัน</li>
+          <li><b>Feasible Successor / RD</b> — เส้นสำรองที่สลับได้ทันที / metric ที่เพื่อนบ้านรายงานมา</li>
+          <li><b>Feasibility Condition</b> — RD ต้องน้อยกว่า FD ถึงจะเป็น Feasible Successor ได้</li>
+          <li><b>Wide Metric</b> — สูตรใหม่รองรับลิงก์เร็วกว่า 10 Gbps</li>
+          <li><b>Variance</b> — ตัวคูณเปิด unequal-cost load balancing</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Internetwork Chapter 7 · ตัวอย่างตัวเลขอ้างอิงจากสไลด์ต้นฉบับ (Figure 7-3, Example 7-1) ต่อเนื่องจากตัวอย่าง Unequal-Cost Load Balancing ในบทที่ 6 · แหล่งอ้างอิง: Chapter 7 slide deck, MidEx exam scope
+  </footer>
+
 </Layout>

@@ -1,7 +1,290 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import ComingSoon from "../components/ComingSoon.astro";
+import Term from "../components/Term.astro";
 ---
-<Layout title="OSPF" description="Open Shortest Path First — โปรโตคอล link-state มาตรฐานเปิดที่ใช้กันแพร่หลายที่สุด">
-  <ComingSoon n={8} title="OSPF" pages={35} accent="var(--coral)" blurb="Open Shortest Path First — โปรโตคอล link-state มาตรฐานเปิดที่ใช้กันแพร่หลายที่สุด" />
+<Layout title="OSPF" description="บทที่ 8 — OSPF: LSDB/SPT, Area และ Backbone, Neighbor States, การตั้งค่าสองวิธี, Default Route Advertisement, และการปรับแต่งที่ออกสอบบ่อย">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--slate)">Internetwork · Chapter 8 of 14</p>
+    <h1>OSPF — Open Shortest Path First</h1>
+    <p class="deck">บทที่ 6 บอกไว้ว่า Link-State Protocol ทุกตัวแจกสถานะลิงก์ให้ทุก Router เห็นเหมือนกันหมดแล้วรัน Dijkstra SPF เอง — บทนี้ลงรายละเอียดว่า OSPF ทำแบบนั้นจริง ๆ ยังไง ตั้งแต่การหาเพื่อนบ้านจนถึงคำสั่งตั้งค่าที่ใช้จริง</p>
+    <div class="credit-bar">
+      <span>OSPFv2 (IPv4)</span><span>LSDB / SPT</span><span>Area 0 Backbone</span><span>DR / BDR</span><span>5 Neighbor Packet Types</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="grid-2">
+      <div class="card">
+        <h3>เชื่อมจากที่รู้แล้ว</h3>
+        <ul>
+          <li>จากบทที่ 6 เรารู้แล้วว่า Link-State Protocol ให้ทุก Router แจกสถานะลิงก์ตัวเองไปทุกตัวในเครือข่าย เก็บไว้ใน LSDB แล้วแต่ละตัวรัน SPF เองเพื่อคำนวณเส้นทาง — AD ของ OSPF คือ 110</li>
+          <li>สิ่งที่ยังไม่เคยพูดถึง: OSPF แจก LSA ยังไง ใครเป็นคนคุมการ flood ไม่ให้ล้นเครือข่าย และทำไมต้องมี "Area" ด้วยทั้งที่ Link-State ควรรู้ topology ทั้งหมดอยู่แล้ว</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>สิ่งที่บทนี้ครอบคลุม</h3>
+        <ul>
+          <li><b>OSPF Fundamentals</b> — LSDB/SPT, Area/Backbone, Packet Types, Neighbor States, DR/BDR</li>
+          <li><b>OSPF Configuration</b> — Network Statement vs Interface-Specific, RID, Passive Interface</li>
+          <li><b>Default Route Advertisement</b> — <code>default-information originate</code></li>
+          <li><b>Common OSPF Optimizations</b> — Link Cost, Timer, DR/BDR Election, Network Types</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="13" cy="7" r="3" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
+        <circle cx="6" cy="19" r="3" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
+        <circle cx="20" cy="19" r="3" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
+        <line x1="13" y1="10" x2="6" y2="16" stroke="var(--slate)" stroke-width="1.5"/>
+        <line x1="13" y1="10" x2="20" y2="16" stroke="var(--slate)" stroke-width="1.5"/>
+      </svg>
+      <h2>OSPF Fundamentals</h2>
+    </div>
+    <p class="sec-sub">OSPF เป็น IGP แบบเปิด (nonproprietary) ไม่ใช่ของ Cisco เพียงเจ้าเดียว — รองรับ VLSM/classless routing/summarization/authentication มีสองเวอร์ชันหลัก: <b>OSPFv2</b> (IPv4) และ <b>OSPFv3</b> (IPv6)</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>LSA → LSDB → <Term id="spt">SPT</Term></h3>
+        <p style="color:var(--ink-2);margin:0">OSPF ส่ง Link-State Advertisement (LSA) บอกสถานะและ metric ของลิงก์ตัวเองไปให้เพื่อนบ้าน — ทุกตัวเก็บ LSA ที่ได้รับไว้ใน Link-State Database (LSDB) เดียวกันหมดทั้งเครือข่าย จากนั้นแต่ละ Router รัน SPF สร้าง Shortest Path Tree ของตัวเอง โดย<b>รากของต้นไม้คือตัว Router เองเสมอ</b> — R1 กับ R4 มองเครือข่ายเดียวกัน แต่ได้ SPT คนละรูปทรง เพราะมุมมอง "ราก" ต่างกัน</p>
+      </div>
+      <div class="card">
+        <h3>Area และ Backbone — สถาปัตยกรรม 2 ชั้น</h3>
+        <p style="color:var(--ink-2);margin:0">OSPF แบ่งเครือข่ายเป็นหลาย Area โดย <b>Area 0 (Backbone)</b> เป็น Area พิเศษที่ทุก Area อื่นต้องเชื่อมเข้ามาหาโดยตรง — เส้นทางระหว่าง Area ที่ไม่ใช่ Backbone ต้องวิ่งผ่าน Area 0 เสมอ (เช่น Area 12 → Area 0 → Area 34) Area 0 เองก็ประกาศเส้นทางของตัวเองเข้าไปในทุก Area ที่เหลือด้วย</p>
+      </div>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>OSPF Packet Types — ใช้ IP protocol 89, multicast 224.0.0.5 (ทุก Router) / 224.0.0.6 (เฉพาะ DR)</caption>
+        <thead><tr><th scope="col">Type</th><th scope="col">ชื่อ</th><th scope="col">หน้าที่</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">1</th><td>Hello</td><td>ค้นหาและรักษาความสัมพันธ์เพื่อนบ้าน ส่งเป็นระยะทุก interface ที่เปิด OSPF</td></tr>
+          <tr><th scope="row">2</th><td>Database Description (DBD)</td><td>สรุปเนื้อหาของ LSDB ตอนสร้าง adjacency</td></tr>
+          <tr><th scope="row">3</th><td>Link-State Request (LSR)</td><td>ขอ LSDB บางส่วนจากเพื่อนบ้านที่คิดว่าตัวเองมีข้อมูลเก่ากว่า</td></tr>
+          <tr><th scope="row">4</th><td>Link-State Update (LSU)</td><td>ส่ง LSA จริง ปกติตอบกลับ LSR</td></tr>
+          <tr><th scope="row">5</th><td>Link-State Ack</td><td>ยืนยันการรับ LSA ทำให้การ flood เชื่อถือได้ (reliable)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3><Term id="ospfHelloPacket">Hello Packet</Term> พกอะไรมาบ้าง</h3>
+        <ul style="margin:0;font-size:.92rem">
+          <li><b><Term id="routerId">Router ID (RID)</Term></b> — เลข 32 บิตที่ไม่ซ้ำกันในโดเมน OSPF</li>
+          <li><b>Authentication</b> — none, clear text หรือ MD5</li>
+          <li><b>Area ID</b> — เขียนแบบ dotted-decimal (0.0.1.0) หรือ decimal (256) ก็ได้</li>
+          <li><b>Interface address mask</b>, <Term id="interfacePriority">Interface Priority</Term>, <Term id="ospfHelloInterval">Hello Interval</Term>, <Term id="ospfDeadInterval">Dead Interval</Term></li>
+          <li><Term id="ospfDR">DR</Term> / <Term id="ospfBDR">BDR</Term> ปัจจุบัน และรายชื่อเพื่อนบ้านที่ยัง active</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>8 ขั้น Neighbor State</h3>
+        <p style="color:var(--ink-2);font-size:.85rem;margin:0">Down → Attempt → Init → 2-Way → ExStart → Exchange → Loading → Full</p>
+        <p style="color:var(--ink-2);font-size:.85rem;margin-top:8px">จุดสำคัญ: <b>2-Way</b> คือจุดที่เลือก DR/BDR ถ้า segment ต้องมี — <b>ExStart</b> คือจุดที่สอง Router ตกลงกันว่าใครเป็น Master/Slave ควบคุมการ sync LSDB — <b>Full</b> คือ adjacency สมบูรณ์แล้วเท่านั้น</p>
+      </div>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>ทำไมต้องมี DR/BDR <span class="tag">ออกสอบ</span></h4>
+      <p>บน Multi-access segment (เช่น Ethernet) ถ้ามี 4 Router เชื่อมกันโดยไม่มี DR — แต่ละคู่ต้องสร้าง adjacency กันเองหมด รวม 6 adjacency และเกิดการ flood LSDB ซ้ำซ้อน 6 รอบต่อการเปลี่ยนแปลงหนึ่งครั้ง</p>
+      <p style="margin:0"><b>ทางแก้:</b> เลือก Router หนึ่งตัวเป็น <b>Designated Router (DR)</b> ให้ทุกตัวที่เหลือสร้าง adjacency กับ DR (และ BDR สำรอง) เท่านั้น จาก 6 adjacency เหลือแค่ 3 — DR เป็นคนกลางกระจาย LSA ต่อให้ทุกตัวแทนที่จะให้ทุกคู่คุยกันเองตรง ๆ</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="3" y="3" width="20" height="20" rx="4" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+        <line x1="8" y1="9" x2="18" y2="9" stroke="var(--coral)" stroke-width="1.8"/>
+        <line x1="8" y1="14" x2="18" y2="14" stroke="var(--coral)" stroke-width="1.8"/>
+        <line x1="8" y1="19" x2="14" y2="19" stroke="var(--coral)" stroke-width="1.8"/>
+      </svg>
+      <h2>OSPF Configuration — สองวิธีเปิดใช้งาน</h2>
+    </div>
+    <p class="sec-sub">เริ่มด้วย <code>router ospf process-id</code> เพื่อสร้าง OSPF process แล้วเลือกวิธีเปิดใช้ interface หนึ่งในสองแบบ</p>
+
+    <div class="grid-2">
+      <div class="knob">
+        <span class="where c1">แบบที่ 1 — รวมศูนย์</span>
+        <h3>OSPF Network Statement</h3>
+        <pre>router ospf 1
+ network 10.1.13.0 0.0.0.255 area 0</pre>
+        <p class="why" style="margin:0">คำสั่ง <code>network ip-address wildcard-mask area area-id</code> — เทียบ IP กับ interface ที่มีอยู่ผ่าน wildcard mask ถ้า match ก็เปิด OSPF บน interface นั้นและกำหนด area ให้พร้อมกัน คล้ายวิธีตั้งค่า EIGRP แต่ OSPF ต้องระบุ area ด้วยเสมอ</p>
+      </div>
+      <div class="knob">
+        <span class="where c1">แบบที่ 2 — ทีละ Interface</span>
+        <h3>Interface-Specific Configuration</h3>
+        <pre>interface g0/0/1
+ ip ospf 1 area 0</pre>
+        <p class="why" style="margin:0">คำสั่ง <code>ip ospf process-id area area-id</code> ใต้ interface โดยตรง ไม่รวมศูนย์ ยิ่ง interface เยอะยิ่งจัดการยากขึ้น — แต่ถ้าตั้งค่าแบบผสมทั้งสองวิธีบน Router เดียวกัน <b>ค่าที่ตั้งบน interface จะชนะ</b> network statement เสมอ</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h3>ตั้ง RID คงที่ + Passive Interface</h3>
+      <p style="color:var(--ink-2);margin:0 0 10px">OSPF สร้าง topology โดยอ้างอิงจาก RID เป็นหลัก — ตั้งค่าคงที่ช่วยเรื่อง troubleshoot และลด LSA ที่เกิดจาก RID เปลี่ยนกลางคัน</p>
+      <pre style="margin:0">router ospf 1
+ router-id 1.1.1.1
+ passive-interface GigabitEthernet0/2
+ passive-interface default   ! ทำให้ทุก interface passive แล้วค่อยเปิดคืนทีละตัว
+!
+clear ip ospf process   ! ต้องสั่งหลังเปลี่ยน RID ให้มีผลจริง</pre>
+      <p style="color:var(--ink-2);margin:10px 0 0"><Term id="ospfPassiveInterface">Passive Interface</Term> ยังคงเอา network ของ interface นั้นเข้า LSDB ตามปกติ แต่<b>ห้าม</b>ส่ง OSPF hello ออกไปและห้ามประมวลผล OSPF packet ที่ได้รับ — ใช้กับ interface ที่ต่อ end-user ไม่ต้องการให้มี Router แปลกปลอมมาสร้าง adjacency ได้ ใช้ <code>no passive-interface</code> เพื่อเปิดกลับ</p>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>เงื่อนไขที่ต้อง "ตรงกัน" ก่อนสอง Router จะเป็นเพื่อนบ้าน OSPF ได้</caption>
+        <tbody>
+          <tr><td>RID ต้องไม่ซ้ำกัน</td></tr>
+          <tr><td>ต้องอยู่ subnet เดียวกัน</td></tr>
+          <tr><td>MTU ต้องตรงกัน</td></tr>
+          <tr><td>Area ID ของ segment ต้องตรงกัน</td></tr>
+          <tr><td>การเปิด/ปิด DR ของ segment ต้องตรงกัน</td></tr>
+          <tr><td>Hello timer และ Dead timer ต้องตรงกัน</td></tr>
+          <tr><td>ชนิด/รหัสผ่าน authentication ต้องตรงกัน (ถ้ามี)</td></tr>
+          <tr><td>Flag ชนิด area ต้องตรงกัน (เช่น Stub, NSSA)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="knob">
+        <span class="where c2">show ip ospf interface brief</span>
+        <h3>คอลัมน์ที่ต้องอ่านออก</h3>
+        <p class="out">Interface  PID  Area  IP Address/Mask  Cost  State  Nbrs F/C
+Gi0/0/1    1    0     10.1.13.13/24     1    P2P    1/1</p>
+        <p class="why" style="margin:0">State ที่เป็นไปได้: DR / BDR / DROTHER / LOOP / Down — Nbrs F คือจำนวนเพื่อนบ้านที่ Full แล้ว, Nbrs C คือจำนวนที่ยังแค่ 2-Way</p>
+      </div>
+      <div class="knob">
+        <span class="where c2">show ip ospf neighbor</span>
+        <h3>Neighbor ID, PRI, State, Dead Time</h3>
+        <p class="out">Neighbor ID  Pri  State       Dead Time  Address       Interface
+2.2.2.2      1    FULL/DR     00:00:38   10.1.13.2     Gi0/0/1</p>
+        <p class="why" style="margin:0">คอลัมน์ State มีสองส่วน: state ของ neighbor ก่อน (FULL) ตามด้วย role ของมันถ้า segment ต้องมี DR (DR/BDR/DROTHER)</p>
+      </div>
+    </div>
+
+    <div class="knob" style="margin-top:20px">
+      <span class="where c1">show ip route ospf</span>
+      <h3>อ่านวงเล็บ [AD/Metric]</h3>
+      <p class="out">O    10.4.4.0/24 [110/2] via 10.1.13.13, GigabitEthernet0/0/1</p>
+      <p class="why" style="margin:0">ตัวเลขแรกในวงเล็บคือ Administrative Distance (110 = ค่า default ของ OSPF ตรงกับตารางบทที่ 6) ตัวเลขที่สองคือ metric ของเส้นทางนั้น (ดูวิธีคำนวณ Link Cost ในหัวข้อ Optimizations ด้านล่าง)</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M4 20 L13 6 L22 20 Z" fill="none" stroke="var(--gold)" stroke-width="1.8" stroke-linejoin="round"/>
+        <text x="13" y="17" text-anchor="middle" font-size="9" font-weight="700" fill="var(--gold)">0</text>
+      </svg>
+      <h2>Default Route Advertisement</h2>
+    </div>
+    <p class="sec-sub">Router ที่มีทางออกสู่ภายนอก (เช่นต่อ ISP) สามารถประกาศ default route เข้าไปในโดเมน OSPF ให้ Router ตัวอื่นใช้ได้ด้วยคำสั่งเดียว</p>
+
+    <div class="knob">
+      <span class="where c1">ใต้ OSPF process</span>
+      <pre>router ospf 1
+ default-information originate always metric 10 metric-type 1</pre>
+      <p class="why" style="margin:0"><b>always</b> — ประกาศ default route แม้ว่าตัวเองจะไม่มี default route อยู่ใน RIB จริงก็ตาม (ไม่ใส่ = ประกาศเฉพาะตอนที่ตัวเองมี default route จริงเท่านั้น) — <b>metric</b> ตั้งค่า metric เริ่มต้นของ default route นั้น — <b>metric-type</b> เลือกชนิด metric ที่ใช้ประกาศ (External Type 1 หรือ Type 2)</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="13" cy="13" r="10" fill="none" stroke="var(--violet)" stroke-width="1.8"/>
+        <path d="M8 13 L11 16 L18 9" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      <h2>Common OSPF Optimizations</h2>
+    </div>
+    <p class="sec-sub">4 เรื่องที่ปรับแต่งบ่อยที่สุดในงานจริงและข้อสอบ: Link Cost, Timer, DR/BDR Election, และ Network Type</p>
+
+    <div class="tablewrap">
+      <table>
+        <caption>Link Cost = Reference Bandwidth ÷ Interface Bandwidth (ค่า default reference = 100 Mbps)</caption>
+        <thead><tr><th scope="col">ชนิด Interface</th><th scope="col">OSPF Cost (default)</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">T1</th><td>64</td></tr>
+          <tr><th scope="row">Ethernet</th><td>10</td></tr>
+          <tr><th scope="row">FastEthernet</th><td>1</td></tr>
+          <tr><th scope="row">GigabitEthernet</th><td>1</td></tr>
+          <tr><th scope="row">10 GigabitEthernet</th><td>1</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>Reference Bandwidth ที่เตี้ยเกินไป = แยกลิงก์เร็วไม่ออก <span class="tag">ออกสอบ</span></h4>
+      <p>ค่า default reference bandwidth คือ 100 Mbps เท่ากับว่า FastEthernet, GigabitEthernet และ 10-GigabitEthernet ทั้งสามชนิดได้ cost <b>1 เท่ากันหมด</b> — OSPF จะมองว่าลิงก์ทั้งสามความเร็วมีคุณภาพเท่ากัน ตัดสินใจเลือกเส้นทางผิดพลาดได้ในเครือข่ายที่มีลิงก์เร็วปนกัน</p>
+      <p style="margin:0"><b>ทางแก้:</b> ปรับ reference bandwidth ให้สูงขึ้นด้วย <code>auto-cost reference-bandwidth bandwidth-in-mbps</code> ใต้ OSPF process (ต้องตั้งให้ตรงกัน<b>ทุก Router ในโดเมน</b> ไม่งั้น cost จะคำนวณไม่ตรงกันข้าม Router) หรือกำหนด cost ตายตัวเฉพาะจุดด้วย <code>ip ospf cost 1-65535</code> ใต้ interface</p>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3>Failure Detection — Hello/Dead Timer</h3>
+        <ul style="margin:0">
+          <li>Dead Interval = Hello Interval × 4 โดย default</li>
+          <li>ปรับ Hello: <code>ip ospf hello-interval 1-65535</code></li>
+          <li>ปรับ Dead: <code>ip ospf dead-interval 1-65535</code> (ต้องตั้งมากกว่า Hello Interval เสมอ ไม่งั้น dead timer จะหมดก่อนได้รับ hello รอบถัดไป)</li>
+          <li>timer ทั้งสองต้อง<b>ตรงกัน</b>ทั้งสองฝั่งของ segment ถึงจะเป็นเพื่อนบ้านกันได้ — เช็คด้วย <code>show ip ospf interface</code></li>
+        </ul>
+      </div>
+      <div class="knob">
+        <span class="where c3">จัดตำแหน่ง DR/BDR</span>
+        <h3>Interface Priority</h3>
+        <pre>R1(config)# interface G0/1
+R1(config-if)# ip ospf priority 100
+R4(config)# interface G0/1
+R4(config-if)# ip ospf priority 0</pre>
+        <p class="why" style="margin:0">Priority สูงกว่าชนะเสมอ (ตรงข้ามกับ AD/Cost ที่ต่ำกว่าชนะ) ค่า default คือ 1 ทุก interface — priority 0 = ถอนตัวจากการเลือก DR/BDR ถาวร ถ้า priority เท่ากันใช้ RID สูงกว่าตัดสิน <b>DR/BDR ที่เลือกแล้วไม่ถูกแทนที่ (non-preemptive)</b> จนกว่าจะล่มหรือ restart process — ตรวจสอบ role ด้วย <code>show ip ospf interface brief</code></p>
+      </div>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>5 ชนิด OSPF Network Type — กำหนดว่าต้องมี DR ไหมและ timer default เท่าไหร่</caption>
+        <thead><tr><th scope="col">ชนิด</th><th scope="col">ใช้ default บน</th><th scope="col">ต้องมี DR</th><th scope="col">Hello / Dead</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Broadcast</th><td>Ethernet</td><td>ใช่</td><td>10s / 40s</td></tr>
+          <tr><th scope="row">Non-broadcast</th><td>Frame Relay main interface</td><td>ใช่</td><td>30s / 120s</td></tr>
+          <tr><th scope="row">Point-to-point</th><td>Frame Relay P2P subinterface</td><td>ไม่</td><td>10s / 40s</td></tr>
+          <tr><th scope="row">Point-to-multipoint</th><td>ไม่มี (ต้องตั้งเอง)</td><td>ไม่</td><td>30s / 120s</td></tr>
+          <tr><th scope="row">Loopback</th><td>Loopback interface</td><td>ไม่เกี่ยว</td><td>ไม่เกี่ยว</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--ink-2);font-size:.9rem;margin-top:10px">จุดที่ต้องจำ: <b>Broadcast</b> ต้องมี DR เพราะรองรับได้มากกว่า 2 อุปกรณ์บน segment เดียว ต้องคุม LSA flood — <b>P2P</b> มีแค่ 2 ฝั่งจึงไม่ต้องมี DR เลย — <b>Loopback</b> พิเศษสุด: ประกาศเป็น /32 เสมอไม่ว่า mask จริงจะเป็นอะไร — เปลี่ยนชนิดได้ด้วย <code>ip ospf network broadcast</code> หรือ <code>ip ospf network point-to-point</code> ใต้ interface</p>
+  </section>
+
+  <section>
+    <div class="grid-2">
+      <div class="exam">
+        <h4>ช่องว่างที่ต้องรู้ <span class="tag">แจ้งเตือน</span></h4>
+        <p>MidEx ระบุหัวข้อ <b>"OSPF Areas และ Router Types" (ABR/ASBR), "LSAs ประเภทต่างๆ" (Type 1-5, 7), "OSPFv3 (IPv6)"</b> และ <b>"OSPF Route Summarization"</b> อยู่ในขอบเขตของบทนี้ แต่เนื้อหาเหล่านี้<b>ไม่ปรากฏ</b>ในสไลด์ต้นฉบับ Chapter 8 เลย — สไลด์ชุดนี้พูดถึง Area/Backbone แค่ระดับภาพรวม (ไม่ตั้งชื่อ Router Type) พูดถึง LSA แค่ระดับแนวคิด (ไม่แจกแจงเลข Type) และไม่มีเนื้อหา OSPFv3 หรือ Summarization เลยแม้แต่บรรทัดเดียว จึงไม่ได้เขียนเนื้อหาเหล่านี้ขึ้นมาเองเพื่อความถูกต้อง แนะนำให้หาสไลด์/เอกสารเพิ่มเติมแยกต่างหาก (Route Summarization และ Special Area Types มักปรากฏใน Chapter 10: Advanced OSPF)</p>
+      </div>
+      <div class="card">
+        <h3>สรุปคำศัพท์บทนี้</h3>
+        <ul>
+          <li><b>DR / BDR</b> — Router กลางที่คุมการ flood LSA บน multi-access segment</li>
+          <li><b>RID</b> — เลขประจำตัว Router ไม่ซ้ำกันในโดเมน</li>
+          <li><b>SPT</b> — ต้นไม้เส้นทางที่แต่ละ Router คำนวณเอง รากคือตัวเอง</li>
+          <li><b>Interface Priority</b> — ตัวเลือก DR/BDR ยิ่งสูงยิ่งชนะ</li>
+          <li><b>Passive Interface</b> — เข้า LSDB แต่ไม่ส่ง hello/สร้าง adjacency</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Internetwork Chapter 8 · คำสั่งและตัวอย่างอ้างอิงจากสไลด์ต้นฉบับ (Figure 8-7, Example 8-2/8-5/8-10/8-11) · แหล่งอ้างอิง: Chapter 8 slide deck, MidEx exam scope
+  </footer>
+
 </Layout>

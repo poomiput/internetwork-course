@@ -103,4 +103,119 @@ export const terms = {
     full: "",
     def: "Static route ที่ชี้ไปยัง interface Null0 เพื่อทิ้งแพ็กเก็ตที่ match โดยไม่ต้องตั้ง access list — ใช้ป้องกัน routing loop เมื่อมี aggregate block ใหญ่ที่ใช้จริงแค่บางส่วน",
   },
+  asEigrp: {
+    term: "Autonomous System",
+    full: "",
+    def: "กลุ่ม Router ที่บริหารร่วมกันภายใต้ EIGRP process เดียวกัน — Router ใน AS เดียวกันเท่านั้นที่แลกเปลี่ยนเส้นทางกันและต้องใช้สูตรคำนวณ metric แบบเดียวกัน",
+  },
+  successorRoute: {
+    term: "Successor Route",
+    full: "",
+    def: "เส้นทางที่มี metric (Feasible Distance) ต่ำที่สุดไปยังปลายทาง — เส้นทางที่ถูกติดตั้งลง RIB จริง",
+  },
+  successor: {
+    term: "Successor",
+    full: "",
+    def: "Router ตัวถัดไป (next-hop) ตัวแรกของ Successor Route",
+  },
+  feasibleDistance: {
+    term: "Feasible Distance (FD)",
+    full: "",
+    def: "ค่า metric ของเส้นทางที่ต่ำที่สุดที่ Router คำนวณได้เองไปยังปลายทางหนึ่ง ๆ — คือ metric ของ Successor Route",
+  },
+  reportedDistance: {
+    term: "Reported Distance (RD)",
+    full: "",
+    def: "ระยะที่เพื่อนบ้านรายงานมาให้ว่าตัวเองไปถึงปลายทางนั้นด้วย metric เท่าไหร่ — ค่านี้คือ Feasible Distance ของฝั่งเพื่อนบ้านเอง ใช้เทียบกับ FD ของเราเองเพื่อตรวจ Feasibility Condition",
+  },
+  feasibilityCondition: {
+    term: "Feasibility Condition",
+    full: "",
+    def: "เงื่อนไขที่เส้นทางสำรองต้องผ่านก่อนถูกเก็บเป็น Feasible Successor: Reported Distance ของเพื่อนบ้านต้องน้อยกว่า Feasible Distance ที่เราคำนวณเอง รับประกันว่าเส้นสำรองนั้นไม่มีทางวนกลับมาหาเราเอง",
+  },
+  feasibleSuccessor: {
+    term: "Feasible Successor",
+    full: "",
+    def: "เส้นทางสำรองที่ผ่าน Feasibility Condition แล้ว — สลับขึ้นมาเป็น Successor ได้ทันทีโดยไม่ต้องรอ DUAL คำนวณใหม่เมื่อ Successor เดิมล่ม",
+  },
+  topologyTable: {
+    term: "Topology Table",
+    full: "",
+    def: "ตารางที่ EIGRP เก็บทุก prefix ที่ประกาศเข้ามาในระบบ AS พร้อมเพื่อนบ้านที่ประกาศ metric และค่าดิบที่ใช้คำนวณ — จุดที่ทำให้ EIGRP ต่างจาก Distance Vector ทั่วไปที่รู้แค่เส้นทางเดียว",
+  },
+  wideMetric: {
+    term: "Wide Metric",
+    full: "",
+    def: "สูตรคำนวณ metric แบบใหม่ของ EIGRP ที่สเกลด้วยตัวคูณ 65,535 แทนสูตร Classic เดิม เพื่อรองรับลิงก์ความเร็วสูงกว่า 10 Gbps ได้แม่นยำขึ้น (สูงสุดถึง 655 Tbps) พร้อมเพิ่ม K6 สำหรับปัจจัยใหม่ในอนาคต",
+  },
+  varianceValue: {
+    term: "Variance Value",
+    full: "",
+    def: "ค่าที่ได้จาก Feasible Distance คูณด้วยตัวคูณ variance ที่ตั้งไว้ — Feasible Successor ตัวใดมี metric ต่ำกว่า Variance Value จะถูกติดตั้งลง RIB เพิ่มเข้าไปด้วย เปิดใช้งาน unequal-cost load balancing",
+  },
+  helloPackets: {
+    term: "Hello Packets",
+    full: "",
+    def: "แพ็กเก็ตที่ EIGRP ส่งเป็นระยะเพื่อค้นหาเพื่อนบ้านใหม่และตรวจสุขภาพเพื่อนบ้านเดิมว่ายังออนไลน์อยู่หรือไม่",
+  },
+  helloTimer: {
+    term: "Hello Timer",
+    full: "",
+    def: "ความถี่ในการส่ง Hello Packet ค่า default 5 วินาที (60 วินาทีบน interface ความเร็วต่ำ เช่น T1 ลงไป) — Hold Timer ที่คู่กันมีค่า default เป็น 3 เท่าของ Hello Timer",
+  },
+  summarizationEigrp: {
+    term: "Summarization",
+    full: "",
+    def: "การสรุปหลาย prefix ย่อยให้เหลือเป็น aggregate เดียวที่ระดับ interface ของ EIGRP เพื่อลดขนาด topology table และเร่ง convergence เมื่อ AS มีขนาดใหญ่ขึ้น",
+  },
+  kValues: {
+    term: "K Values",
+    full: "",
+    def: "ค่าถ่วงน้ำหนัก K1-K5 (Wide Metric เพิ่ม K6) ที่กำหนดว่าปัจจัยไหน (bandwidth, delay, load, reliability, MTU) ถูกนำมาคิดคำนวณ metric บ้าง — ค่า default คือ K1=K3=1 ปัจจัยอื่นเป็น 0",
+  },
+  spt: {
+    term: "Shortest Path Tree (SPT)",
+    full: "",
+    def: "ต้นไม้เส้นทางที่แต่ละ Router คำนวณเองจาก LSDB ด้วยอัลกอริทึม SPF โดยรากของต้นไม้คือตัว Router เองเสมอ — Router คนละตัวมองเครือข่ายเดียวกันแต่ได้ SPT คนละรูปทรงเพราะมุมมอง 'ราก' ต่างกัน",
+  },
+  ospfHelloPacket: {
+    term: "Hello Packet (OSPF)",
+    full: "",
+    def: "แพ็กเก็ตที่ OSPF ส่งเป็นระยะเพื่อค้นหาและรักษาความสัมพันธ์เพื่อนบ้าน พกข้อมูล RID, Area ID, Authentication, Interval ต่าง ๆ และรายชื่อเพื่อนบ้านที่ยัง active",
+  },
+  ospfHelloInterval: {
+    term: "Hello Interval",
+    full: "",
+    def: "ความถี่ในการส่ง OSPF Hello Packet ค่า default 10 วินาทีบน Broadcast/P2P (30 วินาทีบน Non-broadcast/P2MP) — ต้องตรงกันทั้งสองฝั่งของ segment ถึงจะเป็นเพื่อนบ้านกันได้",
+  },
+  ospfDeadInterval: {
+    term: "Dead Interval",
+    full: "",
+    def: "เวลาที่รอก่อนประกาศว่าเพื่อนบ้านตายเมื่อไม่ได้รับ Hello — ค่า default เป็น 4 เท่าของ Hello Interval ต้องตั้งให้มากกว่า Hello Interval เสมอและต้องตรงกันทั้งสองฝั่ง",
+  },
+  ospfDR: {
+    term: "Designated Router (DR)",
+    full: "",
+    def: "Router ที่ถูกเลือกให้เป็นศูนย์กลางการ flood LSA บน multi-access segment เพื่อลดจำนวน adjacency ที่ต้องสร้างและลดการ flood ซ้ำซ้อน — เลือกจาก Interface Priority สูงสุด (เท่ากันใช้ RID สูงสุดตัดสิน) และไม่ถูกแทนที่จนกว่าจะล่ม",
+  },
+  ospfBDR: {
+    term: "Backup Designated Router (BDR)",
+    full: "",
+    def: "Router สำรองของ DR บน multi-access segment เดียวกัน เลือกด้วยหลักเกณฑ์เดียวกับ DR แต่ได้อันดับรองลงมา — พร้อมขึ้นมาเป็น DR ทันทีถ้า DR เดิมล่ม",
+  },
+  interfacePriority: {
+    term: "Interface Priority",
+    full: "",
+    def: "ค่าที่กำหนดสิทธิ์ในการเป็น DR/BDR ของ interface บน segment นั้น ค่า default คือ 1 ทุก interface — ยิ่งสูงยิ่งชนะ (ตรงข้ามกับ AD/Cost) ตั้งเป็น 0 เพื่อถอนตัวออกจากการเลือกถาวร",
+  },
+  ospfPassiveInterface: {
+    term: "Passive Interface",
+    full: "",
+    def: "Interface ที่เอา network เข้า LSDB ตามปกติ แต่ห้ามส่ง OSPF hello ออกไปและห้ามประมวลผล OSPF packet ที่ได้รับ — ใช้ป้องกันไม่ให้อุปกรณ์แปลกปลอมสร้าง adjacency ได้บน interface ที่ต่อ end-user",
+  },
+  routerId: {
+    term: "Router ID (RID)",
+    full: "",
+    def: "เลข 32 บิตที่ไม่ซ้ำกันในโดเมน OSPF ใช้เป็นฐานสร้าง topology ทั้งหมด — ตั้งค่าคงที่ได้ด้วย router-id แล้วสั่ง clear ip ospf process เพื่อให้มีผลจริง",
+  },
 };
