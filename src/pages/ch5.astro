@@ -1,7 +1,507 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import ComingSoon from "../components/ComingSoon.astro";
 ---
-<Layout title="VLAN Trunks and EtherChannel Bundles" description="รวม VLAN หลายเส้นเป็นเทรังค์เดียว และมัดหลายลิงก์กายภาพเป็น EtherChannel เพื่อเพิ่มแบนด์วิดท์และความซ้ำซ้อน">
-  <ComingSoon n={5} title="VLAN Trunks and EtherChannel Bundles" pages={51} accent="var(--slate)" blurb="รวม VLAN หลายเส้นเป็นเทรังค์เดียว และมัดหลายลิงก์กายภาพเป็น EtherChannel เพื่อเพิ่มแบนด์วิดท์และความซ้ำซ้อน" />
+<Layout title="VLAN Trunking, DTP & EtherChannel" description="บทที่ 5 — VTP, DTP, และ EtherChannel: การจัดการ VLAN อัตโนมัติ และการรวมสายซ้ำซ้อนแทนการปล่อยให้ STP บล็อกทิ้ง">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--slate)">Internetwork · Chapter 5 of 14</p>
+    <h1>VLAN Trunks and EtherChannel Bundles</h1>
+    <p class="deck">บทนี้มีสองเรื่องที่แยกกันเป็นคนละหัวข้อสอบ แต่อยู่ในสไลด์ชุดเดียวกัน: <b>Part A</b> ว่าด้วยการให้สวิตช์ "คุยกันเอง" เพื่อจัดการ VLAN และ Trunk แทนที่จะตั้งมือทุกตัว และ <b>Part B</b> ว่าด้วยการเอาสายซ้ำซ้อนที่ STP เคย Block ทิ้ง มารวมเป็นสายเดียวใช้งานจริงแทน</p>
+    <div class="credit-bar">
+      <span>D1 · D2 · A1</span><span>Cisco IOS XE 16.9.4</span><span>VTP</span><span>DTP</span><span>PAgP / LACP</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="grid-2">
+      <div class="card">
+        <h3>เชื่อมจากที่รู้แล้ว</h3>
+        <ul>
+          <li>จากบทที่ 1 เรารู้แล้วว่า <b>Trunk</b> คือสายที่ขนหลาย VLAN พร้อมกันโดยแปะ tag 802.1Q บอกว่าเฟรมเป็นของ VLAN ไหน และ <b>Access Port</b> คือพอร์ตที่มีได้แค่ 1 VLAN</li>
+          <li>สิ่งที่ยังไม่เคยพูดถึง: ถ้ามีสวิตช์ 20 ตัว แล้วต้องสร้าง VLAN เดียวกันซ้ำทีละตัว จะจัดการยังไงให้ไม่ผิดพลาด ไม่ลืม ไม่ไม่ตรงกัน — และถ้ามีสายซ้ำซ้อนหลายเส้นระหว่างสวิตช์ (จากบทที่ 2) ทำไมต้องปล่อยให้ STP บล็อกทิ้งไปเฉย ๆ</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>สิ่งที่บทนี้ครอบคลุม</h3>
+        <ul>
+          <li><b>Part A:</b> VTP (แจกจ่าย VLAN อัตโนมัติ) และ DTP (เจรจา Trunk อัตโนมัติ)</li>
+          <li><b>Part B:</b> EtherChannel — รวมสายจริงหลายเส้นให้ STP เห็นเป็นสายเดียว ผ่าน PAgP, LACP หรือแบบ Static</li>
+          <li>ใช้ topology เดิม D1, D2, A1 — ต่อกันแบบมีสายซ้ำซ้อนเหมือนบทที่ 2-4</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- PART A — VTP / DTP -->
+  <!-- ============================================================ -->
+  <section class="act-title" style="margin-top:60px">
+    <span style="display:block;font-family:var(--mono);font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--slate);font-weight:700;margin-bottom:6px">Part A</span>
+    <h2 style="margin:0 0 8px;font-size:1.4rem;font-weight:800">VTP &amp; DTP — จัดการ VLAN และ Trunk อัตโนมัติ</h2>
+    <p style="margin:0;color:var(--ink-2);max-width:72ch">ทั้งสองโปรโตคอลนี้เป็นของ Cisco ที่ตั้งใจลดงานตั้งค่ามือ — แต่ก็แลกมาด้วยความเสี่ยงด้านความปลอดภัยที่ต้องรู้จักปิดให้เป็น</p>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="4" y="6" width="7" height="7" rx="1.5" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
+        <rect x="15" y="6" width="7" height="7" rx="1.5" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
+        <rect x="9.5" y="15" width="7" height="7" rx="1.5" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
+        <line x1="7.5" y1="13" x2="13" y2="15" stroke="var(--slate)" stroke-width="1.5"/>
+        <line x1="18.5" y1="13" x2="13" y2="15" stroke="var(--slate)" stroke-width="1.5"/>
+      </svg>
+      <h2>VTP (VLAN Trunking Protocol) — ออกสอบ</h2>
+    </div>
+    <p class="sec-sub">ปัญหา: สวิตช์ 20 ตัว ต้องสร้าง VLAN 10 เท่ากันทุกตัว ถ้าตั้งมือทีละตัว โอกาสพิมพ์เลขผิดหรือลืมสูงมาก — VTP แก้ด้วยการให้สร้าง VLAN "ที่เดียว" แล้วกระจายไปทุกตัวเอง</p>
+
+    <div class="tablewrap">
+      <table>
+        <caption>4 บทบาทของสวิตช์ใน VTP Domain</caption>
+        <thead><tr><th scope="col">Role</th><th scope="col">ทำอะไรได้</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Server</th><td>สร้าง/แก้ไข/ลบ VLAN ได้ แล้วกระจาย (advertise) ไปให้ตัวอื่นในโดเมนเดียวกัน</td></tr>
+          <tr><th scope="row">Client</th><td>รับ VTP advertisement มาปรับ VLAN ของตัวเองตาม — <b>แก้ไข VLAN เองไม่ได้เลย</b></td></tr>
+          <tr><th scope="row">Transparent</th><td>ไม่สนใจ advertisement ที่รับมา (ไม่เอาไปแก้ VLAN ตัวเอง) แต่ยัง<b>ส่งต่อ</b>ให้ตัวถัดไป — และแก้ไข VLAN ของตัวเองได้อิสระ</td></tr>
+          <tr><th scope="row">Off</th><td>ไม่สน ไม่ส่งต่อ VTP เลย — เหมือน Transparent แต่ตัดขาดตัวเองจากขบวนการทั้งหมด</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3>VTP เวอร์ชัน</h3>
+        <ul>
+          <li><b>v1</b> — default, รองรับ VLAN 1-1005</li>
+          <li><b>v2</b> — รองรับ VLAN 1-1005 เท่ากับ v1 แต่เพิ่มความสามารถอื่น</li>
+          <li><b>v3</b> — รองรับเต็มช่วง VLAN 1-4094 ต้องเลือก Primary Server ด้วยคำสั่ง <code>vtp primary</code> ก่อนใช้งาน</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>3 ชนิดของ Advertisement</h3>
+        <ul>
+          <li><b>Summary</b> — ส่งทุก 300 วินาที หรือเมื่อมีการเปลี่ยน VLAN บอกแค่เวอร์ชัน โดเมน revision number และเวลา</li>
+          <li><b>Subset</b> — ส่งตามหลัง Summary เมื่อ VLAN เปลี่ยนจริง มีรายละเอียดครบให้สวิตช์อื่นเอาไปอัปเดต</li>
+          <li><b>Client Request</b> — Client ที่เห็น revision number สูงกว่าที่มี จะขอ Subset ฉบับเต็มมา</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="knob" style="margin-top:20px">
+      <span class="where c1">ตั้งค่า VTP</span>
+      <h3>ลำดับการตั้งค่า 4 ขั้น</h3>
+      <pre>vtp version 3
+vtp domain MYDOMAIN
+vtp mode server
+vtp password mypassword</pre>
+      <p class="why" style="margin:0">ตรวจสอบด้วย <code>show vtp status</code> — ดูเวอร์ชัน ชื่อโดเมน โหมด จำนวน VLAN และ configuration revision number</p>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>กับดักที่ทำเครือข่ายทั้งบริษัทพังได้ <span class="tag">ออกสอบบ่อย</span></h4>
+      <p><b>Configuration Revision Number</b> คือเลขนับเวอร์ชันการเปลี่ยนแปลง VLAN ที่เพิ่มขึ้นทุกครั้งที่มีคนแก้ VLAN บน Server — เลขนี้ติดตัวสวิตช์ไปตลอด แม้จะถอดออกจากโดเมนไปแล้วก็ยังจำได้</p>
+      <p>ถ้าเอาสวิตช์ตัวหนึ่งที่เคยมี Configuration Revision Number สูง (เช่น เคยเป็น Server ในแล็บอื่นมาก่อน) มาเสียบเข้าโดเมนใหม่ — สวิตช์ตัวอื่นจะเห็นว่า revision number ของมันสูงกว่า แล้ว<b>เชื่อว่ามันคือข้อมูลใหม่กว่า</b> จึงยอมรับ VLAN database ของมันมาแทนที่ของตัวเอง ถ้า VLAN บนสวิตช์ที่เสียบเข้ามาว่างเปล่า <b>VLAN ทั้งโดเมนจะหายหมด</b></p>
+      <p style="margin:0"><b>วิธีป้องกัน:</b> รีเซ็ต revision number ก่อนเสียบสวิตช์เข้าโดเมนจริงเสมอ วิธีที่ง่ายที่สุดคือเปลี่ยน <code>vtp domain</code> เป็นชื่ออื่นแล้วเปลี่ยนกลับ (การเปลี่ยนชื่อโดเมนจะรีเซ็ต revision number เป็น 0 โดยอัตโนมัติ) หรือตั้งเป็น <code>vtp mode transparent</code> ก่อนเสียบ</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M4 13 L11 13 M15 13 L22 13" stroke="var(--slate)" stroke-width="2" stroke-linecap="round"/>
+        <path d="M11 9 L15 13 L11 17" fill="none" stroke="var(--slate)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h2>DTP (Dynamic Trunking Protocol) — ออกสอบ</h2>
+    </div>
+    <p class="sec-sub">ปัญหาคนละเรื่องกับ VTP: VTP จัดการว่า "มี VLAN อะไรบ้าง" ส่วน DTP จัดการว่า "พอร์ตนี้ควรเป็น Trunk หรือ Access" โดยให้สวิตช์สองฝั่งเจรจากันเอง</p>
+
+    <div class="tablewrap">
+      <table>
+        <caption>DTP Mode และผลการเจรจา (✓ = เกิด Trunk, ✗ = ไม่เกิด)</caption>
+        <thead><tr><th scope="col">ฝั่งเรา \ ฝั่งเขา</th><th scope="col">Trunk</th><th scope="col">Dynamic Desirable</th><th scope="col">Dynamic Auto</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Trunk</th><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td></tr>
+          <tr><th scope="row">Dynamic Desirable</th><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td></tr>
+          <tr><th scope="row">Dynamic Auto</th><td class="center">✓</td><td class="center">✓</td><td class="center" style="color:var(--blk);font-weight:700">✗</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h3>อ่านตารางนี้ยังไง</h3>
+      <ul>
+        <li><b>Trunk</b> = สั่ง <code>switchport mode trunk</code> ตรง ๆ ตั้งเป็น Trunk แน่นอน แต่ยังส่ง DTP ประกาศตัวเองต่อไป</li>
+        <li><b>Dynamic Desirable</b> = ทำตัวเป็น Access Port ไปก่อน แต่ "อยากเป็น Trunk" — ส่งประกาศชวนฝั่งตรงข้ามด้วย</li>
+        <li><b>Dynamic Auto</b> = ทำตัวเป็น Access Port ไปก่อน "รอฟังอย่างเดียว" ไม่ชวนใคร ถ้าไม่มีใครชวนก็อยู่เป็น Access ตลอดไป</li>
+        <li>จุดที่ต้องจำ: <b>Auto คู่กับ Auto ไม่มีทางเกิด Trunk</b> เพราะทั้งคู่รอฟังอย่างเดียว ไม่มีใครเอ่ยชวนก่อน — นี่คือค่า default ของสวิตช์ Cisco หลายรุ่น ซึ่งอธิบายว่าทำไมสองสวิตช์ default ต่อกันแล้วมักเป็น Access ไม่ใช่ Trunk เอง</li>
+      </ul>
+    </div>
+
+    <div class="figwrap" style="margin-top:20px">
+      <figure>
+        <svg viewBox="0 0 720 200" role="img" aria-label="ตัวอย่างจริงจากแลป: D1 พอร์ต g1/0/5 ตั้งเป็น dynamic auto ตามค่า default ส่วน A1 พอร์ต f0/1 ก็เป็น dynamic auto เช่นกัน ทั้งคู่จึงเป็นแค่ access port ธรรมดา จนกระทั่งเปลี่ยน A1 ให้เป็น dynamic desirable ทำให้ A1 เริ่มส่งคำเชิญ ผลคือทั้งคู่เจรจาสำเร็จกลายเป็น trunk port">
+          <rect x="40" y="70" width="140" height="60" rx="8" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="2"/>
+          <text x="110" y="105" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)">D1 g1/0/5</text>
+          <text x="110" y="122" text-anchor="middle" font-size="10" fill="var(--ink-2)">dynamic auto</text>
+
+          <line x1="180" y1="100" x2="300" y2="100" stroke="var(--ink-3)" stroke-width="2" stroke-dasharray="4 3"/>
+          <text x="240" y="90" text-anchor="middle" font-size="11" fill="var(--ink-3)">ทั้งคู่รอฟัง</text>
+
+          <rect x="300" y="70" width="140" height="60" rx="8" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/>
+          <text x="370" y="105" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)">A1 f0/1</text>
+          <text x="370" y="122" text-anchor="middle" font-size="10" fill="var(--ink-2)">dynamic auto</text>
+
+          <text x="240" y="60" text-anchor="middle" font-size="12" fill="var(--blk)" font-weight="700">ผล: Access เท่านั้น (ไม่มีใครชวน)</text>
+
+          <text x="240" y="165" text-anchor="middle" font-size="12" fill="var(--fwd)" font-weight="700">เปลี่ยน A1 เป็น dynamic desirable → เจรจาสำเร็จ → Trunk ทั้งคู่</text>
+        </svg>
+        <figcaption>ของจริงจากแลป: <code>A1(config-if)# switchport mode dynamic desirable</code> — หลังจากนี้ <code>show interfaces trunk</code> จะโชว์ A1 เป็น "desirable" และ D1 เป็น "auto" ทั้งคู่ trunking</figcaption>
+      </figure>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>DTP ไม่ปลอดภัย <span class="tag">ออกสอบ</span></h4>
+      <p>DTP ไม่มีการยืนยันตัวตนใด ๆ — ถ้ามีใครเสียบอุปกรณ์ปลอมที่ส่ง DTP หลอกว่า "อยากเป็น Trunk" เข้ากับพอร์ตที่เป็น <code>dynamic auto</code> หรือ <code>dynamic desirable</code> พอร์ตนั้นจะกลายเป็น Trunk ให้ผู้บุกรุกเข้าถึงได้ทุก VLAN ที่ผ่านสายนั้น</p>
+      <p style="margin:0"><b>แนวทางที่ถูกต้อง:</b> พอร์ตที่ตั้งใจให้เป็น Trunk แน่นอนแล้ว ให้สั่ง <code>switchport mode trunk</code> ร่วมกับ <code>switchport nonegotiate</code> (ปิดการส่ง/รับ DTP ไปเลย) ส่วนพอร์ตที่ต่อ End-user ให้ตั้ง <code>switchport mode access</code> ตรง ๆ ไม่ปล่อยให้เดาเอง</p>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>คำสั่งอ้างอิง Part A</caption>
+        <thead><tr><th scope="col">งาน</th><th scope="col">คำสั่ง</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">ตั้ง Trunk แบบชัวร์ + ปิดเจรจา</th><td><code>switchport mode trunk</code> + <code>switchport nonegotiate</code></td></tr>
+          <tr><th scope="row">ตั้งชวนเป็น Trunk</th><td><code>switchport mode dynamic desirable</code></td></tr>
+          <tr><th scope="row">ตั้งรอฟังอย่างเดียว</th><td><code>switchport mode dynamic auto</code></td></tr>
+          <tr><th scope="row">ตรวจสอบสถานะ Trunk</th><td><code>show interfaces trunk</code></td></tr>
+          <tr><th scope="row">ตรวจสอบ VTP</th><td><code>show vtp status</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- PART B — ETHERCHANNEL -->
+  <!-- ============================================================ -->
+  <section class="act-title" style="margin-top:60px">
+    <span style="display:block;font-family:var(--mono);font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--coral);font-weight:700;margin-bottom:6px">Part B</span>
+    <h2 style="margin:0 0 8px;font-size:1.4rem;font-weight:800">EtherChannel — รวมสายซ้ำซ้อนแทนการปล่อยให้ Block</h2>
+    <p style="margin:0;color:var(--ink-2);max-width:72ch">จากบทที่ 2 เรารู้แล้วว่า STP ต้อง Block พอร์ตที่ซ้ำซ้อนเพื่อกันลูป — EtherChannel คือวิธีที่ทำให้สายซ้ำซ้อนเหล่านั้น <b>ไม่ต้องถูกมองว่าซ้ำซ้อนอีกต่อไป</b></p>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="13" cy="13" r="11.5" fill="none" stroke="var(--coral)" stroke-width="1.6"/>
+        <circle cx="13" cy="13" r="4" fill="var(--coral)"/>
+      </svg>
+      <h2>แนวคิด: ทำให้ STP เห็นสายเดียว</h2>
+    </div>
+    <p class="sec-sub">โจทย์: สายระหว่างสวิตช์อิ่มแล้ว อยากได้ bandwidth เพิ่ม ลองเสียบสายที่สองเข้าไปดู เกิดอะไรขึ้น</p>
+
+    <div class="figwrap">
+      <figure>
+        <svg viewBox="0 0 760 260" role="img" aria-label="ก่อนใช้ EtherChannel A1 มี Et0 สอง เส้นไป D2 คือ Fa0/3 และ Fa0/4 ซึ่ง STP มองเป็นสองพอร์ตแยกกัน จึงต้องเลือก Root Port หนึ่งเส้นแล้ว Block อีกเส้นทิ้ง ทำให้ cost เท่ากับ 19 และแบนด์วิดท์ที่ใช้ได้จริงมีแค่เส้นเดียว หลังรวมเป็น EtherChannel Po1 ทั้งสองสายกลายเป็นอินเทอร์เฟซตรรกะเดียว STP มองเห็นแค่ Po1 เส้นเดียวไม่มีอะไรให้ Block cost รวมลดลงเหลือ 12 และแบนด์วิดท์ของทั้งสองสายถูกใช้งานพร้อมกัน">
+          <text x="190" y="30" text-anchor="middle" font-size="13" font-weight="700" fill="var(--blk)">ก่อน — STP เห็น 2 สาย ต้อง Block 1</text>
+          <rect x="120" y="60" width="140" height="50" rx="8" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/>
+          <text x="190" y="90" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">A1</text>
+          <rect x="120" y="170" width="140" height="50" rx="8" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/>
+          <text x="190" y="200" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">D2</text>
+          <line x1="200" y1="110" x2="230" y2="170" stroke="var(--fwd)" stroke-width="3"/>
+          <text x="245" y="145" font-size="10.5" fill="var(--fwd)">Fa0/3 FWD</text>
+          <line x1="180" y1="110" x2="150" y2="170" stroke="var(--blk)" stroke-width="2.5" stroke-dasharray="5 4"/>
+          <text x="90" y="145" font-size="10.5" fill="var(--blk)">Fa0/4 BLK</text>
+          <text x="190" y="238" text-anchor="middle" font-size="12" fill="var(--ink-2)">Root Cost = 19 (ใช้ได้จริงแค่ 1 สาย)</text>
+
+          <line x1="380" y1="20" x2="380" y2="240" stroke="var(--rule)" stroke-width="1.5" stroke-dasharray="4 4"/>
+
+          <text x="570" y="30" text-anchor="middle" font-size="13" font-weight="700" fill="var(--fwd)">หลัง — รวมเป็น Po1 สายเดียว</text>
+          <rect x="500" y="60" width="140" height="50" rx="8" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/>
+          <text x="570" y="90" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">A1</text>
+          <rect x="500" y="170" width="140" height="50" rx="8" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/>
+          <text x="570" y="200" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">D2</text>
+          <line x1="580" y1="110" x2="610" y2="170" stroke="var(--fwd)" stroke-width="3"/>
+          <line x1="560" y1="110" x2="530" y2="170" stroke="var(--fwd)" stroke-width="3"/>
+          <rect x="530" y="128" width="80" height="24" rx="6" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="1.5"/>
+          <text x="570" y="145" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--coral)">Po1</text>
+          <text x="570" y="238" text-anchor="middle" font-size="12" fill="var(--fwd)" font-weight="700">Root Cost = 12 (ใช้ทั้งสองสายพร้อมกัน)</text>
+        </svg>
+        <figcaption>ตัวเลข cost 19 → 12 นี้คือของจริงจากแลป (<code>show spanning-tree</code> ก่อน/หลังรวม Fa0/3+Fa0/4 เป็น Po1) — STP ไม่ได้หายไปไหน มันแค่มองเห็น topology น้อยพอร์ตลง</figcaption>
+      </figure>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h3>สิ่งที่ควรรู้เกี่ยวกับ EtherChannel</h3>
+      <ul>
+        <li>มาตรฐาน IEEE 802.3ad — ใช้ได้ทั้ง Layer 2 (access/trunk) และ Layer 3</li>
+        <li>ชื่อเรียกสลับกันได้: <b>EtherChannel</b>, <b>EtherChannel bundle</b>, <b>Port-channel</b> — บน Catalyst ใช้แทนกันได้ แต่แพลตฟอร์มอื่นของ Cisco มักเรียก "Port-channel" อย่างเดียว</li>
+        <li>รวมได้สูงสุด 8 สายที่ Active พร้อมกันต่อหนึ่ง Bundle (LACP อนุญาตเผื่อ Standby ได้อีก 8)</li>
+        <li>การตั้งค่าต้องแก้ที่ <b>Port-channel interface</b> เป็นหลัก ไม่ใช่ไปแก้ทีละ physical interface — ไม่งั้นสมาชิกจะตั้งค่าไม่ตรงกันจนใช้งานไม่ได้</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="3" y="10" width="20" height="6" rx="3" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+        <circle cx="7" cy="13" r="2" fill="var(--coral)"/><circle cx="19" cy="13" r="2" fill="var(--coral)"/>
+      </svg>
+      <h2>3 วิธีสร้าง EtherChannel — ของจริงจากแลป</h2>
+    </div>
+    <p class="sec-sub">EtherChannel สร้างได้ 3 แบบ: แบบ <b>Static</b> (บังคับตรง ๆ ไม่มีการเจรจา) และแบบเจรจาผ่านโปรโตคอลอีก 2 ตัว — <b>PAgP (Port Aggregation Protocol)</b> ของ Cisco เอง กับ <b>LACP (Link Aggregation Control Protocol)</b> ซึ่งเป็นมาตรฐานเปิดใช้ข้ามยี่ห้อได้ — แลปเดียวกัน สร้างครบทั้ง 3 แบบบน topology D1-D2-A1 เดิม</p>
+
+    <div class="figwrap">
+      <figure>
+        <svg viewBox="0 0 780 300" role="img" aria-label="สามสวิตช์ D1 D2 A1 เชื่อมกันเป็นสามเหลี่ยม คู่ D2 กับ A1 ใช้ Static EtherChannel หมายเลข 1 คู่ D1 กับ A1 ใช้ PAgP EtherChannel หมายเลข 2 คู่ D1 กับ D2 ใช้ LACP EtherChannel หมายเลข 3">
+          <rect x="150" y="30" width="140" height="60" rx="8" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="2.2"/>
+          <text x="220" y="66" text-anchor="middle" font-size="16" font-weight="700" fill="var(--ink)">D1</text>
+
+          <rect x="480" y="30" width="140" height="60" rx="8" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2.2"/>
+          <text x="550" y="66" text-anchor="middle" font-size="16" font-weight="700" fill="var(--ink)">D2</text>
+
+          <rect x="315" y="210" width="140" height="60" rx="8" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="2.2"/>
+          <text x="385" y="246" text-anchor="middle" font-size="16" font-weight="700" fill="var(--ink)">A1</text>
+
+          <line x1="290" y1="60" x2="480" y2="60" stroke="var(--violet)" stroke-width="3"/>
+          <rect x="345" y="42" width="90" height="24" rx="6" fill="var(--violet-soft)" stroke="var(--violet)" stroke-width="1.5"/>
+          <text x="390" y="59" text-anchor="middle" font-size="11" font-weight="700" fill="var(--violet)">Po3 · LACP</text>
+
+          <line x1="220" y1="90" x2="350" y2="210" stroke="var(--gold)" stroke-width="3"/>
+          <rect x="225" y="140" width="90" height="24" rx="6" fill="var(--gold-soft)" stroke="var(--gold)" stroke-width="1.5"/>
+          <text x="270" y="157" text-anchor="middle" font-size="11" font-weight="700" fill="var(--gold)">Po2 · PAgP</text>
+
+          <line x1="550" y1="90" x2="420" y2="210" stroke="var(--fwd)" stroke-width="3"/>
+          <rect x="450" y="140" width="90" height="24" rx="6" fill="var(--slate-soft)" stroke="var(--fwd)" stroke-width="1.5"/>
+          <text x="495" y="157" text-anchor="middle" font-size="11" font-weight="700" fill="var(--fwd)">Po1 · Static</text>
+        </svg>
+        <figcaption>D2-A1 = Static (mode on) · D1-A1 = PAgP (desirable non-silent) · D1-D2 = LACP (active) — สายกายภาพ 2 เส้นต่อคู่ แต่ละคู่รวมเป็น Port-channel เดียว</figcaption>
+      </figure>
+    </div>
+
+    <div class="grid-3" style="margin-top:20px">
+      <div class="knob">
+        <span class="where c1">D2 ↔ A1</span>
+        <h3>Static — mode on</h3>
+        <p class="why">ไม่มีการเจรจา ไม่มีการตรวจสุขภาพสาย ถ้าสายเสียแต่ Line Protocol ยังขึ้น Port-channel จะไม่รู้ตัวว่ามีปัญหา</p>
+        <pre>interface range g1/0/5-6
+ channel-group 1 mode on</pre>
+      </div>
+      <div class="knob">
+        <span class="where c2">D1 ↔ A1</span>
+        <h3>PAgP (Port Aggregation Protocol)</h3>
+        <p class="why">มีการเจรจา ใช้ได้เฉพาะกับสวิตช์ Cisco ด้วยกัน แนะนำใส่ non-silent เพื่อบังคับให้ต้องได้รับ PAgP packet ก่อนถึงจะรวมสาย</p>
+        <pre>interface range f0/1-2
+ channel-group 2 mode desirable non-silent</pre>
+      </div>
+      <div class="knob">
+        <span class="where c3">D1 ↔ D2</span>
+        <h3>LACP (Link Aggregation Control Protocol)</h3>
+        <p class="why">ใช้ข้ามยี่ห้อได้ เป็นตัวที่ใช้บ่อยสุดในงานจริงปัจจุบัน</p>
+        <pre>interface range g1/0/1-4
+ channel-group 3 mode active</pre>
+      </div>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>โหมดเจรจาของ PAgP และ LACP (โครงเดียวกับตาราง DTP ด้านบน)</caption>
+        <thead><tr><th scope="col">โปรโตคอล</th><th scope="col">โหมด "ชวน"</th><th scope="col">โหมด "รอฟัง"</th><th scope="col">รอฟัง + รอฟัง</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">PAgP</th><td>Desirable</td><td>Auto</td><td style="color:var(--blk);font-weight:700">✗ ไม่เกิด Bundle</td></tr>
+          <tr><th scope="row">LACP</th><td>Active</td><td>Passive</td><td style="color:var(--blk);font-weight:700">✗ ไม่เกิด Bundle</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--ink-2);font-size:.9rem;margin-top:10px">สังเกตรูปแบบซ้ำ: DTP (Auto), PAgP (Auto), LACP (Passive) ล้วนเป็น "โหมดรอฟัง" — กติกาเดียวกันทุกครั้งคือ<b> รอฟังคู่กับรอฟัง จะไม่มีอะไรเกิดขึ้นเลย</b> ต้องมีฝั่งใดฝั่งหนึ่ง "เอ่ยชวน" ก่อนเสมอ</p>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M13 2.5 L23.5 21 L2.5 21 Z" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linejoin="round"/>
+        <line x1="13" y1="10" x2="13" y2="15" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"/><circle cx="13" cy="18" r="1.2" fill="var(--gold)"/>
+      </svg>
+      <h2>ตรวจสอบสถานะ EtherChannel — ออกสอบ</h2>
+    </div>
+    <p class="sec-sub">คำสั่งหลักคือ <code>show etherchannel summary</code> — ตัวย่อในตารางนี้เจอบ่อยในข้อสอบแบบเติมคำ</p>
+
+    <div class="tablewrap">
+      <table>
+        <caption>รหัสสถานะที่ต้องจำ (ตัวพิมพ์เล็ก-ใหญ่มีความหมายต่างกัน)</caption>
+        <thead><tr><th scope="col">รหัส</th><th scope="col">ระดับ</th><th scope="col">ความหมาย</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">U</th><td>Port-channel</td><td>ใช้งานได้ปกติ</td></tr>
+          <tr><th scope="row">D</th><td>Port-channel</td><td>Down</td></tr>
+          <tr><th scope="row">S / R</th><td>Port-channel</td><td>ตั้งเป็น Layer 2 Switching (S) หรือ Layer 3 Routing (R)</td></tr>
+          <tr><th scope="row">M</th><td>Port-channel</td><td>สร้างสำเร็จแต่ใช้งานไม่ได้ เพราะจำนวนสมาชิก Active ไม่ถึงขั้นต่ำที่ตั้งไว้ (<code>port-channel min-links</code>)</td></tr>
+          <tr><th scope="row">P</th><td>สมาชิก</td><td>กำลังส่งข้อมูลอยู่จริงในบันเดิลนี้</td></tr>
+          <tr><th scope="row">H</th><td>สมาชิก</td><td>Hot-standby — สร้าง LACP adjacency ได้แล้ว แต่เกินจำนวนสูงสุด (<code>lacp max-bundle</code>) จึงยังไม่ถูกใช้งาน</td></tr>
+          <tr><th scope="row">I</th><td>สมาชิก</td><td>ไม่พบกิจกรรม LACP บนพอร์ตนี้ ถูกมองเป็น Individual แยกเดี่ยว</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="knob" style="margin-top:20px">
+      <span class="where c1">ของจริงจากแลป — D2</span>
+      <h3>show etherchannel summary</h3>
+      <p class="out">Group Port-channel Protocol Ports
+1     Po1(SU)     -        Gi1/0/5(P) Gi1/0/6(P)
+3     Po3(SU)     LACP     Gi1/0/1(P) Gi1/0/2(P) Gi1/0/3(P)
+                            Gi1/0/4(H)</p>
+      <p class="why" style="margin:0">Po1 (Static) สถานะ <code>SU</code> = Layer2 + ใช้งานได้ปกติ ทั้งสองสมาชิกเป็น (P) กำลังส่งจริง — Po3 (LACP) มี 4 สมาชิก แต่ตั้ง <code>lacp max-bundle 3</code> ไว้ ตัวที่ 4 (Gi1/0/4) เลยกลายเป็น (H) สแตนด์บาย ไม่ได้ส่งข้อมูล จนกว่าตัวใดตัวหนึ่งใน 3 ตัวแรกจะหลุด</p>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>คำสั่งตรวจสอบเพิ่มเติม</caption>
+        <thead><tr><th scope="col">งาน</th><th scope="col">คำสั่ง</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">รายละเอียด Port-channel</th><td><code>show interface port-channel &lt;id&gt;</code></td></tr>
+          <tr><th scope="row">เพื่อนบ้าน LACP</th><td><code>show lacp neighbor [detail]</code></td></tr>
+          <tr><th scope="row">เพื่อนบ้าน PAgP</th><td><code>show pagp neighbor</code></td></tr>
+          <tr><th scope="row">ตัวนับแพ็กเก็ต LACP / PAgP</th><td><code>show lacp counters</code> / <code>show pagp counters</code></td></tr>
+          <tr><th scope="row">ล้างตัวนับ</th><td><code>clear lacp counters</code> / <code>clear pagp counters</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="13" cy="13" r="10" fill="none" stroke="var(--violet)" stroke-width="1.8"/>
+        <path d="M13 7 L13 13 L17 16" stroke="var(--violet)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      </svg>
+      <h2>ปรับแต่ง LACP — ใครเป็น Master ใครเป็น Standby</h2>
+    </div>
+    <p class="sec-sub">เมื่อสมาชิกมีมากกว่าที่ Bundle รับได้ ต้องมีกติกาเลือกว่าใครใช้งานจริง ใครรอสำรอง — ของจริงจากแลป Tuning EtherChannel</p>
+
+    <div class="grid-3">
+      <div class="knob">
+        <span class="where c3">ระดับสวิตช์</span>
+        <h3>LACP System Priority — ใครเป็น Master</h3>
+        <p class="why">Master Switch คือคนตัดสินใจว่าสมาชิกตัวไหน Active ตัวไหน Standby ค่า System ID = System Priority (default 32768) + MAC Address ตัวที่ตัวเลขต่ำกว่าชนะ</p>
+        <pre>lacp system-priority 1</pre>
+        <p class="out">D1# show lacp sys-id
+32768, d8b1.9028.af80
+D2# show lacp sys-id
+1, d8b1.905d.c300</p>
+        <p class="why" style="margin:0"><b>ข้อสังเกตสำคัญ:</b> LACP priority <u>ไม่ต้อง</u>เป็นทวีคูณของ 4096 เหมือน STP Bridge Priority — ใส่เลขอะไรก็ได้ตรง ๆ นี่คือจุดที่มักสับสนกับ STP เพราะชื่อคล้ายกัน</p>
+      </div>
+      <div class="knob">
+        <span class="where c3">ระดับพอร์ต — เลือก "ใคร"</span>
+        <h3>LACP Interface Priority</h3>
+        <p class="why">คนละเรื่องกับ System Priority — อันนี้ใช้ตอน Master Switch ต้องเลือกว่า<b>พอร์ตไหน</b>ใน Bundle จะ Active เมื่อสมาชิกมีเกินจำนวนสูงสุดที่รับได้</p>
+        <pre>interface g1/0/4
+ lacp port-priority 100</pre>
+        <p class="why" style="margin:0">กติกาเดียวกับ System Priority: <b>เลขต่ำกว่าชนะ</b> พอร์ตที่มี priority ต่ำสุดจะถูกเลือกเป็น Active ก่อน ค่า default คือ 32768 เท่ากันทุกพอร์ต</p>
+      </div>
+      <div class="knob">
+        <span class="where c3">ระดับพอร์ต — เลือก "กี่ตัว"</span>
+        <h3>Min-links / Max-bundle</h3>
+        <p class="why">กำหนดขั้นต่ำ-สูงสุดของ<b>จำนวน</b>สมาชิก Active ในหนึ่ง Bundle</p>
+        <pre>interface port-channel 12
+ port-channel min-links 2
+ lacp max-bundle 3</pre>
+        <p class="why" style="margin:0">ในแลป: มีสาย 4 เส้นระหว่าง D1-D2 แต่ตั้ง max-bundle 3 → เส้นที่ 4 (Gi1/0/4) กลายเป็น Hot-standby (H) ทันที ไม่ได้ถูกตัดออก แค่รอสำรองไว้เผื่อเส้นอื่นหลุด</p>
+      </div>
+    </div>
+    <p style="color:var(--ink-2);font-size:.9rem;margin-top:10px">สรุปให้ไม่งง: <b>System Priority</b> เลือกว่า<b>สวิตช์ไหน</b>เป็น Master — <b>Interface Priority</b> เลือกว่า<b>พอร์ตไหน</b>ใน Bundle เดียวกันจะ Active — สองคำสั่งคนละระดับ แต่ใช้กติกา "เลขต่ำกว่าชนะ" เหมือนกันหมด</p>
+
+    <div class="card" style="margin-top:20px">
+      <h3>LACP Fast — เร่งเวลาตรวจับสายขาด</h3>
+      <ul>
+        <li>ค่า default: ส่ง LACP packet ทุก 30 วินาที ถือว่าสายใช้ไม่ได้ถ้าขาดการติดต่อ 3 รอบ = 90 วินาที</li>
+        <li>เปิด <code>lacp rate fast</code> แล้วจะส่งทุก 1 วินาทีแทน — ตรวจจับสายขาดได้ใน 3 วินาที</li>
+        <li>ต้องตั้งให้ตรงกัน<b>ทั้งสองฝั่ง</b> ไม่งั้น Bundle จะขึ้นไม่สำเร็จ</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="3" y="11" width="8" height="8" rx="2" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+        <rect x="15" y="4" width="8" height="8" rx="2" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+        <rect x="15" y="18" width="8" height="8" rx="2" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+        <line x1="11" y1="15" x2="15" y2="8" stroke="var(--coral)" stroke-width="1.5"/>
+        <line x1="11" y1="15" x2="15" y2="22" stroke="var(--coral)" stroke-width="1.5"/>
+      </svg>
+      <h2>Load Balancing — จราจรกระจายไปสายไหน</h2>
+    </div>
+    <p class="sec-sub">คำถามที่มักเข้าใจผิด: EtherChannel ไม่ได้ส่งแบบ round-robin ทีละแพ็กเก็ตสลับสาย</p>
+
+    <div class="card">
+      <h3>หลักการจริง: Hash ไม่ใช่ Round-Robin</h3>
+      <p style="color:var(--ink-2);margin:0 0 10px">สวิตช์คำนวณ hash จาก field ในเฟรม/แพ็กเก็ต (เช่น MAC หรือ IP ต้นทาง-ปลายทาง) แล้ว<b>ผูกทราฟฟิกชุดเดียวกันให้วิ่งสายเดิมเสมอ</b> — เพื่อไม่ให้แพ็กเก็ตมาถึงปลายทางไม่เรียงลำดับ</p>
+      <p style="color:var(--ink-2);margin:0">ตั้งได้ด้วยคำสั่ง <code>port-channel load-balance &lt;hash-method&gt;</code> ระดับทั้งสวิตช์ (ใช้กับทุก EtherChannel บนสวิตช์นั้น) ตัวเลือกที่พบบ่อย: <code>src-mac</code>, <code>dst-mac</code>, <code>src-dst-ip</code>, <code>src-dst-port</code></p>
+    </div>
+
+    <div class="knob" style="margin-top:20px">
+      <span class="where c1">ของจริงจากแลป</span>
+      <h3>Src-MAC เดิม → ออกพอร์ตเดิมเสมอ</h3>
+      <p class="out">D1# show platform software fed switch 1 etherchannel 12 load-balance mac
+0050.0040.00af 0050.0040.00fa → Gi1/0/1
+0050.0040.00af 0050.0040.00fb → Gi1/0/1   (src เดิม → พอร์ตเดิม)
+0050.0040.00bf 0050.0040.00fb → Gi1/0/2   (src ต่าง → พอร์ตเปลี่ยน)</p>
+      <p class="why" style="margin:0">ค่า default ของ Catalyst 3650/2960 คือ <code>src-mac</code> — เห็นได้ชัดว่า MAC ต้นทางเดียวกันจะได้พอร์ตขาออกเดิมทุกครั้ง</p>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>เลือก Hash ผิด = Load ไม่กระจาย <span class="tag">ออกสอบ</span></h4>
+      <p>ถ้า EtherChannel เชื่อมกับ Router (ที่มี MAC เดียวคงที่) แล้วใช้ hash แบบ <code>src-mac</code> หรือ <code>dst-mac</code> — ทราฟฟิกทั้งหมดจะ hash ออกมาเป็นค่าเดียวกันเสมอ วิ่งสายเดียวตลอด ไม่กระจายเลย</p>
+      <p style="margin:0"><b>ทางแก้:</b> เปลี่ยนไปใช้ IP หรือ Port เป็นฐานการคำนวณแทน (เช่น <code>src-dst-ip</code> หรือ <code>src-dst-port</code>) เพราะ IP/Port ต้นทาง-ปลายทางของแต่ละ session แตกต่างกัน กระจายได้ดีกว่า — และควรมีสมาชิกเป็นเลขยกกำลัง 2 (2, 4, 8) เพราะ hash เป็นฟังก์ชันไบนารี ตรวจสอบโหลดจริงแต่ละสายด้วย <code>show etherchannel port</code></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M4 4 L22 22 M22 4 L4 22" stroke="var(--blk)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <h2>Troubleshooting — ทำไม Bundle ไม่ยอมขึ้น</h2>
+    </div>
+    <p class="sec-sub">Port-channel คืออินเทอร์เฟซตรรกะ สมาชิกทุกตัวต้อง "เหมือนกัน" ในค่าพื้นฐาน ไม่งั้นจะรวมไม่สำเร็จหรือทำงานผิดปกติ</p>
+
+    <div class="tablewrap">
+      <table>
+        <caption>ค่าที่สมาชิกทุกพอร์ตต้องตรงกัน</caption>
+        <thead><tr><th scope="col">หมวด</th><th scope="col">ต้องตรงกัน</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Layer 2 พื้นฐาน</th><td>Port type (access/trunk), Port mode, Native VLAN, Allowed VLAN</td></tr>
+          <tr><th scope="row">Physical</th><td>Speed, Duplex</td></tr>
+          <tr><th scope="row">อื่น ๆ</th><td>MTU, Load interval, Storm control</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--ink-2);font-size:.9rem;margin-top:10px"><b>ข้อยกเว้นเดียว:</b> LACP Port Priority ไม่จำเป็นต้องตรงกันระหว่างสมาชิก (มันคือค่าที่ใช้เลือกว่าใครเป็น Active/Standby ไม่ใช่ค่าที่ต้อง sync)</p>
+
+    <div class="fixnote" style="background:var(--slate-soft);margin-top:20px">
+      <b style="color:var(--slate)">เช็คลิสต์เวลา Bundle ไม่ขึ้น:</b> (1) สายต้องเชื่อมระหว่างอุปกรณ์แค่ 2 ตัวเท่านั้น ไม่ผ่าน Hub/อุปกรณ์กลาง (2) พอร์ตสมาชิกทุกตัวต้อง Active ไม่ shutdown (3) ทั้งสองฝั่งต้องตั้งวิธีเดียวกัน — Static คู่กับ Static, หรือ LACP ฝั่งหนึ่ง Active อีกฝั่งอย่างน้อย Active/Passive อย่างใดอย่างหนึ่ง (4) ตรวจการรับส่งแพ็กเก็ต LACP/PAgP จริงด้วย <code>show lacp counters</code> / <code>show pagp counters</code>
+    </div>
+  </section>
+
+  <section>
+    <div class="grid-2">
+      <div class="exam">
+        <h4>ช่องว่างที่ต้องรู้ <span class="tag">แจ้งเตือน</span></h4>
+        <p>MidEx ระบุหัวข้อ <b>"Private VLANs"</b> อยู่ในขอบเขตของบทนี้ แต่เนื้อหานี้<b>ไม่ปรากฏ</b>ในสไลด์ต้นฉบับ สรุปเพื่อน หรือแล็บที่มีให้ทั้งหมด — ไม่ได้เขียนเนื้อหาส่วนนี้ขึ้นมาเองเพื่อความถูกต้อง แนะนำให้หาสไลด์/เอกสารเพิ่มเติมเฉพาะหัวข้อนี้แยกต่างหาก</p>
+      </div>
+      <div class="card">
+        <h3>สรุปคำศัพท์บทนี้</h3>
+        <ul>
+          <li><b>VTP</b> — แจกจ่าย VLAN อัตโนมัติทั้งโดเมน</li>
+          <li><b>DTP</b> — เจรจา Trunk/Access อัตโนมัติระหว่างพอร์ต</li>
+          <li><b>EtherChannel / Port-channel</b> — รวมสายจริงหลายเส้นเป็นอินเทอร์เฟซตรรกะเดียว</li>
+          <li><b>PAgP / LACP</b> — โปรโตคอลเจรจาสร้าง EtherChannel (Cisco / มาตรฐานเปิด)</li>
+          <li><b>Load-balancing hash</b> — วิธีเลือกว่าทราฟฟิกไหนวิ่งสายไหนใน Bundle</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Internetwork Chapter 5 · จากแลปจริงบน D1, D2, A1 (Cisco IOS XE 16.9.4) · แหล่งอ้างอิง: Chapter 5 slide deck, MidEx exam scope, lab 5.1.3/5.1.4
+  </footer>
+
 </Layout>
