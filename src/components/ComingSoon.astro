@@ -1,0 +1,31 @@
+---
+interface Props {
+  n: number;
+  title: string;
+  pages: number;
+  accent: string;
+  blurb: string;
+}
+const { n, title, pages, accent, blurb } = Astro.props;
+---
+
+<header class="masthead">
+  <p class="eyebrow" style={`color:${accent}`}>Internetwork · Chapter {n} of 14</p>
+  <h1>{title}</h1>
+  <p class="deck">{blurb}</p>
+</header>
+
+<section>
+  <div class="card" style="text-align:center; padding:40px 24px">
+    <p style="font-size:.8rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); margin:0 0 8px; font-weight:700">
+      กำลังจะมา
+    </p>
+    <p style="margin:0 0 4px; color:var(--ink-2); max-width:52ch; margin-left:auto; margin-right:auto">
+      บทนี้ยังไม่ได้แปล/สรุปจากสไลด์ต้นฉบับ (CCNP Enterprise: Core Networking, {pages} หน้า) — จะทยอยทำแบบเดียวกับบทที่ 1-4 ทีละบท
+    </p>
+  </div>
+</section>
+
+<footer>
+  Internetwork Chapter {n} · ยังไม่เผยแพร่เนื้อหาเต็ม
+</footer>

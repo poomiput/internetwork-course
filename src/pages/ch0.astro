@@ -1,0 +1,68 @@
+---
+import Layout from "../layouts/Layout.astro";
+const base = import.meta.env.BASE_URL;
+---
+<Layout title="Overview Internetworking" description="ภาพรวมคอร์ส Internetwork — จาก Layer 2 พื้นฐาน ไปจนถึง Routing ขั้นสูงและ Services">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--ink-3)">Internetwork · Chapter 0 of 14</p>
+    <h1>Overview Internetworking</h1>
+    <p class="deck">คอร์สนี้แปล/สรุปจากสไลด์ CCNP Enterprise: Core Networking (ENCOR) ทั้งชุด 15 บท — ไล่จากการตัดสินใจส่งแพ็กเก็ตพื้นฐาน ไปจนถึง Routing Protocol ขั้นสูงและการควบคุมคุณภาพทราฟฟิก</p>
+    <div class="credit-bar">
+      <span>CCNP Enterprise: Core Networking</span><span>15 บท</span><span>Cisco IOS XE</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M3 20 Q9 6 13 13 T23 6" fill="none" stroke="var(--coral)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <h2>แผนที่คอร์ส — 3 ช่วง</h2>
+    </div>
+    <p class="sec-sub">แต่ละช่วงต่อยอดจากช่วงก่อนหน้า — เริ่มจาก Layer 2 ในวงแลนเดียว ขยายไปเป็นเครือข่ายหลายจุด แล้วจบที่การควบคุมคุณภาพทราฟฟิก</p>
+
+    <div class="grid-3">
+      <div class="card" style="border-top:3px solid var(--slate)">
+        <h3 style="color:var(--slate)">1 · Layer 2 พื้นฐาน</h3>
+        <ul>
+          <li>Packet Forwarding</li>
+          <li>Spanning Tree / RSTP</li>
+          <li>Advanced STP Tuning</li>
+          <li>Multiple Spanning Tree</li>
+          <li>VLAN Trunks &amp; EtherChannel</li>
+        </ul>
+      </div>
+      <div class="card" style="border-top:3px solid var(--coral)">
+        <h3 style="color:var(--coral)">2 · Layer 3 Routing</h3>
+        <ul>
+          <li>IP Routing Essentials</li>
+          <li>EIGRP</li>
+          <li>OSPF</li>
+          <li>Advanced OSPF</li>
+          <li>OSPFv3</li>
+        </ul>
+      </div>
+      <div class="card" style="border-top:3px solid var(--violet)">
+        <h3 style="color:var(--violet)">3 · Routing ขั้นสูง &amp; Services</h3>
+        <ul>
+          <li>BGP</li>
+          <li>Advanced BGP</li>
+          <li>Multicast</li>
+          <li>QoS</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="fixnote" style="background:var(--slate-soft)">
+      <b style="color:var(--slate)">สถานะตอนนี้:</b> บทที่ 1-4 (Layer 2 พื้นฐาน) แปลและทำ visual ครบแล้ว เปิดอ่านได้จาก sidebar ด้านซ้าย — บทที่เหลือกำลังทยอยทำทีละบท
+    </div>
+  </section>
+
+  <footer>
+    Internetwork Chapter 0 · Overview · CCNP Enterprise: Core Networking
+  </footer>
+
+</Layout>

@@ -1,0 +1,463 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+<Layout title="MST Anatomy" description="โปสเตอร์เจาะลึกบทที่ 4 — MST Region, Instance, Root Placement, และ Cost/Priority tuning พร้อมผลจริงจากแลป">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--violet)">Internetwork · Chapter 4 of 4 · IEEE 802.1s</p>
+    <h1>Multiple Spanning Tree Protocol</h1>
+    <p class="deck">กายวิภาคของแลป MST — ต่อสายยังไง ข้อมูลไหลยังไง สวิตช์ตัดสินใจปิดพอร์ตไหนเพราะอะไร</p>
+    <div class="credit-bar">
+      <span>EVE-NG</span><span>Cisco IOL-L2</span><span>D1 · D2 · A1 · PC3</span><span>VLAN 2-5</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="grid-2">
+      <div class="card">
+        <h3>MST คืออะไร แก้ปัญหาอะไร</h3>
+        <ul>
+          <li><b>ปัญหาเดิม (PVST+):</b> คำนวณ spanning tree แยก <b>ทีละ VLAN</b> — มี 100 VLAN ก็คำนวณ 100 ครั้ง กิน CPU/RAM และมีเพดานจำนวน instance</li>
+          <li><b>วิธีของ MST:</b> จับ VLAN หลายตัวมัดเป็น <b>Instance</b> แล้วคำนวณครั้งเดียวต่อ instance</li>
+          <li><b>Common STP:</b> แบบเก่าสุด เหมารวมทุก VLAN เป็น topology เดียว ไม่มีทางเลือกเส้นทางเลย</li>
+          <li>MST เป็น <b>มาตรฐานเปิด</b> ใช้ข้ามยี่ห้อได้ ต่างจาก PVST+ ที่เป็นของ Cisco</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>สิ่งที่เราสร้างในแลปนี้</h3>
+        <ul>
+          <li><b>3 สวิตช์:</b> D1, D2 (distribution) และ A1 (access) + PC3</li>
+          <li><b>VLAN 2,3,4,5</b> สร้างครบเหมือนกันทั้ง 3 ตัว</li>
+          <li><b>Instance 1</b> = VLAN 2-3 → Root คือ D1<br /><b>Instance 2</b> = VLAN 4-5 → Root คือ D2</li>
+          <li><b>Instance 0 (IST)</b> = VLAN ที่เหลือทั้งหมด ได้มาฟรีโดยไม่ต้องสั่ง</li>
+          <li>ผลลัพธ์: <b>สายชุดเดียวกัน</b> แต่ VLAN คนละกลุ่มวิ่งคนละเส้นทาง</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="13" cy="13" r="11.5" fill="none" stroke="var(--violet)" stroke-width="1.6"/>
+        <circle cx="13" cy="13" r="4" fill="var(--violet)"/>
+      </svg>
+      <h2>กายวิภาคของ Topology</h2>
+    </div>
+    <p class="sec-sub">โครงสร้างทางกายภาพ — อะไรต่อกับอะไร พอร์ตไหนทำหน้าที่อะไร (ยังไม่พูดถึงว่าพอร์ตไหนเปิด/ปิด นั่นคือส่วนถัดไป)</p>
+
+    <div class="figwrap">
+      <figure>
+        <svg viewBox="0 0 1060 700" role="img" aria-label="ผังกายวิภาค: D1 และ D2 เชื่อมกันหนึ่งเส้นที่ e0/0, D1 ต่อ A1 สองเส้น, D2 ต่อ A1 สองเส้น, A1 ต่อ PC3 ด้วย access port e1/0 ทุกเส้นระหว่างสวิตช์เป็น trunk ที่ขน VLAN 1 ถึง 5 พร้อมกัน">
+          <defs>
+            <marker id="lead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ink-3)"/>
+            </marker>
+          </defs>
+
+          <g stroke="var(--ink-2)" stroke-width="2.5" fill="none">
+            <line x1="400" y1="130" x2="630" y2="130"/>
+            <line x1="300" y1="170" x2="465" y2="380"/>
+            <line x1="340" y1="170" x2="490" y2="380"/>
+            <line x1="690" y1="170" x2="540" y2="380"/>
+            <line x1="730" y1="170" x2="565" y2="380"/>
+          </g>
+          <line x1="515" y1="460" x2="515" y2="560" stroke="var(--coral)" stroke-width="2.5"/>
+
+          <g font-family="Cascadia Mono, Consolas, monospace" font-size="12" fill="var(--ink-3)">
+            <text x="515" y="120" text-anchor="middle">e0/0 ── e0/0</text>
+            <text x="292" y="188" text-anchor="end">e0/1</text>
+            <text x="352" y="196">e0/2</text>
+            <text x="738" y="188">e0/1</text>
+            <text x="678" y="196" text-anchor="end">e0/2</text>
+            <text x="438" y="366" text-anchor="end">e0/0</text>
+            <text x="492" y="358" text-anchor="middle">e0/1</text>
+            <text x="540" y="358" text-anchor="middle">e0/2</text>
+            <text x="594" y="366" text-anchor="start">e0/3</text>
+            <text x="527" y="516" fill="var(--coral)">e1/0</text>
+          </g>
+
+          <g>
+            <rect x="250" y="90" width="150" height="80" rx="10" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="2.5"/>
+            <text x="325" y="126" text-anchor="middle" font-size="24" font-weight="700" fill="var(--ink)">D1</text>
+            <text x="325" y="148" text-anchor="middle" font-size="11" fill="var(--ink-2)">Distribution</text>
+
+            <rect x="630" y="90" width="150" height="80" rx="10" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="2.5"/>
+            <text x="705" y="126" text-anchor="middle" font-size="24" font-weight="700" fill="var(--ink)">D2</text>
+            <text x="705" y="148" text-anchor="middle" font-size="11" fill="var(--ink-2)">Distribution</text>
+
+            <rect x="440" y="380" width="150" height="80" rx="10" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="2.5"/>
+            <text x="515" y="416" text-anchor="middle" font-size="24" font-weight="700" fill="var(--ink)">A1</text>
+            <text x="515" y="438" text-anchor="middle" font-size="11" fill="var(--ink-2)">Access</text>
+
+            <rect x="478" y="560" width="74" height="56" rx="8" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="2"/>
+            <text x="515" y="586" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">PC3</text>
+            <text x="515" y="602" text-anchor="middle" font-size="10" fill="var(--ink-3)">VPCS</text>
+          </g>
+
+          <line x1="238" y1="272" x2="378" y2="272" stroke="var(--ink-3)" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#lead)"/>
+          <g font-size="13" fill="var(--ink-2)">
+            <text x="20" y="248" font-weight="700" fill="var(--ink)" font-size="14">ทุกเส้นระหว่างสวิตช์ = TRUNK</text>
+            <text x="20" y="270">ขน VLAN 1-5 ไปพร้อมกันทุกเส้น</text>
+            <text x="20" y="290">ไม่มีเส้นไหนถูกจองให้ VLAN เดียว</text>
+            <text x="20" y="312" font-family="Cascadia Mono, monospace" font-size="11.5" fill="var(--coral)">switchport mode trunk</text>
+          </g>
+
+          <line x1="822" y1="272" x2="668" y2="272" stroke="var(--ink-3)" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#lead)"/>
+          <g font-size="13" fill="var(--ink-2)">
+            <text x="838" y="248" font-weight="700" fill="var(--ink)" font-size="14">คู่ละ 2 เส้น = สำรอง</text>
+            <text x="838" y="270">STP เปิดใช้จริงทีละเส้น</text>
+            <text x="838" y="290">อีกเส้นถูกกันไว้ (Alternate)</text>
+            <text x="838" y="310">เพื่อไม่ให้เกิด loop</text>
+          </g>
+
+          <line x1="380" y1="530" x2="500" y2="530" stroke="var(--ink-3)" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#lead)"/>
+          <g font-size="13" fill="var(--ink-2)">
+            <text x="20" y="506" font-weight="700" fill="var(--ink)" font-size="14">e1/0 = ACCESS PORT</text>
+            <text x="20" y="528">PC3 อยู่ VLAN เดียว ไม่ต้องมี tag</text>
+            <text x="20" y="548">สวิตช์แปะ/ถอด tag ให้เองที่ขอบ</text>
+          </g>
+
+          <g font-size="13" fill="var(--ink-2)">
+            <text x="700" y="506" font-weight="700" fill="var(--ink)" font-size="14">รูปนี้เป็นสามเหลี่ยม = มี LOOP</text>
+            <text x="700" y="528">ถ้าไม่มี STP เฟรม broadcast</text>
+            <text x="700" y="548">จะวิ่งวนไม่จบ จนเครือข่ายล่ม</text>
+            <text x="700" y="568" fill="var(--coral)">STP จึงต้องปิดบางพอร์ตเสมอ</text>
+          </g>
+
+          <g font-size="11.5" font-weight="700">
+            <rect x="250" y="52" width="150" height="24" rx="12" fill="var(--slate)" opacity="0.14"/>
+            <text x="325" y="69" text-anchor="middle" fill="var(--slate)">Root: MST0 + MST1</text>
+            <rect x="630" y="52" width="150" height="24" rx="12" fill="var(--coral)" opacity="0.14"/>
+            <text x="705" y="69" text-anchor="middle" fill="var(--coral)">Root: MST2</text>
+          </g>
+
+          <text x="515" y="490" text-anchor="middle" font-size="12" fill="var(--ink-3)">A1 ต้องเลือก 1 ทางไป Root — แยกกันคนละ instance</text>
+        </svg>
+        <figcaption>โครงสร้างนี้คือของจริงที่ต่อในแลป: D1-D2 หนึ่งเส้น, D1-A1 สองเส้น, D2-A1 สองเส้น, A1-PC3 หนึ่งเส้น</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="11" cy="11" r="8" fill="none" stroke="var(--violet)" stroke-width="1.8"/>
+        <line x1="17" y1="17" x2="24" y2="24" stroke="var(--violet)" stroke-width="2.2" stroke-linecap="round"/>
+      </svg>
+      <h2>ซูมเข้าไปในเส้น Trunk</h2>
+    </div>
+    <p class="sec-sub">คำถามที่ถามไว้ว่า "เส้นไหนคือ VLAN 2 เส้นไหนคือ VLAN 3" — คำตอบคือทุกเส้นขนทุก VLAN สิ่งที่แยกแยะคือ tag ที่แปะอยู่ในเฟรม</p>
+
+    <div class="figwrap">
+      <figure>
+        <svg viewBox="0 0 900 300" role="img" aria-label="โครงสร้างเฟรม Ethernet: เฟรมจาก PC3 ไม่มี tag เมื่อผ่าน access port สวิตช์แทรกฟิลด์ 802.1Q ขนาด 4 ไบต์ที่มีหมายเลข VLAN เข้าไประหว่าง Source MAC กับ Type ก่อนส่งออก trunk">
+          <text x="30" y="42" font-size="13" font-weight="700" fill="var(--ink)">เฟรมจาก PC3 (บน access port — ไม่มี tag)</text>
+          <g>
+            <rect x="30" y="56" width="130" height="46" rx="5" fill="var(--paper-2)" stroke="var(--ink-3)" stroke-width="1.5"/>
+            <text x="95" y="84" text-anchor="middle" font-size="12" fill="var(--ink-2)">DST MAC</text>
+            <rect x="160" y="56" width="130" height="46" rx="5" fill="var(--paper-2)" stroke="var(--ink-3)" stroke-width="1.5"/>
+            <text x="225" y="84" text-anchor="middle" font-size="12" fill="var(--ink-2)">SRC MAC</text>
+            <rect x="290" y="56" width="90" height="46" rx="5" fill="var(--paper-2)" stroke="var(--ink-3)" stroke-width="1.5"/>
+            <text x="335" y="84" text-anchor="middle" font-size="12" fill="var(--ink-2)">TYPE</text>
+            <rect x="380" y="56" width="200" height="46" rx="5" fill="var(--paper-2)" stroke="var(--ink-3)" stroke-width="1.5"/>
+            <text x="480" y="84" text-anchor="middle" font-size="12" fill="var(--ink-2)">DATA</text>
+            <rect x="580" y="56" width="70" height="46" rx="5" fill="var(--paper-2)" stroke="var(--ink-3)" stroke-width="1.5"/>
+            <text x="615" y="84" text-anchor="middle" font-size="12" fill="var(--ink-2)">FCS</text>
+          </g>
+
+          <g>
+            <line x1="340" y1="118" x2="340" y2="158" stroke="var(--coral)" stroke-width="2.5"/>
+            <polygon points="334,156 346,156 340,166" fill="var(--coral)"/>
+            <text x="356" y="145" font-size="12.5" fill="var(--coral)" font-weight="700">A1 แปะ tag ตอนส่งออก trunk</text>
+          </g>
+
+          <text x="30" y="196" font-size="13" font-weight="700" fill="var(--ink)">เฟรมเดียวกันบนเส้น trunk (มี tag 802.1Q)</text>
+          <g>
+            <rect x="30" y="210" width="130" height="46" rx="5" fill="var(--paper-2)" stroke="var(--ink-3)" stroke-width="1.5"/>
+            <text x="95" y="238" text-anchor="middle" font-size="12" fill="var(--ink-2)">DST MAC</text>
+            <rect x="160" y="210" width="130" height="46" rx="5" fill="var(--paper-2)" stroke="var(--ink-3)" stroke-width="1.5"/>
+            <text x="225" y="238" text-anchor="middle" font-size="12" fill="var(--ink-2)">SRC MAC</text>
+            <rect x="290" y="210" width="132" height="46" rx="5" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="2.5"/>
+            <text x="356" y="231" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--coral)">802.1Q TAG</text>
+            <text x="356" y="247" text-anchor="middle" font-size="11" fill="var(--ink-2)">VLAN ID = 4</text>
+            <rect x="422" y="210" width="88" height="46" rx="5" fill="var(--paper-2)" stroke="var(--ink-3)" stroke-width="1.5"/>
+            <text x="466" y="238" text-anchor="middle" font-size="12" fill="var(--ink-2)">TYPE</text>
+            <rect x="510" y="210" width="180" height="46" rx="5" fill="var(--paper-2)" stroke="var(--ink-3)" stroke-width="1.5"/>
+            <text x="600" y="238" text-anchor="middle" font-size="12" fill="var(--ink-2)">DATA</text>
+            <rect x="690" y="210" width="70" height="46" rx="5" fill="var(--paper-2)" stroke="var(--ink-3)" stroke-width="1.5"/>
+            <text x="725" y="238" text-anchor="middle" font-size="12" fill="var(--ink-2)">FCS</text>
+          </g>
+
+          <g font-size="12" fill="var(--ink-2)">
+            <text x="782" y="228" font-weight="700" fill="var(--ink)">แทรก 4 ไบต์</text>
+            <text x="782" y="246">เข้าไปกลางเฟรม</text>
+          </g>
+        </svg>
+        <figcaption>Trunk 1 เส้น = ถนนหลายเลน — tag คือป้ายบอกว่าเฟรมนี้เป็นของเลนไหน ปลายทางอ่าน tag แล้วแยกส่งให้ถูก VLAN</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M3 18 L9 18 L13 8 L17 18 L23 18" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h2>เส้นทางของข้อมูลจริง ตั้งแต่ PC3 ถึง D2</h2>
+    </div>
+    <p class="sec-sub">ตัวอย่างเดียวที่ร้อยทุกอย่างเข้าด้วยกัน: PC3 อยู่ VLAN 4 ส่งข้อมูลออกไป จะเกิดอะไรขึ้นบ้างตามลำดับ</p>
+
+    <div class="pathway">
+      <div class="pw-step">
+        <span class="n" style="color:var(--violet)">ขั้น 01</span>
+        <h4>PC3 ส่งเฟรมออก</h4>
+        <p>เฟรมธรรมดา ไม่มี tag เข้าที่ A1 พอร์ต <code>e1/0</code></p>
+      </div>
+      <div class="pw-step">
+        <span class="n" style="color:var(--violet)">ขั้น 02</span>
+        <h4>A1 แปะ tag</h4>
+        <p>พอร์ตนี้ถูกตั้งเป็น access ของ VLAN 4 → A1 แทรก tag <b>VLAN 4</b></p>
+      </div>
+      <div class="pw-step">
+        <span class="n" style="color:var(--violet)">ขั้น 03</span>
+        <h4>มองหา Instance</h4>
+        <p>ตารางบอกว่า VLAN 4 อยู่ใน <b>Instance 2</b> → ใช้ topology ของ MST2</p>
+      </div>
+      <div class="pw-step">
+        <span class="n" style="color:var(--violet)">ขั้น 04</span>
+        <h4>เลือกพอร์ตออก</h4>
+        <p>MST2 บอกว่า Root Port คือ <code>Et0/3</code> ส่วน Et0/0-0/2 ถูกบล็อกไว้</p>
+      </div>
+      <div class="pw-step">
+        <span class="n" style="color:var(--violet)">ขั้น 05</span>
+        <h4>ถึง D2 = Root</h4>
+        <p>D2 รับเฟรม อ่าน tag แล้วส่งต่อภายใน VLAN 4 (ถอด tag ถ้าออก access port)</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M13 3 L13 10 M13 10 L6 16 M13 10 L20 16" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="13" cy="3.5" r="2.4" fill="var(--violet)"/>
+        <circle cx="6" cy="17" r="2.4" fill="var(--violet)"/>
+        <circle cx="20" cy="17" r="2.4" fill="var(--violet)"/>
+      </svg>
+      <h2>สวิตช์ตัดสินใจปิดพอร์ตยังไง</h2>
+    </div>
+    <p class="sec-sub">เช็คตามลำดับนี้เป๊ะ ๆ — ข้อไหนตัดสินได้ก็จบ ไม่ต้องดูข้อถัดไป นี่คือเหตุผลที่ cost มีน้ำหนักมากกว่า port-priority เสมอ</p>
+
+    <div class="cascade">
+      <div class="rung" style="border-top-color:var(--violet)">
+        <span class="step-n" style="color:var(--violet)">1</span>
+        <h4>Root Bridge</h4>
+        <p class="what">เลือกจาก Bridge ID (priority + MAC) ที่ต่ำสุด</p>
+        <div class="lab">ในแลป: priority เท่ากันหมด → <b>D1 ชนะเพราะ MAC ลงท้าย 1000 ต่ำสุด</b></div>
+      </div>
+      <div class="rung" style="border-top-color:var(--violet)">
+        <span class="step-n" style="color:var(--violet)">2</span>
+        <h4>Root Path Cost</h4>
+        <p class="what">สวิตช์ที่ไม่ใช่ Root เลือกทางที่ cost สะสมถึง Root น้อยที่สุด</p>
+        <div class="lab">ในแลป: ตั้ง <b>cost 1000</b> บน A1 e0/1 ก็ชนะทันที ไม่ต้องดูข้อ 3-4 เลย</div>
+      </div>
+      <div class="rung" style="border-top-color:var(--violet)">
+        <span class="step-n" style="color:var(--violet)">3</span>
+        <h4>Sender Bridge ID</h4>
+        <p class="what">ถ้า cost เท่ากัน ดูว่าใครเป็นคนส่ง BPDU มา ตัวที่ ID ต่ำกว่าชนะ</p>
+        <div class="lab">ในแลป: A1 มี 2 เส้นไป D1 — cost เท่ากัน ผู้ส่งคนเดียวกัน จึงต้องไปข้อ 4</div>
+      </div>
+      <div class="rung" style="border-top-color:var(--violet)">
+        <span class="step-n" style="color:var(--violet)">4</span>
+        <h4>Sender Port ID</h4>
+        <p class="what">ดู <code>Prio.Nbr</code> ของพอร์ตฝั่งผู้ส่ง เลขต่ำกว่าชนะ</p>
+        <div class="lab">ในแลป: ลด priority ของ D2 e0/2 เหลือ <b>64</b> → A1 ย้าย Root Port ไป Et0/3</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="2.5" y="6" width="6.5" height="14" rx="2" fill="none" stroke="var(--violet)" stroke-width="1.8"/>
+        <rect x="10" y="3" width="6.5" height="20" rx="2" fill="none" stroke="var(--violet)" stroke-width="1.8"/>
+        <rect x="17.5" y="8" width="6" height="10" rx="2" fill="none" stroke="var(--violet)" stroke-width="1.8"/>
+      </svg>
+      <h2>สายชุดเดียว แต่ 3 เส้นทาง</h2>
+    </div>
+    <p class="sec-sub">หัวใจของ MST ทั้งหมดอยู่ตรงนี้ — สายกายภาพไม่ได้เปลี่ยนเลย แต่แต่ละ instance เลือกเส้นทางของตัวเอง ผลลัพธ์ด้านล่างคือของจริงที่รันได้จาก <code>show spanning-tree blockedports</code> บน A1</p>
+
+    <div class="grid-3">
+      <div class="inst-card">
+        <div class="head"><h4>MST0</h4><span class="vl">IST</span></div>
+        <p class="rootline">VLAN 1, 6-4094 · Root = <b>D1</b></p>
+        <svg viewBox="0 0 240 200" role="img" aria-label="MST0: A1 ใช้ Et0/0 เป็น Root Port ไป D1 ส่วนอีกสามพอร์ตถูกบล็อก">
+          <g stroke-width="2" fill="none">
+            <line x1="95" y1="140" x2="45" y2="58" stroke="var(--fwd)" stroke-width="3.5"/>
+            <line x1="105" y1="140" x2="65" y2="58" stroke="var(--ink-3)" stroke-dasharray="5 4"/>
+            <line x1="135" y1="140" x2="180" y2="58" stroke="var(--ink-3)" stroke-dasharray="5 4"/>
+            <line x1="145" y1="140" x2="200" y2="58" stroke="var(--ink-3)" stroke-dasharray="5 4"/>
+          </g>
+          <rect x="18" y="20" width="72" height="38" rx="7" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="2"/>
+          <text x="54" y="44" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">D1</text>
+          <rect x="158" y="20" width="72" height="38" rx="7" fill="none" stroke="var(--ink-3)" stroke-width="1.5"/>
+          <text x="194" y="44" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink-3)">D2</text>
+          <rect x="84" y="140" width="72" height="38" rx="7" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="2"/>
+          <text x="120" y="164" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">A1</text>
+          <text x="88" y="130" font-family="Cascadia Mono, monospace" font-size="10" fill="var(--fwd)" font-weight="700">Et0/0</text>
+        </svg>
+        <p class="result">Root <b>Et0/0</b><br />Blocked Et0/1, Et0/2, Et0/3</p>
+      </div>
+
+      <div class="inst-card">
+        <div class="head"><h4>MST1</h4><span class="vl">VLAN 2-3</span></div>
+        <p class="rootline">Root = <b>D1</b> (root primary)</p>
+        <svg viewBox="0 0 240 200" role="img" aria-label="MST1: หลังตั้ง cost 1000 บน A1 Et0/1 พอร์ตนั้นกลายเป็น Root Port ไป D1 แทน Et0/0">
+          <g stroke-width="2" fill="none">
+            <line x1="95" y1="140" x2="45" y2="58" stroke="var(--ink-3)" stroke-dasharray="5 4"/>
+            <line x1="105" y1="140" x2="65" y2="58" stroke="var(--fwd)" stroke-width="3.5"/>
+            <line x1="135" y1="140" x2="180" y2="58" stroke="var(--ink-3)" stroke-dasharray="5 4"/>
+            <line x1="145" y1="140" x2="200" y2="58" stroke="var(--ink-3)" stroke-dasharray="5 4"/>
+          </g>
+          <rect x="18" y="20" width="72" height="38" rx="7" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="2"/>
+          <text x="54" y="44" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">D1</text>
+          <rect x="158" y="20" width="72" height="38" rx="7" fill="none" stroke="var(--ink-3)" stroke-width="1.5"/>
+          <text x="194" y="44" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink-3)">D2</text>
+          <rect x="84" y="140" width="72" height="38" rx="7" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="2"/>
+          <text x="120" y="164" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">A1</text>
+          <text x="106" y="130" font-family="Cascadia Mono, monospace" font-size="10" fill="var(--fwd)" font-weight="700">Et0/1</text>
+          <text x="120" y="196" text-anchor="middle" font-size="10" fill="var(--coral)">cost 1000 ที่เราตั้งเอง</text>
+        </svg>
+        <p class="result">Root <b>Et0/1</b><br />Blocked Et0/0</p>
+      </div>
+
+      <div class="inst-card">
+        <div class="head"><h4>MST2</h4><span class="vl">VLAN 4-5</span></div>
+        <p class="rootline">Root = <b>D2</b> (root primary)</p>
+        <svg viewBox="0 0 240 200" role="img" aria-label="MST2: หลังลด port-priority ของ D2 e0/2 เหลือ 64 A1 ใช้ Et0/3 เป็น Root Port ไป D2">
+          <g stroke-width="2" fill="none">
+            <line x1="95" y1="140" x2="45" y2="58" stroke="var(--ink-3)" stroke-dasharray="5 4"/>
+            <line x1="105" y1="140" x2="65" y2="58" stroke="var(--ink-3)" stroke-dasharray="5 4"/>
+            <line x1="135" y1="140" x2="180" y2="58" stroke="var(--ink-3)" stroke-dasharray="5 4"/>
+            <line x1="145" y1="140" x2="200" y2="58" stroke="var(--fwd)" stroke-width="3.5"/>
+          </g>
+          <rect x="18" y="20" width="72" height="38" rx="7" fill="none" stroke="var(--ink-3)" stroke-width="1.5"/>
+          <text x="54" y="44" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink-3)">D1</text>
+          <rect x="158" y="20" width="72" height="38" rx="7" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="2"/>
+          <text x="194" y="44" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">D2</text>
+          <rect x="84" y="140" width="72" height="38" rx="7" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="2"/>
+          <text x="120" y="164" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">A1</text>
+          <text x="150" y="130" font-family="Cascadia Mono, monospace" font-size="10" fill="var(--fwd)" font-weight="700">Et0/3</text>
+          <text x="120" y="196" text-anchor="middle" font-size="10" fill="var(--coral)">port-priority 64 ที่ D2</text>
+        </svg>
+        <p class="result">Root <b>Et0/3</b><br />Blocked Et0/0, Et0/1, Et0/2</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="13" cy="13" r="5" fill="none" stroke="var(--violet)" stroke-width="1.9"/>
+        <path d="M13 1.5 L13 6 M13 20 L13 24.5 M1.5 13 L6 13 M20 13 L24.5 13" stroke="var(--violet)" stroke-width="1.9" stroke-linecap="round"/>
+      </svg>
+      <h2>ปุ่มปรับที่เราใช้จริง</h2>
+    </div>
+    <p class="sec-sub">เราไม่เคยสั่ง MST ตรง ๆ ว่า "ปิดสายนี้" — เราปรับตัวแปรให้ผลคำนวณออกมาตามที่ต้องการ</p>
+
+    <div class="grid-2" style="margin-bottom:20px">
+      <div class="knob">
+        <span class="where c3">ตั้งที่ A1 — ฝั่งรับ</span>
+        <h3>Path Cost</h3>
+        <p class="why">ทำให้เส้นทางนั้น "ถูกลง" — ชนะขาดตั้งแต่ข้อ 2 ของลำดับตัดสินใจ ไม่ต้องพึ่ง tie-breaker</p>
+        <pre>interface e0/1
+ spanning-tree mst 1 cost 1000</pre>
+        <p class="why" style="margin:0">ผล: Et0/1 (cost 1000) ชนะ Et0/0 (cost 2,000,000) → Root Port ย้ายมาที่ Et0/1</p>
+      </div>
+      <div class="knob">
+        <span class="where c3">ตั้งที่ D2 — ฝั่งส่ง</span>
+        <h3>Port Priority</h3>
+        <p class="why">ใช้ตอน cost เท่ากันเป๊ะเท่านั้น และต้องตั้งที่ <b>ฝั่งผู้ส่ง BPDU</b> — A1 จะไม่เห็นเลข 64 นี้ในเอาต์พุตของตัวเองเลย</p>
+        <pre>interface e0/2
+ spanning-tree mst 2 port-priority 64</pre>
+        <p class="why" style="margin:0">ผล: A1 ย้าย Root Port ของ MST2 จาก Et0/2 ไป Et0/3</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>MST Region — ต้องตรงกันเป๊ะ 3 อย่าง ถึงจะนับเป็นกลุ่มเดียวกัน</h3>
+      <ul>
+        <li><b>Region name</b> = <code>CCNPv8</code> · <b>Revision</b> = <code>2</code> · <b>VLAN-to-instance mapping</b> = <code>1→2-3, 2→4-5</code></li>
+        <li>สวิตช์ไม่ได้เทียบตัวหนังสือ แต่เทียบ <b>digest</b> (ค่า hash ที่คำนวณจากตาราง mapping) — ในแลปได้ <code>0x47CAC1CE…</code> ตรงกันทั้ง D1, D2, A1</li>
+        <li>ถ้าไม่ตรงแม้แต่ตัวเดียว → กลายเป็นคนละ region ทันที และมองอีกฝั่งเป็นกล่องดำก้อนเดียว</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="tablewrap">
+      <table>
+        <caption>สรุปชิ้นส่วนและหน้าที่</caption>
+        <thead><tr><th scope="col">ชิ้นส่วน</th><th scope="col">หน้าที่</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Trunk port</th><td>ขนหลาย VLAN บนสายเส้นเดียว แปะ tag 802.1Q บอกว่าเฟรมเป็นของ VLAN ไหน</td></tr>
+          <tr><th scope="row">Access port</th><td>อยู่ VLAN เดียว ไม่มี tag — สวิตช์แปะ/ถอด tag ให้เองที่ขอบเครือข่าย</td></tr>
+          <tr><th scope="row">BPDU</th><td>ข้อความที่สวิตช์คุยกันเพื่อเลือก Root และตกลงว่าพอร์ตไหนต้องปิด</td></tr>
+          <tr><th scope="row">Instance</th><td>กลุ่ม VLAN ที่ใช้ผลคำนวณ spanning tree ร่วมกัน 1 ชุด</td></tr>
+          <tr><th scope="row">IST (Instance 0)</th><td>instance ที่มีเสมอ เก็บ VLAN ที่ไม่ได้ map และขนข้อมูลของทุก instance ไปใน BPDU ใบเดียว</td></tr>
+          <tr><th scope="row">Region</th><td>กลุ่มสวิตช์ที่ config ตรงกัน 3 อย่าง — ภายนอกมองเห็นเป็นสวิตช์ตัวเดียว</td></tr>
+          <tr><th scope="row">Root Port</th><td>พอร์ตที่เป็นทางออกที่ดีที่สุดไปหา Root ของ instance นั้น (มีได้ตัวเดียวต่อ instance)</td></tr>
+          <tr><th scope="row">Alternate Port</th><td>ทางสำรองที่แพ้การเลือก ถูกปิดไว้กัน loop พร้อมขึ้นมาแทนถ้า Root Port ตาย</td></tr>
+          <tr><th scope="row">Designated Port</th><td>พอร์ตที่รับหน้าที่ส่งต่อข้อมูลของ segment นั้น (พอร์ตของ Root Bridge เป็นแบบนี้ทั้งหมด)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M13 2.5 L23.5 21 L2.5 21 Z" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linejoin="round"/>
+        <line x1="13" y1="10" x2="13" y2="15" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="13" cy="18" r="1.2" fill="var(--gold)"/>
+      </svg>
+      <h2>ที่ออกสอบ แต่ยังไม่ได้ลงมือทำ</h2>
+    </div>
+    <p class="sec-sub">จาก Internetwork Summary บทที่ 4 — หัวข้อที่ทำเครื่องหมาย "ออกสอบ" ไว้ แต่แลปอาจารย์ไม่ได้ให้ทำ</p>
+
+    <div class="grid-2">
+      <div class="exam">
+        <h4>Pruning เพื่อ Load-balancing <span class="tag">กับดัก</span></h4>
+        <p>ใช้ <code>switchport trunk allowed vlan</code> จำกัด VLAN บนแต่ละ trunk <b>ไม่ได้</b> ทำให้ STP เปิดพอร์ตที่ปิดอยู่ให้ใหม่ — STP ไม่รับรู้เรื่อง allowed-vlan เลย พอร์ตที่ถูก block ก็ยัง block ต่อไป</p>
+        <p style="font-style:italic;border-left:2px solid var(--coral);padding-left:10px">เหมือนตำรวจโบกให้วิ่งเข้าถนนที่มีแผงกั้นปิดอยู่ — อนุญาตแค่ไหนก็ไปไม่ได้</p>
+      </div>
+
+      <div class="exam">
+        <h4>Region Boundary &amp; PVST Simulation <span class="tag">ออกสอบ</span></h4>
+        <p>ตอน Part 2 เราเห็น <code>Bound(PVST)</code> ด้วยตาตัวเอง — นั่นคือ boundary port ที่ MST เจอเพื่อนบ้านพูดคนละภาษา</p>
+        <p>กลไก <b>PVST Simulation</b> แตก BPDU ของ MST (ที่มัดหลาย VLAN ไว้ใบเดียว) ออกเป็นใบแยกทีละ VLAN ให้ฝั่ง PVST เข้าใจ ส่วนขาเข้า MST อ่านแค่ BPDU ของ Native VLAN (VLAN 1) เพราะใบนั้นสรุปโครงสร้างไว้ครบแล้ว</p>
+      </div>
+
+      <div class="exam">
+        <h4>MST Region เป็น Root ของ PVST <span class="tag">ออกสอบ</span></h4>
+        <p><b>กรณีเป็น Root ทุก VLAN:</b> ส่ง IST BPDU ออกครบทุก VLAN ของฝั่ง PVST เผื่อบางเส้นมองไม่เห็นกัน — ฝั่ง PVST มอง region เป็นสวิตช์ตัวเดียวและปิดพอร์ตได้ตามปกติ</p>
+        <p><b>กรณีไม่ได้เป็น Root ทุก VLAN:</b> พอร์ต boundary ทำได้แค่ "เปิดผ่านทุก VLAN" หรือ "ปิดทั้งหมด" → ทำ load-balancing สลับเส้นทางไม่ได้ และถ้ามี BPDU สั่งเปลี่ยนโครงสร้างเข้ามา จะใช้ BPDU Guard ปิดพอร์ตทันทีเพื่อกัน loop</p>
+      </div>
+
+      <div class="exam">
+        <h4>Common Spanning Tree <span class="tag">ออกสอบ</span></h4>
+        <p>STP แบบเก่าสุดที่เหมารวมทุก VLAN เป็น topology เดียวกันหมด — เทียบสามชั้นให้ชัด: <b>CST</b> = ก้อนเดียว, <b>PVST+</b> = แยกทีละ VLAN, <b>MST</b> = แยกทีละกลุ่ม VLAN</p>
+      </div>
+    </div>
+
+    <div class="fixnote" style="background:var(--coral-soft)">
+      <b style="color:var(--coral)">แก้จุดพิมพ์ผิดในเอกสารสรุป:</b> priority ของ secondary root ที่ถูกต้องคือ <code>28672</code> (มาจาก 32768 − 4096) ไม่ใช่ 28762 ที่พิมพ์ไว้ — และคำสั่งที่ถูกคือ <code>spanning-tree mst &lt;instance&gt; priority &lt;value&gt;</code> ไม่มีคำว่า <code>mode</code>
+    </div>
+  </section>
+
+  <footer>
+    Internetwork Chapter 4 · MST Lab บน EVE-NG (IOL-L2) · ทุกผลลัพธ์ในโปสเตอร์นี้มาจากการรันจริงบน D1, D2, A1
+  </footer>
+
+</Layout>

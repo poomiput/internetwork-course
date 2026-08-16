@@ -1,0 +1,314 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+<Layout title="Advanced STP Toolbox Anatomy" description="โปสเตอร์เจาะลึกบทที่ 3 — Root Placement, Cost/Port-Priority tuning, และ 5 เครื่องมือป้องกัน STP พร้อมผลจริงจากแลป">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--gold)">Internetwork · Chapter 3 of 4</p>
+    <h1>Advanced STP Modifications &amp; Mechanisms</h1>
+    <p class="deck">STP/RSTP คำนวณ topology ให้อัตโนมัติก็จริง แต่ "อัตโนมัติ" ไม่ได้แปลว่า "ปลอดภัย" — บทนี้คือชุดเครื่องมือที่บังคับ topology ให้เป็นไปตามที่ตั้งใจ และป้องกันไม่ให้คนอื่น (หรือฮาร์ดแวร์ที่พัง) มาทำลายมันได้</p>
+    <div class="credit-bar">
+      <span>D1 · D2 · A1</span><span>Rapid-PVST</span><span>Root Guard</span><span>BPDU Guard</span><span>Loop Guard</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="grid-2">
+      <div class="card">
+        <h3>โจทย์ตั้งต้น</h3>
+        <ul>
+          <li>ปล่อยให้ STP เลือก Root Bridge เองตามค่า default (MAC ต่ำสุดชนะ) — ผลลัพธ์ที่ได้อาจไม่ใช่สวิตช์ที่เราต้องการเลย</li>
+          <li>ยิ่ง RSTP เร็วขนาดไหน ก็ยิ่ง "เดา" เร็วขนาดนั้น — ถ้าเดาผิด (มี Rogue Switch, สายไฟเบอร์ขาดข้างเดียว) ก็เปิดช่องให้เกิดลูปได้ง่ายเหมือนกัน</li>
+          <li>บทนี้คือการเอาสิ่งที่เคยปล่อยให้อัตโนมัติ กลับมาควบคุมเองบางส่วน + ปิดช่องโหว่ที่เหลือ</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>สิ่งที่แลปนี้สร้าง</h3>
+        <ul>
+          <li>Topology เดิม (D1, D2, A1 สามเหลี่ยม) แต่เริ่มต้นด้วย <b>Rapid-PVST ตั้งแต่แรก</b></li>
+          <li><b>Part 2:</b> บังคับ Root Bridge, ปรับ Cost, ปรับ Port-Priority ให้ topology เป็นไปตามที่ต้องการ</li>
+          <li><b>Part 3:</b> ใส่ Root Guard, BPDU Guard, BPDU Filter, Loop Guard แล้วจำลองสถานการณ์จริงดูผล</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="13" cy="13" r="11.5" fill="none" stroke="var(--gold)" stroke-width="1.6"/>
+        <circle cx="13" cy="13" r="4" fill="var(--gold)"/>
+      </svg>
+      <h2>Root Placement — บังคับใครเป็น Root ของ VLAN ไหน</h2>
+    </div>
+    <p class="sec-sub">ตั้งใจให้ D1 เป็น Root ของ VLAN1, D2 เป็น Root ของ VLAN2 — สลับกันเป็น Secondary ให้อีกฝั่ง</p>
+
+    <div class="grid-2">
+      <div class="knob">
+        <span class="where c1">D1</span>
+        <h3>Primary VLAN1 / Secondary VLAN2</h3>
+        <pre>spanning-tree vlan 1 root primary
+spanning-tree vlan 2 root secondary</pre>
+      </div>
+      <div class="knob">
+        <span class="where c1">D2</span>
+        <h3>Primary VLAN2 / Secondary VLAN1</h3>
+        <pre>spanning-tree vlan 2 root primary
+spanning-tree vlan 1 root secondary</pre>
+      </div>
+    </div>
+
+    <div class="fixnote" style="background:var(--gold-soft);margin-top:20px">
+      <b style="color:var(--gold)">ข้อสังเกตจากตัวเลขจริงที่หลายคนเข้าใจผิด:</b> ตำราสรุปว่า <code>root primary</code> = priority 24576 เสมอ แต่ผลจริงจากแลปคือ <b>VLAN1 ออกมาเป็น 28673</b> ไม่ใช่ 24577! เหตุผล: <b>D1 เป็น Root ของ VLAN1 อยู่แล้ว</b>ตั้งแต่ก่อนสั่งคำสั่งนี้ (ชนะด้วย MAC ต่ำสุดตามปกติ) — พอสั่ง <code>root primary</code> กับสวิตช์ที่เป็น root อยู่แล้ว มันแค่ลด priority ปัจจุบันลงไปอีก 1 ขั้น (32768 − 4096 = 28672) ไม่ได้กระโดดไปที่ 24576 เพราะไม่จำเป็นต้องกระโดดไกลขนาดนั้นก็ชนะอยู่ดี ส่วน <b>D2 (VLAN2 = 24578)</b> ได้ค่าตามตำราปกติ เพราะ D2 <u>ไม่ใช่</u> root มาก่อน จึงกระโดดไปที่เป้าหมายมาตรฐาน 24576 ทันที — บทเรียน: อย่าท่องจำเลข ให้เช็คด้วย <code>show spanning-tree root</code> เสมอ
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="3" y="10" width="20" height="6" rx="3" fill="none" stroke="var(--gold)" stroke-width="1.8"/>
+        <circle cx="7" cy="13" r="2" fill="var(--gold)"/><circle cx="19" cy="13" r="2" fill="var(--gold)"/>
+      </svg>
+      <h2>เรื่องจริงที่พลาดกันบ่อย: ปรับ Cost VLAN เดียว ดันกระเพื่อมอีก VLAN</h2>
+    </div>
+    <p class="sec-sub">คำสั่ง <code>spanning-tree cost &lt;value&gt;</code> (ไม่ระบุ VLAN) มีผลกับ<b>ทุก VLAN บนพอร์ตนั้นพร้อมกัน</b> — บน A1 ปรับ F0/2 cost เพื่อ VLAN1 อย่างเดียว แต่ VLAN2 โดนหางเลขไปด้วยโดยไม่ตั้งใจ</p>
+
+    <div class="tablewrap">
+      <table>
+        <caption>สถานะ Root Port ของ A1 เทียบ 3 ช่วงเวลา</caption>
+        <thead><tr><th scope="col">VLAN</th><th scope="col">ก่อนปรับ (F0/2 cost 19)</th><th scope="col">ตั้ง F0/2 cost 12</th><th scope="col">แก้เป็น F0/2 cost 18</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">VLAN1 (Root=D1)</th><td class="center">F0/1 · cost 19</td><td class="center" style="color:var(--gold);font-weight:700">F0/2 · cost 12</td><td class="center" style="color:var(--fwd);font-weight:700">F0/2 · cost 18</td></tr>
+          <tr><th scope="row">VLAN2 (Root=D2)</th><td class="center">F0/3 · cost 19 (ตรง)</td><td class="center" style="color:var(--blk);font-weight:700">F0/2 · cost 16 (อ้อมผ่าน D1!)</td><td class="center" style="color:var(--fwd);font-weight:700">F0/3 · cost 19 (กลับมาตรงเหมือนเดิม)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="figwrap" style="margin-top:20px">
+      <figure>
+        <svg viewBox="0 0 760 220" role="img" aria-label="ทำไม VLAN2 ถึงเปลี่ยนทางไปด้วย: เมื่อลด cost ของ A1 F0/2 ที่เชื่อมไป D1 ให้ต่ำมาก เส้นทางอ้อมจาก A1 ผ่าน D1 แล้วต่อไป D2 ด้วยลิงก์ cost 4 รวมกันมีค่าต่ำกว่าเส้นทางตรงจาก A1 ไป D2 ที่ cost 19 ทำให้ VLAN2 เลือกเดินทางอ้อมนี้แทนโดยไม่ได้ตั้งใจ">
+          <rect x="30" y="80" width="110" height="50" rx="8" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="2"/>
+          <text x="85" y="110" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)">A1</text>
+
+          <rect x="320" y="20" width="110" height="50" rx="8" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="2"/>
+          <text x="375" y="50" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)">D1</text>
+
+          <rect x="610" y="80" width="110" height="50" rx="8" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/>
+          <text x="665" y="110" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)">D2</text>
+
+          <line x1="140" y1="95" x2="330" y2="55" stroke="var(--blk)" stroke-width="2.6"/>
+          <text x="230" y="60" text-anchor="middle" font-size="12" font-weight="700" fill="var(--blk)">F0/2 cost 12</text>
+
+          <line x1="430" y1="50" x2="615" y2="90" stroke="var(--blk)" stroke-width="2.6"/>
+          <text x="530" y="55" text-anchor="middle" font-size="12" font-weight="700" fill="var(--blk)">+ cost 4</text>
+
+          <line x1="140" y1="115" x2="610" y2="115" stroke="var(--ink-3)" stroke-width="2" stroke-dasharray="5 4"/>
+          <text x="375" y="160" text-anchor="middle" font-size="12" fill="var(--ink-2)">เส้นทางตรง A1→D2 cost 19 (เดิม ชนะอยู่)</text>
+
+          <text x="375" y="195" text-anchor="middle" font-size="13" font-weight="700" fill="var(--blk)">เส้นทางอ้อม A1→D1→D2 = 12+4 = 16 ต่ำกว่า จึงชนะแทน</text>
+        </svg>
+        <figcaption>บทเรียน: cost ที่ปรับบนพอร์ตหนึ่ง ไม่ได้มีผลแค่ VLAN ที่ตั้งใจ — ต้องเช็คทุก VLAN ที่ใช้พอร์ตนั้นร่วมกันเสมอหลังปรับ</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <div class="grid-2">
+      <div class="knob">
+        <span class="where c1">D2 interface G1/0/6</span>
+        <h3>Port-Priority — วิธีที่ 3 ในการคุมเส้นทาง</h3>
+        <p class="why">ใช้ตอน cost เท่ากันเป๊ะเท่านั้น และต้องตั้งที่ <b>ฝั่งผู้ส่ง BPDU</b> (D2) ไม่ใช่ฝั่งรับ (A1) — A1 จะไม่เห็นเลข priority นี้ในเอาต์พุตตัวเองเลย</p>
+        <pre>interface g1/0/6
+ spanning-tree port-priority 64</pre>
+        <p class="why" style="margin:0">ผล: A1's VLAN2 root port ย้ายจาก F0/3 ไป <b>F0/4</b> (คู่กับ G1/0/6 ที่เพิ่งลด priority) — ค่า default คือ 128, ยิ่งเลขน้อยยิ่งชนะ กติกาเดียวกับ Bridge Priority</p>
+      </div>
+      <div class="card">
+        <h3>ลำดับ 3 วิธีคุมเส้นทาง เรียงจากหนักสุด</h3>
+        <ul>
+          <li><b>1. Root Bridge</b> (priority ของทั้งสวิตช์) — เปลี่ยนภาพรวมทั้งเครือข่าย</li>
+          <li><b>2. Path Cost</b> (ต่อพอร์ต) — ชนะแบบเบ็ดเสร็จ ไม่ต้องพึ่งอะไรอีก แต่ระวังผลข้าง VLAN อื่น</li>
+          <li><b>3. Port-Priority</b> (ต่อพอร์ต) — ใช้ได้แค่ตอน cost เท่ากันเป๊ะเท่านั้น เป็น tie-breaker ชั้นสุดท้ายที่ปรับเองได้</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="3" y="3" width="20" height="20" rx="4" fill="none" stroke="var(--gold)" stroke-width="1.8"/>
+        <circle cx="9" cy="9" r="1.6" fill="var(--gold)"/><circle cx="17" cy="9" r="1.6" fill="var(--gold)"/>
+        <circle cx="9" cy="17" r="1.6" fill="var(--gold)"/><circle cx="17" cy="17" r="1.6" fill="var(--gold)"/>
+      </svg>
+      <h2>วงจรชีวิตพอร์ต กับ 4 จุดที่ตัวป้องกันคอยจับตา</h2>
+    </div>
+    <p class="sec-sub">แทนที่จะจำเครื่องมือ 5 ตัวแยกกัน ลองมองเป็น "ระบบเดียว" — ทุกตัวคือหมุดที่ปักไว้ตามจุดต่าง ๆ ของวงจรชีวิตพอร์ตพอร์ตหนึ่ง</p>
+
+    <div class="figwrap">
+      <figure>
+        <svg viewBox="0 0 1040 400" role="img" aria-label="วงจรชีวิตพอร์ตจากซ้ายไปขวา: พอร์ตเชื่อมต่ออุปกรณ์ปลายทางแล้วเข้าสถานะ Forwarding ทันทีเพราะเปิด PortFast แต่ถ้าพอร์ตนั้นได้รับ BPDU ที่ไม่ควรได้รับ BPDU Guard จะสั่งปิดพอร์ตทันทีเข้าสถานะ err-disabled ถ้าไม่อยากให้พอร์ตส่ง BPDU ออกไปเลยใช้ BPDU Filter อีกเส้นทางคือพอร์ตที่เป็น Designated เชื่อมกับสวิตช์อื่นถ้าอยู่ๆได้รับ BPDU ที่เหนือกว่าซึ่งควรจะมาจาก root ใหม่ Root Guard จะปฏิเสธและกักพอร์ตไว้ในสถานะ root inconsistent อีกเส้นทางคือพอร์ตที่เป็น Alternate หรือ Root กำลังบล็อกอยู่ตามปกติ ถ้าอยู่ๆหยุดได้รับ BPDU จากอีกฝั่ง Loop Guard จะไม่ยอมให้เลื่อนสถานะเป็น Designated แต่จะกักไว้ในสถานะ loop inconsistent แทน">
+          <defs>
+            <marker id="lc-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ink-3)"/>
+            </marker>
+          </defs>
+
+          <rect x="10" y="170" width="150" height="60" rx="10" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="2"/>
+          <text x="85" y="204" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">พอร์ตเชื่อมต่อ</text>
+
+          <line x1="160" y1="200" x2="210" y2="140" stroke="var(--fwd)" stroke-width="2.2" marker-end="url(#lc-arrow)"/>
+          <line x1="160" y1="200" x2="210" y2="260" stroke="var(--ink-3)" stroke-width="2.2" marker-end="url(#lc-arrow)"/>
+          <text x="150" y="150" font-size="11" fill="var(--fwd)" font-weight="700">ต่อกับ Host</text>
+          <text x="150" y="280" font-size="11" fill="var(--ink-3)">ต่อกับ Switch</text>
+
+          <rect x="215" y="100" width="180" height="72" rx="10" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="2"/>
+          <text x="305" y="126" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">PortFast (Edge Port)</text>
+          <text x="305" y="144" text-anchor="middle" font-size="10" fill="var(--ink-2)">ข้าม Listen/Learn</text>
+          <text x="305" y="160" text-anchor="middle" font-size="10" fill="var(--ink-2)">→ Forwarding ทันที</text>
+
+          <line x1="395" y1="136" x2="440" y2="136" stroke="var(--gold)" stroke-width="2.2" marker-end="url(#lc-arrow)"/>
+          <text x="415" y="120" font-size="10" fill="var(--gold)" text-anchor="middle">ได้ BPDU?</text>
+
+          <rect x="440" y="60" width="190" height="72" rx="10" fill="var(--gold-soft)" stroke="var(--gold)" stroke-width="2"/>
+          <text x="535" y="86" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">BPDU Guard</text>
+          <text x="535" y="104" text-anchor="middle" font-size="10" fill="var(--ink-2)">ปิดพอร์ตทันที</text>
+          <text x="535" y="120" text-anchor="middle" font-size="10" fill="var(--blk)" font-weight="700">→ err-disabled</text>
+
+          <rect x="440" y="145" width="190" height="55" rx="10" fill="var(--card)" stroke="var(--ink-3)" stroke-width="1.6"/>
+          <text x="535" y="168" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">BPDU Filter</text>
+          <text x="535" y="186" text-anchor="middle" font-size="10" fill="var(--ink-2)">ไม่ส่ง BPDU ออกเลย</text>
+
+          <rect x="215" y="248" width="180" height="60" rx="10" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/>
+          <text x="305" y="272" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">Non-Edge Port</text>
+          <text x="305" y="290" text-anchor="middle" font-size="10" fill="var(--ink-2)">ทำ Proposal/Agreement</text>
+
+          <line x1="395" y1="260" x2="440" y2="235" stroke="var(--coral)" stroke-width="2.2" marker-end="url(#lc-arrow)"/>
+          <text x="420" y="240" font-size="10" fill="var(--coral)" text-anchor="middle">BPDU เหนือกว่า?</text>
+
+          <rect x="440" y="210" width="200" height="65" rx="10" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="2"/>
+          <text x="540" y="235" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">Root Guard</text>
+          <text x="540" y="253" text-anchor="middle" font-size="10" fill="var(--ink-2)">ปฏิเสธ BPDU นั้น</text>
+          <text x="540" y="268" text-anchor="middle" font-size="10" fill="var(--blk)" font-weight="700">→ Root-Inconsistent</text>
+
+          <line x1="395" y1="290" x2="440" y2="320" stroke="var(--violet)" stroke-width="2.2" marker-end="url(#lc-arrow)"/>
+          <text x="420" y="335" font-size="10" fill="var(--violet)" text-anchor="middle">BPDU หายไป?</text>
+
+          <rect x="440" y="300" width="200" height="65" rx="10" fill="var(--violet-soft)" stroke="var(--violet)" stroke-width="2"/>
+          <text x="540" y="325" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">Loop Guard</text>
+          <text x="540" y="343" text-anchor="middle" font-size="10" fill="var(--ink-2)">ไม่ยอมเลื่อนเป็น Designated</text>
+          <text x="540" y="358" text-anchor="middle" font-size="10" fill="var(--blk)" font-weight="700">→ Loop-Inconsistent</text>
+
+          <rect x="700" y="55" width="300" height="330" rx="12" fill="none" stroke="var(--rule)" stroke-width="1.5" stroke-dasharray="4 4"/>
+          <text x="850" y="30" font-size="12" fill="var(--ink-3)" text-anchor="middle">ผลลัพธ์ = verify ได้จริงด้วย show spanning-tree</text>
+          <text x="850" y="90" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">err-disabled</text>
+          <text x="850" y="108" text-anchor="middle" font-size="10" fill="var(--ink-2)">พอร์ตปิดสนิท ต้อง shutdown/no shutdown เอง</text>
+          <text x="850" y="150" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">*ROOT_Inc / *LOOP_Inc</text>
+          <text x="850" y="168" text-anchor="middle" font-size="10" fill="var(--ink-2)">อยู่ใน Blocking (Discarding)</text>
+          <text x="850" y="184" text-anchor="middle" font-size="10" fill="var(--ink-2)">แต่กลับมาเองอัตโนมัติเมื่อสาเหตุหาย</text>
+          <text x="850" y="226" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">ต่างกันตรงนี้:</text>
+          <text x="850" y="248" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">Guard ทั้งสองใช้กับพอร์ต "ไม่ควรเป็นตัวเลือกใหม่"</text>
+          <text x="850" y="266" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">PortFast/Filter ใช้กับพอร์ต "ไม่ควรมี BPDU เลย"</text>
+          <text x="850" y="300" text-anchor="middle" font-size="10.5" fill="var(--gold)" font-weight="700">show spanning-tree inconsistentports</text>
+          <text x="850" y="318" text-anchor="middle" font-size="10" fill="var(--ink-2)">เช็คได้ครบทุกพอร์ตที่ค้างอยู่ในเวลาเดียว</text>
+        </svg>
+        <figcaption>สังเกตแกนตั้ง: PortFast/BPDU Guard/Filter อยู่ฝั่งบน (พอร์ตต่อ host) — Root Guard/Loop Guard อยู่ฝั่งล่าง (พอร์ตต่อสวิตช์ด้วยกัน) ใช้คนละสถานการณ์ ห้ามสลับที่กัน</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M13 2.5 L23.5 21 L2.5 21 Z" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linejoin="round"/>
+        <line x1="13" y1="10" x2="13" y2="15" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"/><circle cx="13" cy="18" r="1.2" fill="var(--gold)"/>
+      </svg>
+      <h2>5 เครื่องมือ ปุ่มปรับ คำสั่ง และผลจริงจากแลป</h2>
+    </div>
+    <p class="sec-sub">ทุกอันนี้รันจริงและมี syslog ยืนยันผลจริง</p>
+
+    <div class="grid-2" style="margin-bottom:20px">
+      <div class="knob">
+        <span class="where c1">ตั้งที่พอร์ตต่อ Host (A1 F0/23)</span>
+        <h3>PortFast — ออกสอบ</h3>
+        <p class="why">ข้าม Listening/Learning (30 วิ) ไป Forwarding ทันที เพราะมั่นใจว่าไม่มีสวิตช์อื่นต่ออยู่ปลายสาย</p>
+        <pre>interface f0/23
+ spanning-tree portfast</pre>
+        <p class="out">%Warning: portfast should only be enabled on
+ports connected to a single host...
+RSTP(1): Fa0/23 is now designated
+(ไม่มี "transmitting a proposal" อีกต่อไป)</p>
+      </div>
+      <div class="knob">
+        <span class="where c1">ตั้งที่พอร์ตต่อ Host (A1 F0/1 — สาธิต)</span>
+        <h3>BPDU Guard — ออกสอบ</h3>
+        <p class="why">ถ้าพอร์ต PortFast ดันได้รับ BPDU (แปลว่ามีสวิตช์แปลกปลอมมาต่อ) ปิดพอร์ตทันที กันลูปจากอุปกรณ์ผิดที่ผิดทาง</p>
+        <pre>interface f0/1
+ spanning-tree bpduguard enable</pre>
+        <p class="out">%SPANTREE-2-BLOCK_BPDUGUARD: Received BPDU on
+port Fa0/1 with BPDU Guard enabled. Disabling port.
+%PM-4-ERR_DISABLE: bpduguard error detected on Fa0/1</p>
+      </div>
+      <div class="knob">
+        <span class="where c2">ตั้งได้ทั้งสองฝั่ง (A1 F0/23)</span>
+        <h3>BPDU Filter</h3>
+        <p class="why">ไม่ส่ง (และไม่ประมวลผล) BPDU บนพอร์ตนั้นเลย — ใช้แยกเครือข่ายเป็นสอง STP domain โดยตั้งใจ เสี่ยงถ้าใช้ผิดที่</p>
+        <pre>interface f0/23
+ spanning-tree bpdufilter enable</pre>
+        <p class="out">BPDU: sent 374695 → 374696 → 374697 (ก่อนตั้ง)
+BPDU: sent 374726 → 374726 → 374726 (หลังตั้ง — นิ่งสนิท)</p>
+      </div>
+      <div class="knob">
+        <span class="where c3">ตั้งที่พอร์ตต่อ Switch อื่น (D2 G1/0/5-6)</span>
+        <h3>Root Guard — ออกสอบ</h3>
+        <p class="why">ปกป้อง Designated Port ไม่ให้ถูก "แย่ง" เป็น Root Port จากสวิตช์ปลายทางที่ประกาศตัวเป็น root ใหม่</p>
+        <pre>interface range g1/0/5-6
+ spanning-tree guard root</pre>
+        <p class="out">%SPANTREE-2-ROOTGUARD_CONFIG_CHANGE:
+Root guard enabled on port GigabitEthernet1/0/5
+→ ทดสอบ: A1 ตั้ง priority 16384 แย่งเป็น root VLAN2
+→ ผล D2: Gi1/0/5 Desg BKN*19 *ROOT_Inc</p>
+      </div>
+    </div>
+
+    <div class="knob" style="max-width:640px;margin:0 auto 20px">
+      <span class="where c3">ตั้งที่พอร์ต Alternate/Root (A1 F0/1)</span>
+      <h3>Loop Guard — ออกสอบ</h3>
+      <p class="why">ถ้าพอร์ตที่กำลัง Block อยู่ดันหยุดได้รับ BPDU (เช่นสาย fiber ขาดข้างเดียว) ไม่ยอมให้เลื่อนเป็น Designated ไปเฉย ๆ — กันลูปจาก Unidirectional Link จำลองด้วยการตั้ง bpdufilter ที่ปลายสายอีกฝั่ง (D1 g1/0/5) เพื่อทำให้ A1 หยุดได้รับ BPDU</p>
+      <pre>! A1
+interface f0/1
+ spanning-tree guard loop
+! D1 (จำลอง BPDU หาย)
+interface g1/0/5
+ spanning-tree bpdufilter enable</pre>
+      <p class="out">%SPANTREE-2-LOOPGUARD_BLOCK: Loop guard blocking
+port FastEthernet0/1 on VLAN0002.
+→ Fa0/1 Desg BKN*19 *LOOP_Inc (แทนที่จะเผลอเปิดเป็น Designated)</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="grid-3">
+      <div class="exam">
+        <h4>UplinkFast <span class="tag">ออกสอบ</span></h4>
+        <p>ถ้า Root Port ใช้งานไม่ได้ สลับไปพอร์ตสำรองทันที ไม่ต้องรอ 30-50 วิ แล้วส่ง Dummy Multicast บีบให้สวิตช์อื่นอัปเดต topology ตาม</p>
+      </div>
+      <div class="exam">
+        <h4>BackboneFast <span class="tag">ออกสอบ</span></h4>
+        <p>เมื่อสายขาดที่จุดไกลออกไป ข้าม Max Age (20 วิ) แล้วส่ง RLQ ถามหา Root Bridge เลย ลดเวลารอคอยที่ไม่จำเป็น</p>
+      </div>
+      <div class="card">
+        <h3>UDLD</h3>
+        <p style="margin:0;color:var(--ink-2);font-size:.93rem">ตรวจจับ Unidirectional Link ด้วยการรอ Acknowledge — โหมด Normal แค่ทำเครื่องหมายไว้ โหมด <b>Aggressive</b> ยิง 8 แพ็กเก็ตต่อวิ ถ้ายังไม่ตอบ ปรับเป็น Error (ไม่มี tag ออกสอบในเอกสารต้นฉบับ แต่เกี่ยวข้องโดยตรงกับ Loop Guard)</p>
+      </div>
+    </div>
+
+    <div class="fixnote" style="background:var(--gold-soft)">
+      <b style="color:var(--gold)">จุดผิดในเอกสารสรุปที่พบซ้ำ:</b> ค่า secondary root priority ที่ถูกต้องคือ <code>28672</code> (มาจาก 32768 − 4096) ไม่ใช่ 28762 ที่พิมพ์คลาดไว้ — และคำสั่งที่ถูกคือ <code>spanning-tree vlan &lt;id&gt; priority &lt;value&gt;</code> ไม่ใช่ <code>spanning-tree mode ...</code>
+    </div>
+  </section>
+
+  <footer>
+    Internetwork Chapter 3 · จากแลปจริงบน D1, D2, A1 (Rapid-PVST)
+  </footer>
+
+</Layout>
