@@ -1,0 +1,358 @@
+---
+import PreviewLayout from "../layouts/PreviewLayout.astro";
+
+const ruler = ["0x00", "0x04", "0x08", "0x0C", "0x10", "0x14", "0x18", "0x1C"];
+---
+<PreviewLayout title="Packet Forwarding Anatomy" description="ดีไซน์พรีวิว — Chapter 1 ในทิศทางภาพ &quot;packet header&quot; ใหม่ ยังไม่แตะเว็บจริง">
+
+  <div class="pv-shell">
+
+    <header class="pv-hero">
+      <div class="pv-ruler" aria-hidden="true">
+        {ruler.map((tick) => <span>{tick}</span>)}
+      </div>
+      <div class="pv-field">
+        <span class="pv-field-label">chapter · packet-forwarding</span>
+        <h1>Packet Forwarding &amp; Inter-VLAN Routing</h1>
+        <p class="pv-deck">VLAN ตัดขาด Broadcast Domain ได้ดีมาก ดีจนสอง VLAN คุยกันเองไม่ได้เลย — บทนี้คือเรื่องของการเอา Layer 3 กลับเข้ามาเชื่อม และกลไกที่ทำให้ส่งแพ็กเก็ตได้เร็วที่สุดโดยไม่ต้องพึ่ง CPU ทุกครั้ง</p>
+        <div class="pv-credit-bar">
+          <span class="pv-chip">R1 · R3 · D1 · D2 · PC1-4</span>
+          <span class="pv-chip">Cisco IOS XE 16.9.4</span>
+          <span class="pv-chip">Router-on-a-Stick</span>
+          <span class="pv-chip">Layer 3 Switch</span>
+          <span class="pv-chip">CEF</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="pv-section">
+      <div class="pv-sec-head">
+        <span class="pv-offset">0x00</span>
+        <h2>โจทย์ตั้งต้น</h2>
+      </div>
+      <div class="pv-grid-2">
+        <div class="pv-card">
+          <h3>ปัญหาของ VLAN</h3>
+          <ul>
+            <li><b>Collision Domain</b> = ขอบเขตที่เฟรมชนกันได้ — Hub กระจายทุกพอร์ต (โดนชนได้หมด) ส่วน Switch แบ่งขอบเขตให้เล็กลงทีละพอร์ต</li>
+            <li><b>Broadcast Domain</b> = ขอบเขตที่ Broadcast กระจายถึง — ปกติต้องใช้ Router ตัดเท่านั้น แต่ <b>VLAN (IEEE 802.1Q)</b> ตัดได้โดยไม่ต้องมี Router เลย ด้วยการแปะ tag บอกที่มา</li>
+            <li>ปัญหาที่ตามมา: พอ VLAN ตัด Broadcast Domain เก่งขนาดนี้ <b>สอง VLAN ก็คุยกันเองไม่ได้เลย</b> — ต้องดึง Layer 3 กลับเข้ามาช่วย route ระหว่าง VLAN</li>
+          </ul>
+        </div>
+        <div class="pv-card">
+          <h3>สิ่งที่แลปนี้สร้าง — สองวิธีแก้โจทย์เดียวกัน</h3>
+          <ul>
+            <li><b>D1</b> เป็น Layer 3 Switch: สร้าง VLAN 50, 60 + SVI แล้ว route เองบนตัวมันเอง ไม่ต้องมี router แยก</li>
+            <li><b>D2 + R3</b> เป็นคู่ Router-on-a-Stick: D2 ทำหน้าที่แค่ trunk ส่ง VLAN 75, 85 ผ่านสายเดียวไปให้ R3 เป็นคน route ผ่าน subinterface</li>
+            <li><b>R1</b> อยู่ตรงกลางเชื่อมทั้งสองฝั่งเข้าด้วยกันด้วย static route</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="pv-section">
+      <div class="pv-sec-head">
+        <span class="pv-offset">0x04</span>
+        <h2>กายวิภาคของ Topology</h2>
+      </div>
+      <p class="pv-sec-sub">สองปีกซ้าย-ขวาที่ต่างวิธีแก้โจทย์เดียวกัน มาบรรจบกันที่ R1 ตรงกลาง</p>
+
+      <div class="pv-figwrap">
+        <figure>
+          <svg viewBox="0 0 1080 460" role="img" aria-label="ผังกายวิภาค: ฝั่งซ้าย D1 เป็น Layer 3 Switch เชื่อมกับ R1 ผ่านพอร์ตที่ทำ routed port G0/0/1 แล้วแตกออกเป็น VLAN50 ต่อ PC1 และ VLAN60 ต่อ PC2 บนตัว D1 เอง ฝั่งขวา R1 เชื่อมต่อ R3 ผ่านสาย Serial แล้ว R3 แตก subinterface สองเส้นสำหรับ VLAN75 และ VLAN85 ส่งผ่านสายเดียวเป็น trunk ไปยัง D2 ซึ่งเป็นแค่ตัวส่งผ่านแตกเป็น access port ไปหา PC3 และ PC4">
+            <defs>
+              <marker id="pv-t-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ink-3)"/>
+              </marker>
+            </defs>
+
+            <line x1="210" y1="75" x2="470" y2="75" stroke="var(--ink-2)" stroke-width="2.4"/>
+            <line x1="610" y1="75" x2="870" y2="75" stroke="var(--ink-2)" stroke-width="2.4"/>
+
+            <text x="340" y="66" text-anchor="middle" font-size="11.5" fill="var(--ink-2)" font-family="Cascadia Mono, monospace">G1/0/11 ↔ G0/0/1</text>
+            <text x="340" y="96" text-anchor="middle" font-size="10.5" fill="var(--slate)">10.1.13.0/24 (routed port)</text>
+            <text x="740" y="66" text-anchor="middle" font-size="11.5" fill="var(--ink-2)" font-family="Cascadia Mono, monospace">S0/1/1 ↔ S0/1/1</text>
+            <text x="740" y="96" text-anchor="middle" font-size="10.5" fill="var(--coral)">10.1.3.0/24 (Serial WAN)</text>
+
+            <rect x="60" y="40" width="150" height="70" rx="4" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="2.2"/>
+            <text x="135" y="70" text-anchor="middle" font-size="17" font-weight="700" fill="var(--ink)">D1</text>
+            <text x="135" y="90" text-anchor="middle" font-size="10" fill="var(--ink-2)">Layer 3 Switch</text>
+
+            <rect x="470" y="40" width="140" height="70" rx="4" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2.2"/>
+            <text x="540" y="70" text-anchor="middle" font-size="17" font-weight="700" fill="var(--ink)">R1</text>
+            <text x="540" y="90" text-anchor="middle" font-size="10" fill="var(--ink-2)">Router — จุดกลาง</text>
+
+            <rect x="870" y="40" width="150" height="70" rx="4" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="2.2"/>
+            <text x="945" y="70" text-anchor="middle" font-size="17" font-weight="700" fill="var(--ink)">R3</text>
+            <text x="945" y="90" text-anchor="middle" font-size="10" fill="var(--ink-2)">Router-on-a-Stick</text>
+
+            <line x1="105" y1="110" x2="70" y2="170" stroke="var(--ink-2)" stroke-width="2"/>
+            <line x1="165" y1="110" x2="200" y2="170" stroke="var(--ink-2)" stroke-width="2"/>
+            <rect x="20" y="172" width="100" height="44" rx="4" fill="var(--card)" stroke="var(--slate)" stroke-width="1.6"/>
+            <text x="70" y="192" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--ink)">SVI VLAN50</text>
+            <text x="70" y="206" text-anchor="middle" font-size="9" fill="var(--ink-2)">10.2.50.1/24</text>
+            <rect x="150" y="172" width="100" height="44" rx="4" fill="var(--card)" stroke="var(--slate)" stroke-width="1.6"/>
+            <text x="200" y="192" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--ink)">SVI VLAN60</text>
+            <text x="200" y="206" text-anchor="middle" font-size="9" fill="var(--ink-2)">10.2.60.1/24</text>
+
+            <line x1="70" y1="216" x2="70" y2="250" stroke="var(--ink-2)" stroke-width="2"/>
+            <line x1="200" y1="216" x2="200" y2="250" stroke="var(--ink-2)" stroke-width="2"/>
+            <rect x="25" y="252" width="90" height="40" rx="4" fill="var(--paper-2)" stroke="var(--ink-3)" stroke-width="1.5"/>
+            <text x="70" y="276" text-anchor="middle" font-size="11" fill="var(--ink)">PC1</text>
+            <text x="70" y="288" text-anchor="middle" font-size="8.5" fill="var(--ink-3)">.50.50</text>
+            <rect x="155" y="252" width="90" height="40" rx="4" fill="var(--paper-2)" stroke="var(--ink-3)" stroke-width="1.5"/>
+            <text x="200" y="276" text-anchor="middle" font-size="11" fill="var(--ink)">PC2</text>
+            <text x="200" y="288" text-anchor="middle" font-size="8.5" fill="var(--ink-3)">.60.50</text>
+
+            <line x1="945" y1="110" x2="945" y2="150" stroke="var(--coral)" stroke-width="2.4"/>
+            <text x="1000" y="135" text-anchor="middle" font-size="10" fill="var(--coral)">trunk dot1q</text>
+            <text x="1000" y="150" text-anchor="middle" font-size="9.5" fill="var(--ink-2)">native VLAN 999</text>
+
+            <rect x="870" y="152" width="150" height="55" rx="4" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/>
+            <text x="945" y="177" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)">D2</text>
+            <text x="945" y="195" text-anchor="middle" font-size="9.5" fill="var(--ink-2)">แค่ trunk ส่งผ่าน</text>
+
+            <line x1="905" y1="207" x2="870" y2="250" stroke="var(--ink-2)" stroke-width="2"/>
+            <line x1="985" y1="207" x2="1020" y2="250" stroke="var(--ink-2)" stroke-width="2"/>
+
+            <rect x="820" y="252" width="100" height="42" rx="4" fill="var(--card)" stroke="var(--coral)" stroke-width="1.6"/>
+            <text x="870" y="271" text-anchor="middle" font-size="10" font-weight="700" fill="var(--ink)">G0/0/1.75</text>
+            <text x="870" y="285" text-anchor="middle" font-size="9" fill="var(--ink-2)">dot1q 75</text>
+            <rect x="970" y="252" width="100" height="42" rx="4" fill="var(--card)" stroke="var(--coral)" stroke-width="1.6"/>
+            <text x="1020" y="271" text-anchor="middle" font-size="10" font-weight="700" fill="var(--ink)">G0/0/1.85</text>
+            <text x="1020" y="285" text-anchor="middle" font-size="9" fill="var(--ink-2)">dot1q 85</text>
+
+            <line x1="870" y1="294" x2="870" y2="326" stroke="var(--ink-2)" stroke-width="2"/>
+            <line x1="1020" y1="294" x2="1020" y2="326" stroke="var(--ink-2)" stroke-width="2"/>
+            <rect x="825" y="328" width="90" height="40" rx="4" fill="var(--paper-2)" stroke="var(--ink-3)" stroke-width="1.5"/>
+            <text x="870" y="352" text-anchor="middle" font-size="11" fill="var(--ink)">PC3</text>
+            <text x="870" y="364" text-anchor="middle" font-size="8.5" fill="var(--ink-3)">.75.50</text>
+            <rect x="975" y="328" width="90" height="40" rx="4" fill="var(--paper-2)" stroke="var(--ink-3)" stroke-width="1.5"/>
+            <text x="1020" y="352" text-anchor="middle" font-size="11" fill="var(--ink)">PC4</text>
+            <text x="1020" y="364" text-anchor="middle" font-size="8.5" fill="var(--ink-3)">.85.50</text>
+
+            <line x1="330" y1="120" x2="330" y2="160" stroke="var(--ink-3)" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#pv-t-arrow)"/>
+            <text x="270" y="145" font-size="11.5" fill="var(--ink)" font-weight="700">D1 route เองบนตัวมันเอง</text>
+            <text x="270" y="162" font-size="10.5" fill="var(--ink-2)">ไม่ต้องมี router แยก</text>
+
+            <line x1="700" y1="120" x2="700" y2="160" stroke="var(--ink-3)" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#pv-t-arrow)"/>
+            <text x="700" y="140" font-size="11.5" fill="var(--ink)" font-weight="700" text-anchor="middle">R1 = จุดเชื่อมกลาง</text>
+            <text x="700" y="160" font-size="10.5" fill="var(--ink-2)" text-anchor="middle">รู้เส้นทางทั้งสองฝั่ง</text>
+
+            <text x="945" y="410" text-anchor="middle" font-size="11.5" fill="var(--ink)" font-weight="700">R3 route แทน D2</text>
+            <text x="945" y="428" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">D2 เป็นแค่สื่อกลาง L2</text>
+          </svg>
+          <figcaption>ฝั่งซ้าย: routing เกิด "ข้างใน" ตัวสวิตช์ (D1) — ฝั่งขวา: routing เกิด "ที่ปลายสาย" บนเราเตอร์แยก (R3) โดยแบ่ง VLAN ด้วย subinterface หนึ่งเดียวต่อสายกายภาพหนึ่งเส้น</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="pv-section">
+      <div class="pv-sec-head">
+        <span class="pv-offset">0x08</span>
+        <h2>เฟรมมาถึง ตัดสินใจยังไง</h2>
+      </div>
+      <p class="pv-sec-sub">คำถามเดียวตัดสินทุกอย่าง: "ปลายทางอยู่ VLAN/Subnet เดียวกันไหม" — ถ้าใช่ อ่าน MAC Table จบเลย ถ้าไม่ใช่ ต้องพึ่ง Layer 3 และใช้เส้นทางลัดที่ชื่อ CEF</p>
+
+      <div class="pv-figwrap">
+        <figure>
+          <svg viewBox="0 0 1040 440" role="img" aria-label="แผนผังการตัดสินใจส่งเฟรม: เฟรมเข้ามาที่สวิตช์ ถามว่าปลายทางอยู่ VLAN เดียวกันไหม ถ้าใช่อ่าน MAC Address Table แล้วส่งตรงไปพอร์ตปลายทางเป็น Layer 2 ล้วน ถ้าไม่ใช่ต้องส่งผ่าน Router หรือ SVI ซึ่งจะเช็ค ARP Table หา MAC ปลายทาง แล้วใช้ CEF ประกอบด้วย FIB ตารางเส้นทาง Layer 3 และ Adjacency Table ที่เก็บ Layer 2 header สำเร็จรูปไว้แล้ว ส่งออกได้ทันทีโดยไม่ต้องผ่าน CPU ประมวลผลใหม่ทุกครั้ง">
+            <defs>
+              <marker id="pv-fw-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ink-3)"/>
+              </marker>
+            </defs>
+
+            <rect x="20" y="20" width="130" height="52" rx="4" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="2"/>
+            <text x="85" y="52" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)">เฟรมเข้ามา</text>
+
+            <line x1="150" y1="46" x2="158" y2="46" stroke="var(--ink-3)" stroke-width="2" marker-end="url(#pv-fw-arrow)"/>
+
+            <polygon points="300,10 440,46 300,82 160,46" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="2"/>
+            <text x="300" y="42" text-anchor="middle" font-size="12.5" fill="var(--ink)" font-weight="700">ปลายทาง</text>
+            <text x="300" y="58" text-anchor="middle" font-size="12.5" fill="var(--ink)" font-weight="700">VLAN เดียวกัน?</text>
+
+            <line x1="300" y1="83" x2="300" y2="138" stroke="var(--fwd)" stroke-width="2.2" marker-end="url(#pv-fw-arrow)"/>
+            <text x="330" y="115" font-size="12" fill="var(--fwd)" font-weight="700">ใช่</text>
+
+            <rect x="230" y="140" width="140" height="46" rx="4" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="2"/>
+            <text x="300" y="167" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">MAC Address Table</text>
+
+            <line x1="300" y1="186" x2="300" y2="220" stroke="var(--fwd)" stroke-width="2.2" marker-end="url(#pv-fw-arrow)"/>
+            <rect x="185" y="222" width="230" height="46" rx="4" fill="var(--card)" stroke="var(--fwd)" stroke-width="2"/>
+            <text x="300" y="250" text-anchor="middle" font-size="12" font-weight="700" fill="var(--fwd)">ส่งตรงไปพอร์ตปลายทาง (L2 ล้วน)</text>
+
+            <line x1="440" y1="46" x2="468" y2="46" stroke="var(--coral)" stroke-width="2.2" marker-end="url(#pv-fw-arrow)"/>
+            <text x="452" y="34" font-size="12" fill="var(--coral)" font-weight="700">ไม่ใช่</text>
+
+            <rect x="470" y="20" width="190" height="52" rx="4" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="2"/>
+            <text x="565" y="45" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ink)">ต้องผ่าน L3</text>
+            <text x="565" y="61" text-anchor="middle" font-size="11" fill="var(--ink-2)">Router หรือ SVI</text>
+
+            <line x1="565" y1="72" x2="565" y2="106" stroke="var(--coral)" stroke-width="2.2" marker-end="url(#pv-fw-arrow)"/>
+            <rect x="470" y="108" width="190" height="46" rx="4" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/>
+            <text x="565" y="136" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">เช็ค ARP Table หา MAC</text>
+
+            <line x1="565" y1="154" x2="565" y2="188" stroke="var(--coral)" stroke-width="2.2" marker-end="url(#pv-fw-arrow)"/>
+
+            <rect x="440" y="190" width="480" height="200" rx="4" fill="var(--gold-soft)" stroke="var(--gold)" stroke-width="2"/>
+            <text x="680" y="215" text-anchor="middle" font-size="13" font-weight="700" fill="var(--gold)">CEF — เส้นทางลัด ไม่ผ่าน CPU ซ้ำ</text>
+
+            <rect x="465" y="235" width="200" height="130" rx="4" fill="var(--card)" stroke="var(--gold)" stroke-width="1.6"/>
+            <text x="565" y="258" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">FIB</text>
+            <text x="565" y="276" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">Forwarding Info Base</text>
+            <text x="565" y="298" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">มาจาก Routing Table</text>
+            <text x="565" y="316" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">= ปลายทาง + Next-Hop</text>
+            <text x="565" y="338" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">ตัดสินใจระดับ L3</text>
+
+            <rect x="685" y="235" width="215" height="130" rx="4" fill="var(--card)" stroke="var(--gold)" stroke-width="1.6"/>
+            <text x="792" y="258" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">Adjacency Table</text>
+            <text x="792" y="276" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">มาจาก ARP Table</text>
+            <text x="792" y="298" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">เก็บ L2 header สำเร็จรูป</text>
+            <text x="792" y="316" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">(MAC ปลายทาง + interface)</text>
+            <text x="792" y="338" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">แปะแล้วยิงออกได้เลย</text>
+
+            <line x1="665" y1="300" x2="685" y2="300" stroke="var(--gold)" stroke-width="2" marker-end="url(#pv-fw-arrow)"/>
+
+            <line x1="680" y1="392" x2="680" y2="410" stroke="var(--gold)" stroke-width="2.2" marker-end="url(#pv-fw-arrow)"/>
+            <text x="680" y="430" text-anchor="middle" font-size="12" font-weight="700" fill="var(--gold)">ส่งออกทันที ไม่ต้องแวะ CPU / Routing Table ทุกแพ็กเก็ต</text>
+          </svg>
+          <figcaption>เส้นทางซ้าย (เขียว) คือ Layer 2 ล้วน — เส้นทางขวา (เหลือง) คือกลไก CEF ที่พรีคอมไพล์คำตอบไว้ล่วงหน้าทั้งสองตาราง แทนที่จะคำนวณ Routing Table ใหม่ทุกแพ็กเก็ต</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="pv-section">
+      <div class="pv-sec-head">
+        <span class="pv-offset">0x0C</span>
+        <h2>ของจริงจาก R1 — อ่าน CEF ยังไง</h2>
+      </div>
+      <p class="pv-sec-sub">รันจริงบน R1 ในแลป แล้วอ่านทีละคอลัมน์</p>
+
+      <div class="pv-grid-2">
+        <div class="pv-term">
+          <div class="pv-term-bar">
+            <span class="pv-term-dot"></span><span class="pv-term-dot"></span><span class="pv-term-dot"></span>
+            <span class="pv-term-path">R1#</span>
+          </div>
+          <div class="pv-term-body">
+            <h3>show ip cef</h3>
+            <p class="pv-why">FIB — ตารางเส้นทาง L3 แต่ละแถวคือคำตอบที่พรีคอมไพล์ไว้แล้วว่า "ปลายทางนี้ ให้ไปทางไหน ผ่านอะไร"</p>
+            <p class="pv-out">Prefix          Next Hop      Interface
+10.2.0.0/16     10.1.13.13    GigabitEthernet0/0/1
+0.0.0.0/0       10.1.3.3      Serial0/1/1
+10.1.13.0/24    attached      GigabitEthernet0/0/1</p>
+            <p class="pv-why" style="margin:0"><b>10.2.0.0/16</b> คือ subnet รวมของ VLAN50+VLAN60 หลัง D1 — R1 รู้แค่ว่า "ไปทาง D1" ไม่ต้องรู้รายละเอียดว่า VLAN ไหนอยู่ตรงไหน เพราะ D1 เป็นคน route ต่อเอง</p>
+          </div>
+        </div>
+        <div class="pv-term">
+          <div class="pv-term-bar">
+            <span class="pv-term-dot"></span><span class="pv-term-dot"></span><span class="pv-term-dot"></span>
+            <span class="pv-term-path">R1#</span>
+          </div>
+          <div class="pv-term-body">
+            <h3>show adjacency detail</h3>
+            <p class="pv-why">Adjacency Table — เก็บ MAC ปลายทางที่ได้จาก ARP ไว้แปะหน้าแพ็กเก็ตได้ทันที ไม่ต้อง ARP ซ้ำทุกครั้ง</p>
+            <p class="pv-out">IP GigabitEthernet0/0/1 10.1.13.13(11)
+  20 packets, 1680 bytes
+  Encap length 14
+  001AE3CFB8C37079B39236410800
+  Link-type after encap: ip</p>
+            <p class="pv-why" style="margin:0">บรรทัด hex 14 ไบต์นั้นคือ L2 header ที่ต่อกันไว้แล้ว (dest MAC + src MAC + EtherType) — พร้อมแปะหน้าแพ็กเก็ตส่งออกได้เลยโดยไม่ต้องประกอบใหม่</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pv-section">
+      <div class="pv-sec-head">
+        <span class="pv-offset">0x10</span>
+        <h2>สองวิธีตั้งค่า Inter-VLAN Routing</h2>
+      </div>
+      <p class="pv-sec-sub">คำสั่งจริงที่ใช้ในแลป เทียบข้างกัน</p>
+
+      <div class="pv-grid-2">
+        <div class="pv-term">
+          <div class="pv-term-bar">
+            <span class="pv-term-dot"></span><span class="pv-term-dot"></span><span class="pv-term-dot"></span>
+            <span class="pv-term-path">D1(config)#</span>
+          </div>
+          <div class="pv-term-body">
+            <h3>SVI ทำ routing บนตัวสวิตช์เอง</h3>
+            <pre>ip routing
+ipv6 unicast-routing
+vlan 50
+ name Group50
+interface g1/0/23
+ switchport access vlan 50
+interface vlan 50
+ ip address 10.2.50.1 255.255.255.0
+interface g1/0/11
+ no switchport
+ ip address 10.1.13.13 255.255.255.0</pre>
+            <p class="pv-why" style="margin:0"><b>จุดสำคัญ:</b> <code>no switchport</code> เปลี่ยน G1/0/11 จากพอร์ต VLAN ธรรมดาให้กลายเป็น <b>routed port</b> — ยืนยันได้ด้วย <code>show vlan brief | i g1/0/11</code> ที่ไม่มีผลลัพธ์เลย (เพราะไม่ผูกกับ VLAN ไหนอีกต่อไป)</p>
+          </div>
+        </div>
+        <div class="pv-term">
+          <div class="pv-term-bar">
+            <span class="pv-term-dot"></span><span class="pv-term-dot"></span><span class="pv-term-dot"></span>
+            <span class="pv-term-path">D2 + R3</span>
+          </div>
+          <div class="pv-term-body">
+            <h3>D2 แค่ trunk ส่งผ่าน R3 route แทน</h3>
+            <pre>! D2
+vlan 75
+vlan 85
+vlan 999
+ name NativeVLAN
+interface g1/0/11
+ switchport mode trunk
+ switchport trunk native vlan 999
+ switchport trunk allowed vlan 75,85,999
+
+! R3
+interface g0/0/1.75
+ encapsulation dot1q 75
+ ip address 10.3.75.1 255.255.255.0
+interface g0/0/1.999
+ encapsulation dot1q 999 native</pre>
+            <p class="pv-why" style="margin:0"><b>จุดสำคัญ:</b> ต้องสร้าง subinterface <code>.999</code> แยกไว้เสมอสำหรับ Native VLAN แม้จะไม่มี IP ใช้งานจริงก็ตาม เพราะเฟรมของ Native VLAN จะไม่มี tag ติดมาเลย ต้องมี subinterface ที่ตรงกันไว้รับ</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pv-section">
+      <div class="pv-sec-head">
+        <span class="pv-offset">0x14</span>
+        <h2>ศัพท์ที่ต้องรู้</h2>
+      </div>
+
+      <div class="pv-tablewrap">
+        <table>
+          <caption>Packet Forwarding</caption>
+          <thead><tr><th scope="col">คำศัพท์</th><th scope="col">ความหมาย</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Native VLAN</th><td>VLAN ที่ trunk ใช้เป็นทางผ่านสำหรับเฟรมที่ไม่มี tag ติดมา — ค่า default คือ VLAN 1 แต่ในแลปตั้งใจเปลี่ยนเป็น VLAN 999 เพื่อไม่ให้ชนกับ VLAN 1 ที่ใช้งานจริง (ข้อสอบชอบถามเรื่อง Native VLAN mismatch)</td></tr>
+            <tr><th scope="row">TCAM</th><td>ตารางที่ CEF ใช้ค้นหาบน Hardware โดยตรง (Value/Mask/Result) เร็วกว่าการค้นหาผ่าน CPU ปกติมาก</td></tr>
+            <tr><th scope="row">SDM Template</th><td>กำหนดสัดส่วนการจอง TCAM ระหว่างงานแต่ละประเภท — ถ้าจองไม่พอ ข้อมูลจะล้นไปกิน CPU แทน ทำให้ช้าลง ต้องเช็คด้วย <code>show sdm prefer</code> ก่อนใช้ IPv6</td></tr>
+            <tr><th scope="row">ASIC</th><td>ชิปที่ถูกออกแบบ/บัดกรีมาให้ทำงานเฉพาะทาง แก้ไขไม่ได้ แต่เร็วมาก</td></tr>
+            <tr><th scope="row">NPU</th><td>มาช่วย ASIC ตัดสินใจงานที่ซับซ้อนกว่า ยืดหยุ่นกว่าเพราะโปรแกรมได้</td></tr>
+            <tr><th scope="row">Centralized Forwarding</th><td>Router Processor + Forwarding Engine รวมกัน — ทุกการส่งต้องถามส่วนกลาง มั่นใจแต่ช้ากว่า</td></tr>
+            <tr><th scope="row">Distributed Forwarding</th><td>ย้าย Forwarding Engine ไปอยู่ที่ Line Card ขาเข้า/ออกเลย ตัดสินใจเสร็จก็ส่งทันที</td></tr>
+            <tr><th scope="row">SSO</th><td>รัน Route Processor 2 ตัวคู่กันเป็น Checkpoint กันการล่มของฝั่งประมวลผลเส้นทาง</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pv-fixnote">
+        <b>สังเกตความไม่สมมาตร:</b> R1 มี static route เจาะจง <code>10.2.0.0/16 → D1</code> (รู้ว่า D1 มี 2 VLAN ข้างหลัง) แต่ D1 มีแค่ <b>default route</b> เดียวชี้กลับมาที่ R1 — สะท้อนหลักการออกแบบ routing จริง: ปลายทาง (D1) ไม่จำเป็นต้องรู้จักทุกเส้นทางในโลก รู้แค่ "ถ้าไม่ใช่ของฉัน ส่งกลับไปให้ตัวกลางจัดการ" ก็พอ
+      </div>
+    </section>
+
+    <footer class="pv-footer">
+      Internetwork Chapter 1 · Design Preview — ยังไม่ผูกกับเว็บจริง · จากแลปจริงบน R1, R3, D1, D2 (Cisco IOS XE 16.9.4)
+    </footer>
+
+  </div>
+</PreviewLayout>
