@@ -59,7 +59,12 @@ const units = [
     <span class="brand-sub">CCNP Enterprise Core</span>
   </div>
 
-  <nav>
+  <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="chapter-nav">
+    <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
+    <span>เมนูบทเรียน</span>
+  </button>
+
+  <nav id="chapter-nav">
     {units.map((unit) => (
       <div class="unit">
         <p class="unit-title" style={`--accent:${unit.accent}`}>{unit.title}</p>
@@ -83,6 +88,17 @@ const units = [
   </nav>
 </aside>
 
+<script>
+  const toggle = document.querySelector(".nav-toggle");
+  const sidebar = document.querySelector(".sidebar");
+  if (toggle && sidebar) {
+    toggle.addEventListener("click", () => {
+      const open = sidebar.classList.toggle("nav-open");
+      toggle.setAttribute("aria-expanded", String(open));
+    });
+  }
+</script>
+
 <style>
   .sidebar{
     width:260px;flex:none;
@@ -105,7 +121,7 @@ const units = [
   .chlink{
     display:flex;align-items:center;gap:10px;
     text-decoration:none;color:var(--ink-2);
-    padding:7px 6px;border-radius:8px;font-size:.86rem;
+    padding:8px 6px;border-radius:8px;font-size:.86rem;min-height:44px;
   }
   .chlink:hover{background:var(--paper-2)}
   .chlink.active{
@@ -125,11 +141,39 @@ const units = [
     flex:none;white-space:nowrap;
   }
 
+  .nav-toggle{
+    display:none;align-items:center;gap:10px;
+    width:100%;border:none;background:none;cursor:pointer;
+    padding:10px 12px;margin:0 0 4px;border-radius:8px;
+    font:inherit;font-size:.86rem;font-weight:700;color:var(--ink);min-height:44px;
+  }
+  .nav-toggle:hover{background:var(--paper-2)}
+  .nav-toggle:focus-visible{outline:2px solid var(--ink-3);outline-offset:2px}
+
+  .hamburger{flex:none;width:18px;height:13px;position:relative}
+  .hamburger span{
+    position:absolute;left:0;right:0;height:2px;background:currentColor;border-radius:1px;
+    transition:transform .2s ease,opacity .2s ease;
+  }
+  .hamburger span:nth-child(1){top:0}
+  .hamburger span:nth-child(2){top:5.5px}
+  .hamburger span:nth-child(3){top:11px}
+  .sidebar.nav-open .hamburger span:nth-child(1){transform:translateY(5.5px) rotate(45deg)}
+  .sidebar.nav-open .hamburger span:nth-child(2){opacity:0}
+  .sidebar.nav-open .hamburger span:nth-child(3){transform:translateY(-5.5px) rotate(-45deg)}
+
+  @media (min-width: 861px) and (max-width: 1024px){
+    .sidebar{width:220px}
+  }
+
   @media (max-width: 860px){
     .sidebar{
       position:static;height:auto;width:100%;
       border-right:none;border-bottom:1px solid var(--rule-soft);
       padding:16px 18px;
     }
+    .nav-toggle{display:flex}
+    #chapter-nav{display:none}
+    .sidebar.nav-open #chapter-nav{display:block}
   }
 </style>
