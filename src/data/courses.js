@@ -85,6 +85,7 @@ export const courses = [
         accent: "var(--gold)",
         chapters: [
           { n: "★", slug: "dbsec/exam", title: "สรุปก่อนสอบ", ready: true },
+          { n: "✎", slug: "dbsec/mock", title: "ข้อสอบจำลอง", ready: true },
         ],
       },
     ],
