@@ -1,16 +1,22 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 ---
-<Layout title="ข้อสอบจำลอง" description="DB Security — ข้อสอบจำลอง CP423324 ปรนัย 22 ข้อ ครอบคลุมทั้ง 4 รูปแบบข้อสอบ: จับคู่คำ, PHP+MySQL, Login/Logout, Security ของ Login">
+<Layout title="ข้อสอบจำลอง" description="DB Security — ข้อสอบจำลอง CP423324 ปรนัย 22 ข้อ กดเลือกคำตอบได้จริง ครอบคลุมทั้ง 4 รูปแบบข้อสอบ: จับคู่คำ, PHP+MySQL, Login/Logout, Security ของ Login">
 
   <header class="masthead">
     <p class="eyebrow" style="color:var(--sage)">DB Security · ฝึกทำข้อสอบ</p>
     <h1>ข้อสอบจำลอง CP423324</h1>
-    <p class="deck">22 ข้อปรนัย ครอบคลุมทั้ง 4 รูปแบบข้อสอบตามที่อาจารย์บอกไว้ ลองตอบในใจก่อนกดดูเฉลย — แต่ละข้อมีคำอธิบายสั้นๆ กำกับไว้ด้วย</p>
+    <p class="deck">22 ข้อปรนัย ครอบคลุมทั้ง 4 รูปแบบข้อสอบตามที่อาจารย์บอกไว้ — กดเลือกคำตอบได้จริง เลือกแล้วขึ้นถูก/ผิดทันที พร้อมคำอธิบาย</p>
     <div class="credit-bar">
-      <span>22 ข้อ</span><span>4 หมวด</span><span>กดดูเฉลยได้ทีละข้อ</span>
+      <span>22 ข้อ</span><span>4 หมวด</span><span>กดตอบได้จริง</span>
     </div>
   </header>
+
+  <div class="score-bar" id="scoreBar">
+    <span>ทำแล้ว <b id="scoreDone">0</b>/22 ข้อ</span>
+    <span>ถูก <b id="scoreCorrect">0</b> ข้อ</span>
+    <button type="button" id="resetMock">เริ่มใหม่</button>
+  </div>
 
   <section>
     <div class="sec-head">
@@ -19,74 +25,74 @@ import Layout from "../../layouts/Layout.astro";
     </div>
     <p class="sec-sub">ศัพท์และความหมายพื้นฐานที่ใช้ตลอดทั้งวิชา</p>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="B">
       <p class="mcq-n">ข้อ 1</p>
       <p class="mcq-q">คำว่า "Authentication" หมายถึงอะไร?</p>
       <ol class="mcq-opts">
-        <li><b>A</b> การตรวจสอบว่าใครมีสิทธิ์ทำอะไรได้บ้าง</li>
-        <li><b>B</b> การยืนยันตัวตนว่าผู้ใช้คือใคร</li>
-        <li><b>C</b> การเข้ารหัสข้อมูลก่อนส่งผ่านเครือข่าย</li>
-        <li><b>D</b> การบันทึกกิจกรรมผู้ใช้ลง Log</li>
+        <li data-letter="A"><b>A</b> การตรวจสอบว่าใครมีสิทธิ์ทำอะไรได้บ้าง</li>
+        <li data-letter="B"><b>B</b> การยืนยันตัวตนว่าผู้ใช้คือใคร</li>
+        <li data-letter="C"><b>C</b> การเข้ารหัสข้อมูลก่อนส่งผ่านเครือข่าย</li>
+        <li data-letter="D"><b>D</b> การบันทึกกิจกรรมผู้ใช้ลง Log</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — Authentication ตอบคำถาม "เป็นใคร" เกิดขึ้นตอน Login ส่วน "ทำอะไรได้บ้าง" คือ Authorization</div></details>
     </div>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="B">
       <p class="mcq-n">ข้อ 2</p>
       <p class="mcq-q">ข้อใดอธิบายความสัมพันธ์ระหว่าง Session กับ Cookie ได้ถูกต้อง?</p>
       <ol class="mcq-opts">
-        <li><b>A</b> Session เก็บ Session ID, Cookie เก็บข้อมูลผู้ใช้ทั้งหมด</li>
-        <li><b>B</b> Session เก็บข้อมูลผู้ใช้ฝั่ง Server, Cookie เก็บแค่ Session ID (PHPSESSID) ฝั่ง Browser</li>
-        <li><b>C</b> ทั้งสองเก็บข้อมูลเดียวกันแค่คนละที่</li>
-        <li><b>D</b> Cookie ทำงานฝั่ง Server, Session ทำงานฝั่ง Browser</li>
+        <li data-letter="A"><b>A</b> Session เก็บ Session ID, Cookie เก็บข้อมูลผู้ใช้ทั้งหมด</li>
+        <li data-letter="B"><b>B</b> Session เก็บข้อมูลผู้ใช้ฝั่ง Server, Cookie เก็บแค่ Session ID (PHPSESSID) ฝั่ง Browser</li>
+        <li data-letter="C"><b>C</b> ทั้งสองเก็บข้อมูลเดียวกันแค่คนละที่</li>
+        <li data-letter="D"><b>D</b> Cookie ทำงานฝั่ง Server, Session ทำงานฝั่ง Browser</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — Server ใช้ Session ID จาก Cookie เป็นกุญแจค้นหาข้อมูล Session ของผู้ใช้คนนั้น</div></details>
     </div>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="B">
       <p class="mcq-n">ข้อ 3</p>
       <p class="mcq-q">ฟังก์ชันใดใช้ยืนยันว่ารหัสผ่านที่กรอกตรงกับ hash ที่เก็บไว้ในฐานข้อมูลหรือไม่?</p>
       <ol class="mcq-opts">
-        <li><b>A</b> password_hash()</li>
-        <li><b>B</b> password_verify()</li>
-        <li><b>C</b> md5()</li>
-        <li><b>D</b> hash_equals()</li>
+        <li data-letter="A"><b>A</b> password_hash()</li>
+        <li data-letter="B"><b>B</b> password_verify()</li>
+        <li data-letter="C"><b>C</b> md5()</li>
+        <li data-letter="D"><b>D</b> hash_equals()</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — password_hash() ใช้ตอน<b>สร้าง</b>รหัสผ่าน ส่วน password_verify() ใช้ตอน<b>ตรวจสอบ</b>ตอน Login</div></details>
     </div>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="B">
       <p class="mcq-n">ข้อ 4</p>
       <p class="mcq-q">"Prepared Statement" ป้องกันการโจมตีประเภทใดเป็นหลัก?</p>
       <ol class="mcq-opts">
-        <li><b>A</b> Cross-Site Scripting (XSS)</li>
-        <li><b>B</b> SQL Injection</li>
-        <li><b>C</b> Session Hijacking</li>
-        <li><b>D</b> Brute Force</li>
+        <li data-letter="A"><b>A</b> Cross-Site Scripting (XSS)</li>
+        <li data-letter="B"><b>B</b> SQL Injection</li>
+        <li data-letter="C"><b>C</b> Session Hijacking</li>
+        <li data-letter="D"><b>D</b> Brute Force</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — Prepared Statement แยกคำสั่ง SQL ออกจากข้อมูล ทำให้ข้อมูลที่ผู้ใช้กรอกไม่ถูกตีความเป็นคำสั่ง SQL ได้อีก แต่ไม่ได้ป้องกัน XSS</div></details>
     </div>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="C">
       <p class="mcq-n">ข้อ 5</p>
       <p class="mcq-q">ฟังก์ชันใดใช้แปลงอักขระพิเศษ เช่น &lt; และ &gt; ให้เป็น HTML Entity ก่อน echo ออกจอ เพื่อป้องกัน XSS?</p>
       <ol class="mcq-opts">
-        <li><b>A</b> trim()</li>
-        <li><b>B</b> strip_tags()</li>
-        <li><b>C</b> htmlspecialchars()</li>
-        <li><b>D</b> filter_var()</li>
+        <li data-letter="A"><b>A</b> trim()</li>
+        <li data-letter="B"><b>B</b> strip_tags()</li>
+        <li data-letter="C"><b>C</b> htmlspecialchars()</li>
+        <li data-letter="D"><b>D</b> filter_var()</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b> — ต้องใช้ทุกจุดที่ echo ค่าที่มาจากผู้ใช้ออกจอ ไม่ว่าจะผ่าน Prepared Statement มาแล้วหรือไม่ก็ตาม</div></details>
     </div>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="C">
       <p class="mcq-n">ข้อ 6</p>
       <p class="mcq-q">ข้อใด <b>ไม่ใช่</b> การโจมตีที่เล็งเป้าไปที่ Session โดยตรง?</p>
       <ol class="mcq-opts">
-        <li><b>A</b> Session Fixation</li>
-        <li><b>B</b> Session Hijacking</li>
-        <li><b>C</b> SQL Injection</li>
-        <li><b>D</b> ถูกทั้ง A และ B</li>
+        <li data-letter="A"><b>A</b> Session Fixation</li>
+        <li data-letter="B"><b>B</b> Session Hijacking</li>
+        <li data-letter="C"><b>C</b> SQL Injection</li>
+        <li data-letter="D"><b>D</b> ถูกทั้ง A และ B</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b> — SQL Injection จัดอยู่ในกลุ่ม Injection Attacks ไม่ใช่ Session-based Attacks</div></details>
     </div>
@@ -99,58 +105,58 @@ import Layout from "../../layouts/Layout.astro";
     </div>
     <p class="sec-sub">โค้ดขาดอะไร ผิดตรงไหน bind_param() ตัวอักษรไหนคือชนิดข้อมูลอะไร</p>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="B">
       <p class="mcq-n">ข้อ 7</p>
       <p class="mcq-q">ตาราง users มีคอลัมน์ <code>username</code> (string) และ <code>age</code> (integer) โค้ดควรใช้ type string อะไรใน bind_param?</p>
       <pre class="mcq-code">$stmt-&gt;bind_param(<b>???</b>, $username, $age);</pre>
       <ol class="mcq-opts">
-        <li><b>A</b> 'is'</li>
-        <li><b>B</b> 'si'</li>
-        <li><b>C</b> 'ss'</li>
-        <li><b>D</b> 'ii'</li>
+        <li data-letter="A"><b>A</b> 'is'</li>
+        <li data-letter="B"><b>B</b> 'si'</li>
+        <li data-letter="C"><b>C</b> 'ss'</li>
+        <li data-letter="D"><b>D</b> 'ii'</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — เรียงตามลำดับตัวแปร: username (s) มาก่อน แล้วตามด้วย age (i) จึงเป็น 'si'</div></details>
     </div>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="B">
       <p class="mcq-n">ข้อ 8</p>
       <p class="mcq-q">โค้ดนี้มีปัญหาอะไร?</p>
       <pre class="mcq-code">$sql = "SELECT * FROM users WHERE username = '$username'";
 $result = $conn-&gt;query($sql);</pre>
       <ol class="mcq-opts">
-        <li><b>A</b> ใช้ query() แทน exec() ทำให้ช้าเกินไป</li>
-        <li><b>B</b> เสี่ยง SQL Injection เพราะต่อ string ตรงๆ ไม่ใช้ Prepared Statement</li>
-        <li><b>C</b> ไม่ได้ปิด connection หลังใช้งาน</li>
-        <li><b>D</b> ไม่มีปัญหา เพราะคำสั่ง SELECT ปลอดภัยกว่า INSERT อยู่แล้ว</li>
+        <li data-letter="A"><b>A</b> ใช้ query() แทน exec() ทำให้ช้าเกินไป</li>
+        <li data-letter="B"><b>B</b> เสี่ยง SQL Injection เพราะต่อ string ตรงๆ ไม่ใช้ Prepared Statement</li>
+        <li data-letter="C"><b>C</b> ไม่ได้ปิด connection หลังใช้งาน</li>
+        <li data-letter="D"><b>D</b> ไม่มีปัญหา เพราะคำสั่ง SELECT ปลอดภัยกว่า INSERT อยู่แล้ว</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — ถ้า $username มาจาก $_GET/$_POST ผู้โจมตีสามารถกรอก <code>' OR '1'='1</code> เพื่อดึงข้อมูลทั้งตารางได้</div></details>
     </div>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="B">
       <p class="mcq-n">ข้อ 9</p>
       <p class="mcq-q"><code>filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT)</code> ทำหน้าที่อะไร?</p>
       <ol class="mcq-opts">
-        <li><b>A</b> ดึงค่า id จาก $_POST แล้วแปลงเป็น string</li>
-        <li><b>B</b> ดึงค่า id จาก $_GET แล้วตรวจสอบว่าเป็นเลขจำนวนเต็มจริง คืนค่า false ถ้าไม่ใช่</li>
-        <li><b>C</b> ลบค่า id ออกจาก URL หลังใช้งาน</li>
-        <li><b>D</b> เข้ารหัสค่า id ก่อนนำไปใช้</li>
+        <li data-letter="A"><b>A</b> ดึงค่า id จาก $_POST แล้วแปลงเป็น string</li>
+        <li data-letter="B"><b>B</b> ดึงค่า id จาก $_GET แล้วตรวจสอบว่าเป็นเลขจำนวนเต็มจริง คืนค่า false ถ้าไม่ใช่</li>
+        <li data-letter="C"><b>C</b> ลบค่า id ออกจาก URL หลังใช้งาน</li>
+        <li data-letter="D"><b>D</b> เข้ารหัสค่า id ก่อนนำไปใช้</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — ใช้ก่อนนำ id ไปใช้ใน query เสมอ กัน id ที่ไม่ใช่ตัวเลขหลุดเข้าไป</div></details>
     </div>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="C">
       <p class="mcq-n">ข้อ 10</p>
       <p class="mcq-q">bind_param() type character ใดใช้กับข้อมูลทศนิยม เช่น ราคาสินค้า 199.50?</p>
       <ol class="mcq-opts">
-        <li><b>A</b> s</li>
-        <li><b>B</b> i</li>
-        <li><b>C</b> d</li>
-        <li><b>D</b> b</li>
+        <li data-letter="A"><b>A</b> s</li>
+        <li data-letter="B"><b>B</b> i</li>
+        <li data-letter="C"><b>C</b> d</li>
+        <li data-letter="D"><b>D</b> b</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b> — d = double (ทศนิยม) · s = string, i = integer, b = blob</div></details>
     </div>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="A">
       <p class="mcq-n">ข้อ 11</p>
       <p class="mcq-q">โค้ดนี้มีปัญหาด้านความปลอดภัยอะไร?</p>
       <pre class="mcq-code">if (isset($_GET['delete'])) &#123;
@@ -158,22 +164,22 @@ $result = $conn-&gt;query($sql);</pre>
     $conn-&gt;query("DELETE FROM products WHERE id = $id");
 &#125;</pre>
       <ol class="mcq-opts">
-        <li><b>A</b> ใช้ GET กับ action ที่เปลี่ยนแปลงข้อมูล (ลบผ่านลิงก์ได้) และเสี่ยง SQL Injection เพราะไม่ใช้ Prepared Statement</li>
-        <li><b>B</b> ตัวแปร $id ควรเปลี่ยนชื่อเป็น $productId</li>
-        <li><b>C</b> ควรใช้ isset() กับ $_POST['delete'] แทน isset() เฉยๆ</li>
-        <li><b>D</b> ไม่มีปัญหา เพราะคำสั่ง DELETE ไม่กระทบข้อมูลตารางอื่น</li>
+        <li data-letter="A"><b>A</b> ใช้ GET กับ action ที่เปลี่ยนแปลงข้อมูล (ลบผ่านลิงก์ได้) และเสี่ยง SQL Injection เพราะไม่ใช้ Prepared Statement</li>
+        <li data-letter="B"><b>B</b> ตัวแปร $id ควรเปลี่ยนชื่อเป็น $productId</li>
+        <li data-letter="C"><b>C</b> ควรใช้ isset() กับ $_POST['delete'] แทน isset() เฉยๆ</li>
+        <li data-letter="D"><b>D</b> ไม่มีปัญหา เพราะคำสั่ง DELETE ไม่กระทบข้อมูลตารางอื่น</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b> — สองปัญหาซ้อนกัน: (1) การลบข้อมูลควรบังคับเป็น POST เท่านั้น กันลบผ่านลิงก์ <code>&lt;a href&gt;</code> (2) ต้องใช้ Prepared Statement + bind_param</div></details>
     </div>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="B">
       <p class="mcq-n">ข้อ 12</p>
       <p class="mcq-q">เมื่อใช้ mysqli Prepared Statement คำสั่งใดต้องเรียก<b>ก่อน</b> bind_param()?</p>
       <ol class="mcq-opts">
-        <li><b>A</b> $conn-&gt;query()</li>
-        <li><b>B</b> $conn-&gt;prepare()</li>
-        <li><b>C</b> $stmt-&gt;execute()</li>
-        <li><b>D</b> $conn-&gt;connect()</li>
+        <li data-letter="A"><b>A</b> $conn-&gt;query()</li>
+        <li data-letter="B"><b>B</b> $conn-&gt;prepare()</li>
+        <li data-letter="C"><b>C</b> $stmt-&gt;execute()</li>
+        <li data-letter="D"><b>D</b> $conn-&gt;connect()</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — ลำดับคือ prepare() → bind_param() → execute()</div></details>
     </div>
@@ -186,19 +192,19 @@ $result = $conn-&gt;query($sql);</pre>
     </div>
     <p class="sec-sub">ให้โค้ดบางส่วนมาถามว่าทำงานยังไง มีปัญหาอะไร ควรแก้ตรงไหน</p>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="B">
       <p class="mcq-n">ข้อ 13</p>
       <p class="mcq-q">ข้อใดเรียงลำดับขั้นตอนของระบบ Login ได้ถูกต้อง?</p>
       <ol class="mcq-opts">
-        <li><b>A</b> login.php → สร้าง Session → login_process.php → auth_check.php</li>
-        <li><b>B</b> login.php → login_process.php (ตรวจรหัสผ่าน) → สร้าง Session (regenerate ID) → auth_check.php ตรวจทุกหน้า Protected</li>
-        <li><b>C</b> auth_check.php → login.php → login_process.php → สร้าง Session</li>
-        <li><b>D</b> login_process.php → login.php → auth_check.php → สร้าง Session</li>
+        <li data-letter="A"><b>A</b> login.php → สร้าง Session → login_process.php → auth_check.php</li>
+        <li data-letter="B"><b>B</b> login.php → login_process.php (ตรวจรหัสผ่าน) → สร้าง Session (regenerate ID) → auth_check.php ตรวจทุกหน้า Protected</li>
+        <li data-letter="C"><b>C</b> auth_check.php → login.php → login_process.php → สร้าง Session</li>
+        <li data-letter="D"><b>D</b> login_process.php → login.php → auth_check.php → สร้าง Session</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — ต้องตรวจรหัสผ่านให้ผ่านก่อน ถึงจะสร้าง/เปลี่ยน Session ID แล้ว auth_check.php จึงมาคุมทุกหน้าที่ต้อง Login หลังจากนั้น</div></details>
     </div>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="B">
       <p class="mcq-n">ข้อ 14</p>
       <p class="mcq-q">โค้ด logout.php นี้ขาดขั้นตอนใดไปเมื่อเทียบกับ Logout ที่ปลอดภัย?</p>
       <pre class="mcq-code">session_start();
@@ -206,34 +212,34 @@ session_destroy();
 header('Location: login.php');
 exit;</pre>
       <ol class="mcq-opts">
-        <li><b>A</b> ไม่ขาดอะไร ครบถ้วนสมบูรณ์แล้ว</li>
-        <li><b>B</b> ขาดการเคลียร์ $_SESSION = [] และการทำให้ Cookie หมดอายุ ก่อนเรียก session_destroy()</li>
-        <li><b>C</b> ต้องเรียก session_start() สองครั้งติดกัน</li>
-        <li><b>D</b> ต้อง header('Location: logout.php') แทน</li>
+        <li data-letter="A"><b>A</b> ไม่ขาดอะไร ครบถ้วนสมบูรณ์แล้ว</li>
+        <li data-letter="B"><b>B</b> ขาดการเคลียร์ $_SESSION = [] และการทำให้ Cookie หมดอายุ ก่อนเรียก session_destroy()</li>
+        <li data-letter="C"><b>C</b> ต้องเรียก session_start() สองครั้งติดกัน</li>
+        <li data-letter="D"><b>D</b> ต้อง header('Location: logout.php') แทน</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — Logout ปลอดภัยต้องครบ 3 ขั้น: $_SESSION = [] → setcookie หมดอายุ → session_destroy()</div></details>
     </div>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="B">
       <p class="mcq-n">ข้อ 15</p>
       <p class="mcq-q">เพราะเหตุใด password_verify() จึงปลอดภัยกว่าการเทียบ string ตรงๆ เช่น <code>if ($password == $storedPassword)</code>?</p>
       <ol class="mcq-opts">
-        <li><b>A</b> password_verify() ทำงานเร็วกว่า</li>
-        <li><b>B</b> password_verify() เทียบกับค่า hash ที่ถอดกลับไม่ได้ ฐานข้อมูลจึงไม่เก็บรหัสผ่านจริง</li>
-        <li><b>C</b> password_verify() ไม่ต้องเชื่อมต่อฐานข้อมูล</li>
-        <li><b>D</b> ทั้งสองวิธีปลอดภัยเท่ากัน เลือกใช้แบบไหนก็ได้</li>
+        <li data-letter="A"><b>A</b> password_verify() ทำงานเร็วกว่า</li>
+        <li data-letter="B"><b>B</b> password_verify() เทียบกับค่า hash ที่ถอดกลับไม่ได้ ฐานข้อมูลจึงไม่เก็บรหัสผ่านจริง</li>
+        <li data-letter="C"><b>C</b> password_verify() ไม่ต้องเชื่อมต่อฐานข้อมูล</li>
+        <li data-letter="D"><b>D</b> ทั้งสองวิธีปลอดภัยเท่ากัน เลือกใช้แบบไหนก็ได้</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — การเทียบ Plain Text ตรงๆ แปลว่าฐานข้อมูลต้องเก็บรหัสผ่านจริงไว้ด้วย ถ้าฐานข้อมูลรั่วคือหายนะทันที</div></details>
     </div>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="B">
       <p class="mcq-n">ข้อ 16</p>
       <p class="mcq-q">Role-based Authorization (เช่น เช็คว่า role เป็น admin) ควรตรวจสอบเมื่อใด?</p>
       <ol class="mcq-opts">
-        <li><b>A</b> ตรวจครั้งเดียวตอน Login เท่านั้น พอผ่านแล้วไม่ต้องตรวจซ้ำ</li>
-        <li><b>B</b> ตรวจทุกครั้งก่อนทำงานสำคัญ เช่น แก้ไข ลบ หรือเข้าถึงข้อมูลที่จำกัดสิทธิ์</li>
-        <li><b>C</b> ไม่จำเป็นต้องตรวจถ้า Login ผ่านมาแล้ว</li>
-        <li><b>D</b> ตรวจเฉพาะตอน Logout เท่านั้น</li>
+        <li data-letter="A"><b>A</b> ตรวจครั้งเดียวตอน Login เท่านั้น พอผ่านแล้วไม่ต้องตรวจซ้ำ</li>
+        <li data-letter="B"><b>B</b> ตรวจทุกครั้งก่อนทำงานสำคัญ เช่น แก้ไข ลบ หรือเข้าถึงข้อมูลที่จำกัดสิทธิ์</li>
+        <li data-letter="C"><b>C</b> ไม่จำเป็นต้องตรวจถ้า Login ผ่านมาแล้ว</li>
+        <li data-letter="D"><b>D</b> ตรวจเฉพาะตอน Logout เท่านั้น</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — Login สำเร็จ ≠ เข้าถึงได้ทุกอย่าง Authorization ต้องเช็คซ้ำทุกครั้งก่อน action ที่มีผลกระทบ</div></details>
     </div>
@@ -246,74 +252,74 @@ exit;</pre>
     </div>
     <p class="sec-sub">ให้สถานการณ์หรือโค้ดมาถามว่าโจมตีอะไรได้บ้าง ความเสี่ยงอยู่ตรงไหน ป้องกัน/แก้โค้ดยังไง</p>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="B">
       <p class="mcq-n">ข้อ 17</p>
       <p class="mcq-q">ผู้โจมตีส่งลิงก์ที่มี Session ID กำหนดไว้ล่วงหน้าให้เหยื่อคลิก<b>ก่อน</b> Login นี่คือการโจมตีประเภทใด?</p>
       <ol class="mcq-opts">
-        <li><b>A</b> Session Hijacking</li>
-        <li><b>B</b> Session Fixation</li>
-        <li><b>C</b> SQL Injection</li>
-        <li><b>D</b> Brute Force</li>
+        <li data-letter="A"><b>A</b> Session Hijacking</li>
+        <li data-letter="B"><b>B</b> Session Fixation</li>
+        <li data-letter="C"><b>C</b> SQL Injection</li>
+        <li data-letter="D"><b>D</b> Brute Force</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — จุดสำคัญคือ "ก่อน Login" ถ้าเป็นระหว่างใช้งาน Session อยู่แล้วโดนขโมย จะเป็น Session Hijacking แทน</div></details>
     </div>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="B">
       <p class="mcq-n">ข้อ 18</p>
       <p class="mcq-q">วิธีป้องกัน Session Fixation ที่ได้ผลที่สุดคือข้อใด?</p>
       <ol class="mcq-opts">
-        <li><b>A</b> บังคับให้ผู้ใช้เปลี่ยนรหัสผ่านบ่อยๆ</li>
-        <li><b>B</b> เรียก session_regenerate_id(true) ทันทีหลัง Login สำเร็จ</li>
-        <li><b>C</b> ใช้ CAPTCHA ทุกครั้งที่ Login</li>
-        <li><b>D</b> ปิดการใช้งาน Cookie ทั้งหมด</li>
+        <li data-letter="A"><b>A</b> บังคับให้ผู้ใช้เปลี่ยนรหัสผ่านบ่อยๆ</li>
+        <li data-letter="B"><b>B</b> เรียก session_regenerate_id(true) ทันทีหลัง Login สำเร็จ</li>
+        <li data-letter="C"><b>C</b> ใช้ CAPTCHA ทุกครั้งที่ Login</li>
+        <li data-letter="D"><b>D</b> ปิดการใช้งาน Cookie ทั้งหมด</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — ทำให้ Session ID ที่ผู้โจมตียัดเยียดไว้ล่วงหน้าใช้งานไม่ได้อีกต่อไปหลัง Login</div></details>
     </div>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="B">
       <p class="mcq-n">ข้อ 19</p>
       <p class="mcq-q">ผู้โจมตีลองรหัสผ่านยอดฮิตไม่กี่คำ เช่น "123456", "password" กับบัญชีผู้ใช้<b>จำนวนมาก</b>พร้อมกัน (ไม่ใช่บัญชีเดียว) เรียกว่าอะไร?</p>
       <ol class="mcq-opts">
-        <li><b>A</b> Brute Force</li>
-        <li><b>B</b> Password Spraying</li>
-        <li><b>C</b> Credential Stuffing</li>
-        <li><b>D</b> Session Hijacking</li>
+        <li data-letter="A"><b>A</b> Brute Force</li>
+        <li data-letter="B"><b>B</b> Password Spraying</li>
+        <li data-letter="C"><b>C</b> Credential Stuffing</li>
+        <li data-letter="D"><b>D</b> Session Hijacking</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — Brute Force คือลองทุกความเป็นไปได้กับ<b>บัญชีเดียว</b> · Credential Stuffing คือเอาข้อมูลที่หลุดจากเว็บอื่นมาลอง</div></details>
     </div>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="B">
       <p class="mcq-n">ข้อ 20</p>
       <p class="mcq-q">ข้อความ error "Invalid username or password." ที่ใช้เหมือนกันทั้งกรณี username ไม่มีอยู่จริง และกรณีรหัสผ่านผิด ป้องกันการโจมตีประเภทใด?</p>
       <ol class="mcq-opts">
-        <li><b>A</b> SQL Injection</li>
-        <li><b>B</b> Username Enumeration</li>
-        <li><b>C</b> Session Hijacking</li>
-        <li><b>D</b> CSRF</li>
+        <li data-letter="A"><b>A</b> SQL Injection</li>
+        <li data-letter="B"><b>B</b> Username Enumeration</li>
+        <li data-letter="C"><b>C</b> Session Hijacking</li>
+        <li data-letter="D"><b>D</b> CSRF</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — ถ้าข้อความ error ต่างกัน ผู้โจมตีจะรู้ได้ว่า username ไหนมีอยู่จริงในระบบ</div></details>
     </div>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="C">
       <p class="mcq-n">ข้อ 21</p>
       <p class="mcq-q">Cookie flag ใดที่ป้องกันไม่ให้ JavaScript ฝั่ง Client อ่านค่า Cookie ได้ (ช่วยลดผลกระทบจาก XSS)?</p>
       <ol class="mcq-opts">
-        <li><b>A</b> Secure</li>
-        <li><b>B</b> SameSite</li>
-        <li><b>C</b> HttpOnly</li>
-        <li><b>D</b> Path</li>
+        <li data-letter="A"><b>A</b> Secure</li>
+        <li data-letter="B"><b>B</b> SameSite</li>
+        <li data-letter="C"><b>C</b> HttpOnly</li>
+        <li data-letter="D"><b>D</b> Path</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b> — Secure บังคับส่งผ่าน HTTPS เท่านั้น · SameSite กันการยิง request ข้ามไซต์ · HttpOnly กัน JavaScript อ่าน Cookie</div></details>
     </div>
 
-    <div class="mcq">
+    <div class="mcq" data-answer="A">
       <p class="mcq-n">ข้อ 22</p>
       <p class="mcq-q">ความแตกต่างหลักระหว่าง Idle Timeout กับ Absolute Timeout คือข้อใด?</p>
       <ol class="mcq-opts">
-        <li><b>A</b> Idle Timeout รีเซ็ตทุกครั้งที่มีการใช้งาน ส่วน Absolute Timeout นับจากเวลา Login ตรงๆ ไม่รีเซ็ต</li>
-        <li><b>B</b> Idle Timeout ใช้กับ Cookie เท่านั้น Absolute Timeout ใช้กับ Session เท่านั้น</li>
-        <li><b>C</b> ทั้งสองแบบทำงานเหมือนกันทุกประการ ต่างกันแค่ชื่อ</li>
-        <li><b>D</b> Absolute Timeout สั้นกว่า Idle Timeout เสมอ</li>
+        <li data-letter="A"><b>A</b> Idle Timeout รีเซ็ตทุกครั้งที่มีการใช้งาน ส่วน Absolute Timeout นับจากเวลา Login ตรงๆ ไม่รีเซ็ต</li>
+        <li data-letter="B"><b>B</b> Idle Timeout ใช้กับ Cookie เท่านั้น Absolute Timeout ใช้กับ Session เท่านั้น</li>
+        <li data-letter="C"><b>C</b> ทั้งสองแบบทำงานเหมือนกันทุกประการ ต่างกันแค่ชื่อ</li>
+        <li data-letter="D"><b>D</b> Absolute Timeout สั้นกว่า Idle Timeout เสมอ</li>
       </ol>
       <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b> — Idle เผลอทิ้งไว้เฉยๆ นานเกินโดนเตะ ส่วน Absolute จำกัดอายุ Session สูงสุดแม้จะใช้งานต่อเนื่องตลอดก็ตาม</div></details>
     </div>
@@ -330,13 +336,34 @@ exit;</pre>
   </footer>
 
   <style>
+    .score-bar{
+      position:sticky;top:0;z-index:5;
+      display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+      background:var(--sage-soft);border:1px solid var(--sage);border-radius:12px;
+      padding:12px 18px;margin:0 0 24px;font-size:.88rem;color:var(--ink);
+    }
+    .score-bar b{font-family:var(--mono);color:var(--sage);font-size:1rem}
+    .score-bar button{
+      margin-left:auto;border:1px solid var(--sage);background:var(--card);color:var(--sage);
+      font-family:var(--sans);font-size:.82rem;font-weight:700;padding:6px 14px;border-radius:999px;
+      cursor:pointer;transition:background .15s;
+    }
+    .score-bar button:hover{background:var(--sage);color:#fff}
+
     .mcq{border:1px solid var(--rule-soft);border-radius:14px;padding:22px 24px;margin-bottom:14px;background:var(--card)}
     .mcq-n{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--sage);font-weight:700;margin:0 0 8px}
     .mcq-q{margin:0 0 12px;font-size:.98rem;color:var(--ink);font-weight:600;line-height:1.6}
     .mcq-code{margin:0 0 14px;padding:12px 14px;background:var(--paper-2);border-radius:8px;font-family:var(--mono);font-size:.82rem;overflow-x:auto;white-space:pre;color:var(--ink)}
     .mcq-opts{list-style:none;margin:0 0 4px;padding:0;display:flex;flex-direction:column;gap:7px}
-    .mcq-opts li{padding:8px 12px;border:1px solid var(--rule-soft);border-radius:8px;font-size:.9rem;color:var(--ink-2)}
+    .mcq-opts li{padding:8px 12px;border:1px solid var(--rule-soft);border-radius:8px;font-size:.9rem;color:var(--ink-2);cursor:pointer;transition:border-color .12s, background .12s, transform .1s}
+    .mcq-opts li:hover{border-color:var(--sage);transform:translateX(2px)}
     .mcq-opts li b{font-family:var(--mono);color:var(--sage);margin-right:8px}
+    .mcq[data-locked="1"] .mcq-opts li{cursor:default}
+    .mcq[data-locked="1"] .mcq-opts li:hover{transform:none}
+    .mcq-opts li.is-correct{border-color:var(--fwd);background:var(--fwd-soft);color:var(--ink)}
+    .mcq-opts li.is-correct b{color:var(--fwd)}
+    .mcq-opts li.is-wrong{border-color:var(--coral);background:var(--coral-soft);color:var(--ink)}
+    .mcq-opts li.is-wrong b{color:var(--coral)}
     .mcq details{margin-top:12px}
     .mcq summary{cursor:pointer;color:var(--sage);font-weight:700;font-size:.85rem;list-style:none}
     .mcq summary::-webkit-details-marker{display:none}
@@ -344,6 +371,58 @@ exit;</pre>
     .mcq details[open] summary::before{content:"▾ "}
     .mcq-answer{margin-top:10px;padding-top:10px;border-top:1px dashed var(--rule);font-size:.88rem;color:var(--ink-2);line-height:1.6}
     .mcq-answer b{color:var(--fwd)}
+
+    @media (max-width:640px){
+      .score-bar{gap:10px 16px}
+      .score-bar button{margin-left:0}
+    }
   </style>
+
+  <script>
+    (function () {
+      const mcqs = document.querySelectorAll(".mcq[data-answer]");
+      const doneEl = document.getElementById("scoreDone");
+      const correctEl = document.getElementById("scoreCorrect");
+      const resetBtn = document.getElementById("resetMock");
+      let done = 0;
+      let correct = 0;
+
+      function updateScore() {
+        if (doneEl) doneEl.textContent = String(done);
+        if (correctEl) correctEl.textContent = String(correct);
+      }
+
+      mcqs.forEach((mcq) => {
+        const answer = mcq.getAttribute("data-answer");
+        const opts = mcq.querySelectorAll(".mcq-opts li");
+        opts.forEach((li) => {
+          li.addEventListener("click", () => {
+            if (mcq.getAttribute("data-locked") === "1") return;
+            mcq.setAttribute("data-locked", "1");
+
+            const letter = li.getAttribute("data-letter");
+            const isCorrect = letter === answer;
+            li.classList.add(isCorrect ? "is-correct" : "is-wrong");
+
+            if (!isCorrect) {
+              const correctLi = mcq.querySelector('.mcq-opts li[data-letter="' + answer + '"]');
+              if (correctLi) correctLi.classList.add("is-correct");
+            }
+
+            const details = mcq.querySelector("details");
+            if (details) details.open = true;
+
+            done += 1;
+            if (isCorrect) correct += 1;
+            updateScore();
+          });
+        });
+      });
+
+      if (resetBtn) {
+        resetBtn.addEventListener("click", () => location.reload());
+      }
+    })();
+  </script>
 
 </Layout>
