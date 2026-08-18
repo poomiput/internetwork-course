@@ -1,14 +1,254 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import ComingSoon from "../../components/ComingSoon.astro";
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+const chapters = [
+  { n: 1, slug: "dbsec/ch1", t: "Web Application และ HTML", m: "พื้นฐาน Client-Server" },
+  { n: 2, slug: "dbsec/ch2", t: "HTML Form และ GET/POST", m: "Query String, Untrusted Input" },
+  { n: 3, slug: "dbsec/ch3", t: "พื้นฐาน PHP", m: "Superglobals, XSS, htmlspecialchars" },
+  { n: 4, slug: "dbsec/ch4", t: "PHP กับ MySQL (I)", m: "bind_param, SQL Injection" },
+  { n: 5, slug: "dbsec/ch5", t: "PHP กับ MySQL (II)", m: "UPDATE/DELETE, REQUEST_METHOD" },
+  { n: 6, slug: "dbsec/ch6", t: "Login/Logout และรหัสผ่าน", m: "password_hash/verify" },
+  { n: 7, slug: "dbsec/ch7", t: "Session Security", m: "Fixation, Hijacking, Timeout" },
+];
 ---
-<Layout title="สรุปก่อนสอบ" description="DB Security — แผ่นสรุปรวบยอดก่อนสอบ ยังไม่มีเนื้อหา รอทำหลังบทที่ 1-7 เสร็จ">
-  <ComingSoon
-    n="★"
-    title="สรุปก่อนสอบ"
-    accent="var(--gold)"
-    blurb="จะทำหลังเนื้อหาบทที่ 1-7 เสร็จ — สอบ 27 ส.ค. 16:00-19:00 ห้อง 9127 ครอบคลุมบทที่ 1-7"
-    courseLabel="DB Security"
-    courseTotal={7}
-  />
+<Layout title="สรุปก่อนสอบ" description="DB Security — แผ่นสรุปรวบยอดก่อนสอบ CP423324 ครอบคลุมบทที่ 1-7 ตารางช่วยจำ bind_param, Attack→Fix, กับดักที่ออกสอบบ่อย">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--sage)">DB Security · ก่อนเข้าห้องสอบ</p>
+    <h1>สรุปก่อนสอบ CP423324</h1>
+    <p class="deck">อ่านมาครบ 7 บทแล้ว หน้านี้รีดเอาเฉพาะสิ่งที่ออกสอบบ่อยที่สุดมาไว้ที่เดียว — ตารางช่วยจำ, Attack→Fix รวบยอด, และกับดักที่คนพลาดบ่อย อ่านรอบสุดท้ายได้ใน 10 นาที</p>
+    <div class="credit-bar">
+      <span>27 ส.ค. 16:00-19:00 · ห้อง 9127</span><span>ครอบคลุมบทที่ 1-7</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="pray">
+      <p class="pray-label">ตั้งสติก่อนเข้าห้องสอบ</p>
+      <p class="pray-text">อ่านโจทย์ให้ครบ — โจทย์ Security มักซ่อนคำใบ้ไว้ในโค้ดตัวเดียว<br/>เช่นมี <code>bind_param</code> หรือไม่ มี <code>htmlspecialchars</code> หรือไม่</p>
+      <div class="pray-rule"></div>
+      <p class="pray-wish">เจอโจทย์ "อะไรผิด/ควรแก้ตรงไหน" ให้ไล่ทีละจุด<br/>รับข้อมูลจากไหน → เชื่อได้ไหม → ก่อนใช้ต้องกรอง/escape หรือยัง<br/>รับ Session/Cookie มายังไง → ตรวจ Auth ก่อนหรือยัง</p>
+      <p class="pray-foot">— ที่เหลือคือของจริงที่ทบทวนมาแล้ว เลื่อนลงไปดูอีกรอบ —</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">01</span>
+      <h2>4 รูปแบบข้อสอบ</h2>
+    </div>
+    <p class="sec-sub">แนวข้อสอบที่อาจารย์บอกไว้ — รู้รูปแบบก่อนช่วยให้อ่านโจทย์เร็วขึ้น</p>
+
+    <div class="grid-2">
+      <div class="exam">
+        <h4>1. จับคู่คำ / เติมคำในช่องว่าง</h4>
+        <p>ศัพท์และความหมาย เช่น Session, Authentication, Hashing, Prepared Statement — ดูตารางศัพท์ท้ายบทที่ 1-7</p>
+      </div>
+      <div class="exam">
+        <h4>2. PHP + MySQL แก้/เติมโค้ด</h4>
+        <p>โค้ดขาดอะไร ผิดตรงไหน · <code>bind_param()</code> ตัวอักษรไหนคือชนิดข้อมูลอะไร · การ verify ค่า/รหัสผ่าน</p>
+      </div>
+      <div class="exam">
+        <h4>3. การทำงานของ Login/Logout</h4>
+        <p>ให้โค้ดบางส่วนมา ถามว่าทำงานยังไง มีปัญหาอะไร ควรแก้ตรงไหน — แนวจากบทที่ 6</p>
+      </div>
+      <div class="exam">
+        <h4>4. Security ของ Login (เนื้อหาล่าสุด)</h4>
+        <p>ให้สถานการณ์/โค้ดมา ถามว่าโจมตีอะไรได้บ้าง → เสี่ยงตรงไหน → แก้ยังไง — ต้องรู้ทั้งทฤษฎีและแก้โค้ดได้ (บทที่ 7)</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">02</span>
+      <h2>Attack → Fix รวบยอด</h2>
+    </div>
+    <p class="sec-sub">คำตอบมาตรฐานของข้อสอบแนวที่ 4 — จำสัญญาณในโจทย์ให้ได้ แล้วตอบวิธีแก้ตรงจุด</p>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col">การโจมตี</th><th scope="col">สัญญาณที่เจอในโจทย์</th><th scope="col">วิธีแก้</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">SQL Injection</th><td>ต่อ query ด้วย string ตรงๆ ไม่มี <code>bind_param</code></td><td>Prepared Statement + <code>bind_param()</code></td></tr>
+          <tr><th scope="row">XSS</th><td><code>echo $_GET[...]</code> ตรงๆ ไม่ผ่าน <code>htmlspecialchars</code></td><td>ครอบทุกจุดที่ echo ออกจอด้วย <code>htmlspecialchars()</code></td></tr>
+          <tr><th scope="row">Session Fixation</th><td>ไม่มี <code>session_regenerate_id</code> หลัง Login สำเร็จ</td><td><code>session_regenerate_id(true)</code> ทันทีหลัง verify ผ่าน</td></tr>
+          <tr><th scope="row">Session Hijacking</th><td>Cookie ไม่มี <code>httponly</code>/<code>secure</code>/<code>samesite</code></td><td><code>session_set_cookie_params()</code> ก่อน <code>session_start()</code> + HTTPS</td></tr>
+          <tr><th scope="row">Brute Force / Spraying</th><td>ไม่มีการนับจำนวนครั้งที่ Login ผิด</td><td>Rate Limiting (Threshold/Window/Lockout) + Adaptive CAPTCHA</td></tr>
+          <tr><th scope="row">Username Enumeration</th><td>ข้อความ error ต่างกันระหว่าง "ไม่มี user" กับ "รหัสผ่านผิด"</td><td>ใช้ข้อความเดียวกันเสมอ "Invalid username or password."</td></tr>
+          <tr><th scope="row">GET ทำ side-effect</th><td>ลบ/แก้ข้อมูลผ่านลิงก์ <code>&lt;a href&gt;</code> ที่เป็น GET</td><td>บังคับ <code>$_SERVER['REQUEST_METHOD'] === 'POST'</code></td></tr>
+          <tr><th scope="row">เข้าหน้า Protected ตรงๆ</th><td>ไม่มีการเช็ค <code>isset($_SESSION['user_id'])</code></td><td><code>require_once 'auth_check.php'</code> ทุกหน้า</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">03</span>
+      <h2>ตารางที่ช่วยได้มากที่สุด</h2>
+    </div>
+
+    <div class="grid-2">
+      <div class="tablewrap">
+        <table>
+          <caption>bind_param() — ตัวอักษรชนิดข้อมูล</caption>
+          <tbody>
+            <tr><th scope="row"><code>s</code></th><td>string — ข้อความทั่วไป</td></tr>
+            <tr><th scope="row"><code>i</code></th><td>integer — เลขจำนวนเต็ม เช่น id</td></tr>
+            <tr><th scope="row"><code>d</code></th><td>double — เลขทศนิยม</td></tr>
+            <tr><th scope="row"><code>b</code></th><td>blob — ไฟล์ไบนารี</td></tr>
+          </tbody>
+        </table>
+        <div class="fixnote" style="background:var(--sage-soft);margin-top:14px">
+          <b style="color:var(--sage)">กฎเหล็ก:</b> จำนวนตัวอักษรใน string ต้องเท่ากับจำนวนตัวแปรที่ตามมา และ<b>เรียงลำดับให้ตรงกับ <code>?</code> ใน SQL</b> ทุกตัว
+        </div>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <caption>Session Fixation vs Session Hijacking</caption>
+          <tbody>
+            <tr><th scope="row">จังหวะโจมตี</th><td><b>Fixation:</b> ก่อน Login</td></tr>
+            <tr><th scope="row"></th><td><b>Hijacking:</b> ระหว่างใช้งาน Session</td></tr>
+            <tr><th scope="row">ป้องกันหลัก</th><td><b>Fixation:</b> <code>session_regenerate_id(true)</code></td></tr>
+            <tr><th scope="row"></th><td><b>Hijacking:</b> Secure Cookie + HTTPS</td></tr>
+          </tbody>
+        </table>
+        <div class="fixnote" style="background:var(--coral-soft);margin-top:14px">
+          <b style="color:var(--coral)">Idle Timeout vs Absolute Timeout:</b> Idle รีเซ็ตทุกครั้งที่ใช้งาน (เผลอทิ้งไว้โดนเตะ) · Absolute นับจากตอน Login ตรงๆ ไม่รีเซ็ตแม้ใช้งานตลอด
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="tablewrap">
+        <table>
+          <caption>ฟังก์ชันกรองข้อมูลที่ใช้บ่อย</caption>
+          <tbody>
+            <tr><th scope="row"><code>htmlspecialchars()</code></th><td>ป้องกัน XSS ตอน echo ออกจอ</td></tr>
+            <tr><th scope="row"><code>trim()</code></th><td>ตัดช่องว่างหัว-ท้าย</td></tr>
+            <tr><th scope="row"><code>filter_var(FILTER_VALIDATE_INT)</code></th><td>ยืนยันว่าเป็นเลขจำนวนเต็มจริง</td></tr>
+            <tr><th scope="row"><code>filter_input(INPUT_GET,...)</code></th><td>ดึงค่าจาก <code>$_GET</code> พร้อมกรองในขั้นตอนเดียว</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <caption>Authentication vs Authorization</caption>
+          <tbody>
+            <tr><th scope="row">Authentication</th><td>"เป็นใคร" — ยืนยันตัวตนตอน Login</td></tr>
+            <tr><th scope="row">Authorization</th><td>"ทำอะไรได้บ้าง" — ตรวจสิทธิ์หลัง Login เสมอ</td></tr>
+            <tr><th scope="row">password_hash()</th><td>เก็บรหัสผ่านตอนสร้างบัญชี</td></tr>
+            <tr><th scope="row">password_verify()</th><td>ตรวจรหัสผ่านตอน Login</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">04</span>
+      <h2>กับดัก 10 ข้อที่ออกสอบบ่อยที่สุด</h2>
+    </div>
+
+    <div class="cascade">
+      <div class="rung"><b>1. Prepared Statement กัน SQLi แต่ไม่กัน XSS</b> — ยังต้อง <code>htmlspecialchars()</code> ทุกจุดที่ echo ค่าออกจอ</div>
+      <div class="rung"><b>2. bind_param ลำดับ/จำนวนไม่ตรง</b> — string ชนิดข้อมูลต้องเรียงตรงกับ <code>?</code> ทุกตัว ผิดลำดับเดียวพังทั้งคำสั่ง</div>
+      <div class="rung"><b>3. DELETE/UPDATE ผ่าน GET</b> — ลิงก์ <code>&lt;a href&gt;</code> ที่ลบข้อมูลได้โดยไม่ต้องยืนยัน ต้องบังคับเป็น POST เท่านั้น</div>
+      <div class="rung"><b>4. เก็บรหัสผ่านด้วย MD5/SHA1</b> — เร็วเกินไปสำหรับผู้โจมตี ต้องใช้ <code>password_hash()</code> เท่านั้น</div>
+      <div class="rung"><b>5. ไม่เปลี่ยน Session ID หลัง Login</b> — เปิดช่องให้ Session Fixation ต้องมี <code>session_regenerate_id(true)</code></div>
+      <div class="rung"><b>6. Cookie ไม่มี Security Flags</b> — ลืมตั้ง <code>httponly</code>/<code>secure</code>/<code>samesite</code> ก่อน <code>session_start()</code></div>
+      <div class="rung"><b>7. ข้อความ error บอกใบ้ Username Enumeration</b> — "ไม่มี user นี้" ต่างจาก "รหัสผ่านผิด" ต้องใช้ข้อความเดียวกัน</div>
+      <div class="rung"><b>8. ใช้ CAPTCHA แทน Rate Limiting</b> — ต้องใช้ร่วมกันทั้งสองอย่าง ไม่ใช่เลือกอย่างใดอย่างหนึ่ง</div>
+      <div class="rung"><b>9. Idle Timeout ไม่อัปเดต last_activity ทุก request</b> — ถ้าลืมอัปเดต ผู้ใช้จะโดนเตะออกทั้งที่ใช้งานอยู่</div>
+      <div class="rung"><b>10. Logout ไม่ครบ 3 ขั้น</b> — ต้องเคลียร์ <code>$_SESSION</code> → หมดอายุ Cookie → <code>session_destroy()</code> ครบทั้งสามอย่าง ไม่ใช่แค่ข้อใดข้อหนึ่ง</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">05</span>
+      <h2>เช็คลิสต์ 7 บท — กดเข้าไปทวนได้เลย</h2>
+    </div>
+
+    <div class="chk">
+      {chapters.map((c) => (
+        <a class="chk-item" href={`${base}/${c.slug}`}>
+          <span class="chk-n">{c.n}</span>
+          <span class="chk-body">
+            <span class="chk-t">{c.t}</span>
+            <span class="chk-m">{c.m}</span>
+          </span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section>
+    <div class="pray pray-end">
+      <p class="pray-wish" style="margin:0">อ่านมาถึงตรงนี้ได้ แปลว่าเตรียมมาดีพอแล้ว<br/><b>ไล่โค้ดทีละบรรทัด อย่าเดา อ่านให้ครบแล้วลุยเลย</b></p>
+      <p class="pray-foot" style="margin:14px 0 0">โชคดีนะ 🍀</p>
+    </div>
+  </section>
+
+  <footer>
+    DB Security · หน้ารวบยอดก่อนสอบ · สรุปจากบทที่ 1-7 ทั้งหมดในเว็บนี้ ซึ่งอ้างอิงสไลด์ต้นฉบับ CP423324 Database and Web Security
+  </footer>
+
+  <style>
+    .pray{
+      background:var(--sage-soft);
+      border:1px solid var(--sage);
+      border-radius:14px;
+      padding:34px 28px;
+      text-align:center;
+    }
+    .pray-label{
+      font-family:var(--mono);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;
+      color:var(--sage);font-weight:700;margin:0 0 16px;
+    }
+    .pray-text{
+      font-family:var(--serif);
+      font-size:1.3rem;line-height:1.8;
+      color:var(--ink);margin:0;
+    }
+    .pray-rule{
+      width:60px;height:1px;background:var(--sage);
+      margin:24px auto;opacity:.5;
+    }
+    .pray-wish{
+      font-size:1.02rem;line-height:2;color:var(--ink);margin:0;
+    }
+    .pray-foot{font-size:.85rem;color:var(--ink-3);margin:20px 0 0}
+    .pray-end{background:var(--gold-soft);border-color:var(--gold)}
+
+    .chk{
+      display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+      gap:10px;
+    }
+    .chk-item{
+      display:flex;align-items:center;gap:12px;
+      text-decoration:none;
+      border:1px solid var(--rule-soft);border-radius:10px;
+      padding:12px 14px;background:var(--card);
+      transition:border-color .15s, transform .15s;
+    }
+    .chk-item:hover{border-color:var(--sage);transform:translateY(-1px)}
+    .chk-n{
+      font-family:var(--mono);font-size:1.05rem;font-weight:700;
+      color:var(--sage);width:24px;flex:none;text-align:right;
+    }
+    .chk-body{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .chk-t{font-size:.92rem;color:var(--ink);font-weight:700;line-height:1.25}
+    .chk-m{font-size:.72rem;color:var(--ink-3)}
+
+    @media (max-width:640px){
+      .pray{padding:26px 18px}
+      .pray-text{font-size:1.1rem}
+    }
+  </style>
+
 </Layout>

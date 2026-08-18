@@ -9,10 +9,11 @@ interface Props {
 }
 
 const { title, description = "Internetwork Course" } = Astro.props;
+const course = Astro.url.pathname.includes("/dbsec") ? "dbsec" : "internetwork";
 ---
 
 <!doctype html>
-<html lang="th">
+<html lang="th" data-course={course}>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -147,6 +148,10 @@ const { title, description = "Internetwork Course" } = Astro.props;
     --sans:'Sarabun',"Leelawadee UI","Segoe UI",system-ui,-apple-system,sans-serif;
     --serif:Georgia,"Times New Roman",serif;
     --mono:"Cascadia Mono",Consolas,ui-monospace,monospace;
+  }
+  :root[data-course="dbsec"]{
+    --paper:#F7FAE9; --paper-2:#ECF2D6;
+    --rule:#D9E0BE; --rule-soft:#E5EBCF;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}

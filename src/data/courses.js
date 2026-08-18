@@ -84,7 +84,7 @@ export const courses = [
         title: "ก่อนเข้าห้องสอบ",
         accent: "var(--gold)",
         chapters: [
-          { n: "★", slug: "dbsec/exam", title: "สรุปก่อนสอบ", ready: false },
+          { n: "★", slug: "dbsec/exam", title: "สรุปก่อนสอบ", ready: true },
         ],
       },
     ],
