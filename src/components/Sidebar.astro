@@ -1,63 +1,34 @@
 ---
+import { courses } from "../data/courses.js";
+
 const base = import.meta.env.BASE_URL;
 const path = Astro.url.pathname.replace(base, "").replace(/\/$/, "");
 
-const units = [
-  {
-    title: "Layer 2 พื้นฐาน",
-    accent: "var(--slate)",
-    chapters: [
-      { n: 0, slug: "ch0", title: "Overview Internetworking", ready: false },
-      { n: 1, slug: "ch1", title: "Packet Forwarding", ready: true },
-      { n: 2, slug: "ch2", title: "Spanning Tree", ready: true },
-      { n: 3, slug: "ch3", title: "Advanced STP Tuning", ready: true },
-      { n: 4, slug: "ch4", title: "Multiple Spanning Tree", ready: true },
-      { n: 5, slug: "ch5", title: "VLAN Trunks & EtherChannel", ready: true },
-    ],
-  },
-  {
-    title: "Layer 3 Routing",
-    accent: "var(--coral)",
-    chapters: [
-      { n: 6, slug: "ch6", title: "IP Routing Essentials", ready: true },
-      { n: 7, slug: "ch7", title: "EIGRP", ready: true },
-      { n: 8, slug: "ch8", title: "OSPF", ready: true },
-      { n: 9, slug: "ch9", title: "Advanced OSPF", ready: true },
-      { n: 10, slug: "ch10", title: "OSPFv3", ready: true },
-    ],
-  },
-  {
-    title: "Routing ขั้นสูง & Services",
-    accent: "var(--violet)",
-    chapters: [
-      { n: 11, slug: "ch11", title: "BGP", ready: true },
-      { n: 12, slug: "ch12", title: "Advanced BGP", ready: true },
-      { n: 13, slug: "ch13", title: "Multicast", ready: true },
-      { n: 14, slug: "ch14", title: "QoS", ready: false },
-    ],
-  },
-  {
-    title: "Interactive Lab",
-    accent: "var(--fwd)",
-    chapters: [
-      { n: "▶", slug: "routing-lab", title: "IGP Routing Animation", ready: true },
-    ],
-  },
-  {
-    title: "ก่อนเข้าห้องสอบ",
-    accent: "var(--gold)",
-    chapters: [
-      { n: "★", slug: "exam", title: "บทสวดขอให้สอบดี", ready: true },
-    ],
-  },
-];
+const activeCourse =
+  courses.find((c) => c.id !== "internetwork" && path.startsWith(`/${c.id}/`)) ||
+  courses.find((c) => c.id === "internetwork");
 ---
 
 <aside class="sidebar">
   <div class="brand">
-    <span class="brand-name">Internetwork</span>
-    <span class="brand-sub">CCNP Enterprise Core</span>
+    <span class="brand-name">{activeCourse.name}</span>
+    <span class="brand-sub">{activeCourse.brandSub}</span>
   </div>
+
+  {courses.length > 1 && (
+    <nav class="course-switch" aria-label="สลับวิชา">
+      {courses.map((c) => (
+        <a
+          href={`${base.replace(/\/$/, "")}/${c.home}`}
+          class:list={["course-pill", { active: c.id === activeCourse.id }]}
+          style={`--accent:${c.accent}`}
+          aria-current={c.id === activeCourse.id ? "page" : undefined}
+        >
+          {c.name}
+        </a>
+      ))}
+    </nav>
+  )}
 
   <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="chapter-nav">
     <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
@@ -65,7 +36,7 @@ const units = [
   </button>
 
   <nav id="chapter-nav">
-    {units.map((unit) => (
+    {activeCourse.units.map((unit) => (
       <div class="unit">
         <p class="unit-title" style={`--accent:${unit.accent}`}>{unit.title}</p>
         <ul>
@@ -107,9 +78,25 @@ const units = [
     position:sticky;top:0;
     height:100vh;overflow-y:auto;
   }
-  .brand{display:flex;flex-direction:column;gap:2px;margin-bottom:24px;padding:0 6px}
+  .brand{display:flex;flex-direction:column;gap:2px;margin-bottom:14px;padding:0 6px}
   .brand-name{font-family:var(--serif);font-size:1.2rem;color:var(--ink)}
   .brand-sub{font-size:.72rem;color:var(--ink-3);letter-spacing:.05em}
+
+  .course-switch{
+    display:flex;gap:6px;margin-bottom:20px;padding:0 6px;
+  }
+  .course-pill{
+    flex:1;text-align:center;text-decoration:none;
+    font-size:.78rem;font-weight:700;color:var(--ink-2);
+    background:var(--paper-2);border:1px solid var(--rule-soft);border-radius:8px;
+    padding:8px 6px;min-height:40px;display:flex;align-items:center;justify-content:center;
+    transition:border-color .15s,color .15s,background .15s;
+  }
+  .course-pill:hover{border-color:var(--accent);color:var(--ink)}
+  .course-pill.active{
+    color:#fff;border-color:var(--accent);
+    background:var(--accent);
+  }
 
   .unit{margin-bottom:22px}
   .unit-title{
