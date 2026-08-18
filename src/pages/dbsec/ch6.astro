@@ -1,14 +1,215 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import ComingSoon from "../../components/ComingSoon.astro";
 ---
-<Layout title="บทที่ 6" description="DB Security บทที่ 6 — ยังไม่มีเนื้อหา รอไฟล์ต้นฉบับ">
-  <ComingSoon
-    n={6}
-    title="บทที่ 6"
-    accent="var(--sage)"
-    blurb="คาดว่าเกี่ยวกับ Login / Logout (ตามที่พูดถึงในแนวข้อสอบ) — ยังไม่ยืนยันจนกว่าจะได้ไฟล์ต้นฉบับ"
-    courseLabel="DB Security"
-    courseTotal={7}
-  />
+<Layout title="ระบบ Login/Logout และการจัดการรหัสผ่าน" description="DB Security บทที่ 6 — Authentication vs Authorization, password_hash/password_verify, กระบวนการ Login/Logout เต็มระบบ, และ Session/Cookie">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--sage)">DB Security · Chapter 6 of 7</p>
+    <h1>ระบบ Login/Logout และการจัดการรหัสผ่าน</h1>
+    <p class="deck">ทุกอย่างที่เรียนมา 5 บท — Form, PHP, Prepared Statement, htmlspecialchars — มาบรรจบกันที่นี่ บทนี้ประกอบร่างเป็นระบบ Login/Logout เต็มระบบ พร้อมจุดที่ต้องระวังที่สุด: รหัสผ่านเก็บยังไงให้ปลอดภัย</p>
+    <div class="credit-bar">
+      <span>Authentication</span><span>password_hash()</span><span>password_verify()</span><span>Session</span><span>Logout</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">01</span>
+      <h2>Authentication vs Authorization</h2>
+    </div>
+    <p class="sec-sub">สองคำที่หน้าตาคล้ายกันแต่ตอบคำถามคนละข้อ — สับสนสองคำนี้คือสาเหตุอันดับต้นของช่องโหว่ด้านสิทธิ์</p>
+
+    <div class="grid-2">
+      <div class="card" style="border-left:4px solid var(--slate)">
+        <h3 style="color:var(--slate)">Authentication — ยืนยันตัวตน</h3>
+        <ul>
+          <li>ตอบคำถาม <b>"เป็นใคร"</b> ใช้ Username + Password</li>
+          <li>เกิดขึ้นตอน Login เท่านั้น</li>
+          <li>ผลลัพธ์: เข้าสู่ระบบได้ และสร้าง Session</li>
+        </ul>
+      </div>
+      <div class="card" style="border-left:4px solid var(--gold)">
+        <h3 style="color:var(--gold)">Authorization — ตรวจสิทธิ์</h3>
+        <ul>
+          <li>ตอบคำถาม <b>"ทำอะไรได้บ้าง"</b> ใช้ Role / Permission</li>
+          <li>เกิดขึ้น<b>หลัง</b> Login เสมอ ทุกครั้งที่จะทำงานสำคัญ</li>
+          <li>ผลลัพธ์: เข้าถึงเฉพาะทรัพยากรที่ได้รับอนุญาต เช่น <code>role=admin</code> เท่านั้นที่แก้ไข/ลบข้อมูลได้</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="fixnote" style="background:var(--slate-soft);margin-top:20px">
+      <b style="color:var(--slate)">Login สำเร็จ ≠ เข้าถึงได้ทุกอย่าง:</b> ทุกครั้งก่อนทำงานสำคัญ (แก้ไข ลบ ดูข้อมูลคนอื่น) ต้องเช็ค Authorization ซ้ำเสมอ — <code>if ($_SESSION['role'] !== 'admin') &#123; http_response_code(403); exit('Access denied.'); &#125;</code>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">02</span>
+      <h2>การเก็บรหัสผ่าน — จุดที่พลาดแล้วหายนะที่สุด</h2>
+    </div>
+    <p class="sec-sub">ฐานข้อมูลรั่วเกิดขึ้นได้เสมอ คำถามคือตอนนั้นรหัสผ่านผู้ใช้จะปลอดภัยแค่ไหน</p>
+
+    <div class="attack-flow">
+      <div class="af-step af-attack">
+        <span class="af-label">Attack</span>
+        <h4>ฐานข้อมูลรั่วไหล</h4>
+        <p>ผู้โจมตีเข้าถึงตาราง <code>users</code> ได้ ไม่ว่าจะผ่าน SQL Injection, backup หลุด หรือช่องโหว่อื่น</p>
+      </div>
+      <div class="af-step af-risk">
+        <span class="af-label">Risk</span>
+        <h4>เก็บรหัสผ่านแบบ Plain Text</h4>
+        <p>ถ้าคอลัมน์ password เก็บค่า <code>Admin1234</code> ตรงๆ ผู้โจมตีเห็นรหัสผ่านจริงทันที ใช้ Login ได้เลย — ยิ่งร้ายเพราะคนส่วนใหญ่ใช้รหัสผ่านซ้ำกันหลายเว็บ</p>
+      </div>
+      <div class="af-step af-fix">
+        <span class="af-label">Fix</span>
+        <h4>เก็บเป็น password_hash</h4>
+        <p>เก็บค่าที่ผ่าน <code>password_hash()</code> แล้ว เช่น <code>$2y$10$SZgFDih...</code> — ถอดกลับเป็นรหัสผ่านเดิมไม่ได้ ตรวจสอบได้แต่ไม่เปิดเผย</p>
+      </div>
+    </div>
+
+    <div class="filecard" style="margin-top:20px">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">create_user.php — ตอนสร้างบัญชี</span>
+      </div>
+      <pre><code><span class="fc-attr">$passwordHash</span> = <span class="fc-attr">password_hash</span>(
+    <span class="fc-attr">$password</span>,
+    PASSWORD_DEFAULT
+);
+
+<span class="fc-attr">$sql</span> = <span class="fc-str">'INSERT INTO users
+    (username, password_hash, role) VALUES (?, ?, ?)'</span>;
+<span class="fc-attr">$stmt</span>-&gt;bind_param(<span class="fc-str">'sss'</span>, <span class="fc-attr">$username</span>, <span class="fc-attr">$passwordHash</span>, <span class="fc-attr">$role</span>);</code></pre>
+    </div>
+
+    <div class="filecard" style="margin-top:20px">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">login_process.php — ตอน Login</span>
+      </div>
+      <pre><code><span class="fc-tag">if</span> (<span class="fc-attr">$user</span> &amp;&amp; <span class="fc-attr">password_verify</span>(<span class="fc-attr">$password</span>, <span class="fc-attr">$user</span>[<span class="fc-str">'password_hash'</span>])) &#123;
+    <span class="fc-cm">// ถูกต้อง — ล็อกอินสำเร็จ</span>
+&#125; <span class="fc-tag">else</span> &#123;
+    <span class="fc-tag">echo</span> <span class="fc-str">'Invalid username or password.'</span>;
+&#125;</code></pre>
+      <div class="notes">
+        <p style="margin:0;font-size:.86rem;color:var(--ink-2)">password_verify() เทียบรหัสผ่านที่กรอกกับ hash ในฐานข้อมูล คืนค่า <code>true</code>/<code>false</code> — <b>ห้ามใช้ MD5 หรือ SHA1</b> สำหรับรหัสผ่าน เพราะเร็วเกินไปสำหรับผู้โจมตี ใช้ <code>password_hash()</code> เท่านั้น</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">03</span>
+      <h2>กระบวนการ Login/Logout เต็มระบบ</h2>
+    </div>
+    <p class="sec-sub">Password ปกป้องขั้นตอน "ก่อน Login" — Session ID ปกป้องสถานะ "หลัง Login" — ดังนั้น Session ID ต้องได้รับการป้องกันเหมือนข้อมูลลับ (รายละเอียดเต็มในบทที่ 7)</p>
+
+    <div class="flow">
+      <div class="flow-step" data-n="1">
+        <h4>login.php — แสดงฟอร์ม</h4>
+        <p>รับ Username และ Password จากผู้ใช้</p>
+      </div>
+      <div class="flow-step" data-n="2">
+        <h4>login_process.php — ค้นหาและตรวจสอบ</h4>
+        <p>SELECT ผู้ใช้ด้วย Prepared Statement แล้วตรวจด้วย <code>password_verify()</code></p>
+      </div>
+      <div class="flow-step" data-n="3">
+        <h4>สร้าง Session</h4>
+        <p><code>session_regenerate_id(true)</code> แล้วเขียน <code>$_SESSION['user_id']</code>, <code>role</code> ฯลฯ</p>
+      </div>
+      <div class="flow-step" data-n="4">
+        <h4>auth_check.php — ยามหน้าประตู</h4>
+        <p>ทุกหน้าที่ต้อง Login ต้อง <code>require_once</code> ไฟล์นี้ก่อนเสมอ ตรวจ <code>isset($_SESSION['user_id'])</code></p>
+      </div>
+      <div class="flow-step" data-n="5">
+        <h4>profile.php — Protected Page</h4>
+        <p>แสดงข้อมูลจาก <code>$_SESSION</code> เท่านั้น ไม่ query ซ้ำโดยไม่จำเป็น</p>
+      </div>
+      <div class="flow-step" data-n="6">
+        <h4>logout.php — ล้างและทำลาย Session</h4>
+        <p>เคลียร์ <code>$_SESSION</code>, ลบ Cookie, <code>session_destroy()</code> แล้วกลับหน้า Login</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">04</span>
+      <h2>Session, $_SESSION และ Cookie ทำงานร่วมกันยังไง</h2>
+    </div>
+    <p class="sec-sub">สามคำที่ดูคล้ายกันแต่อยู่คนละฝั่ง — สับสนสามคำนี้บ่อยที่สุดตอนตอบข้อสอบจับคู่คำ</p>
+
+    <div class="grid-3">
+      <div class="card">
+        <h3>Session</h3>
+        <ul><li>ข้อมูลฝั่ง <b>Server</b> ที่จดจำสถานะผู้ใช้ เก็บ <code>user_id</code>, <code>role</code> — ไม่ควรเก็บ password หรือข้อมูลลับจำนวนมาก</li></ul>
+      </div>
+      <div class="card">
+        <h3><code>$_SESSION</code></h3>
+        <ul><li>ตัวแปร Superglobal ของ PHP ใช้อ่าน-เขียนข้อมูล Session ต้องเรียก <code>session_start()</code> ก่อนใช้งานเสมอ</li></ul>
+      </div>
+      <div class="card">
+        <h3>Cookie</h3>
+        <ul><li>ฝั่ง <b>Browser</b> เก็บแค่ Session ID (ชื่อ <code>PHPSESSID</code>) — Server ใช้ ID นี้ค้นหา Session ของผู้ใช้</li></ul>
+      </div>
+    </div>
+
+    <div class="filecard" style="margin-top:20px">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">auth_check.php</span>
+      </div>
+      <pre><code><span class="fc-tag">if</span> (!<span class="fc-attr">isset</span>(<span class="fc-attr">$_SESSION</span>[<span class="fc-str">'user_id'</span>])) &#123;
+    header(<span class="fc-str">'Location: login.php'</span>);
+    <span class="fc-tag">exit</span>;
+&#125;</code></pre>
+      <div class="notes">
+        <p style="margin:0;font-size:.86rem;color:var(--ink-2)">ทุกหน้า Protected Page (เช่น profile.php) ต้องเริ่มด้วย <code>require_once 'auth_check.php';</code> เสมอ — ไม่ควรพึ่งแค่การซ่อนลิงก์หรือปุ่มในหน้าเว็บ</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">05</span>
+      <h2>กรณีทดสอบที่ต้องผ่านให้ได้</h2>
+    </div>
+    <p class="sec-sub">5 สถานการณ์ที่ระบบ Login/Logout จริงต้องรับมือได้ทั้งหมด — ข้อ 4 คือจุดที่โยงกลับไปบทที่ 4 โดยตรง</p>
+
+    <div class="grid-3">
+      <div class="card"><h3>1. Login ถูกต้อง</h3><ul><li>เข้าหน้า Profile ได้ แสดงข้อมูลถูกต้องตรงกับผู้ใช้ที่ Login</li></ul></div>
+      <div class="card"><h3>2. Password ผิด</h3><ul><li>แสดง "Invalid username or password." — ข้อความเดียวกับ username ไม่มีอยู่จริง (กัน Username Enumeration)</li></ul></div>
+      <div class="card"><h3>3. เปิด URL ตรง</h3><ul><li>พิมพ์ <code>profile.php</code> ตรงๆ โดยยังไม่ Login ต้องถูกเด้งกลับไปหน้า Login เสมอ</li></ul></div>
+      <div class="card" style="border-left:4px solid var(--coral)"><h3 style="color:var(--coral)">4. SQL Injection</h3><ul><li>กรอก <code>' OR '1'='1</code> แทน username ต้องได้ "Invalid username or password." ไม่ใช่ Login สำเร็จ — พิสูจน์ว่า Prepared Statement ทำงาน</li></ul></div>
+      <div class="card"><h3>5. Multi-tab Logout</h3><ul><li>เปิด Profile 2 แท็บ Logout แท็บแรก แล้ว Refresh แท็บที่สอง ต้องเด้งกลับ Login เพราะ Session เดียวกันถูกทำลายแล้ว</li></ul></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="tablewrap">
+      <table>
+        <caption>ศัพท์ที่ต้องรู้ — Login/Logout และรหัสผ่าน</caption>
+        <thead><tr><th scope="col">คำศัพท์</th><th scope="col">ความหมาย</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Authentication</th><td>การยืนยันตัวตน ตอบว่า "เป็นใคร" เกิดขึ้นตอน Login</td></tr>
+          <tr><th scope="row">Authorization</th><td>การตรวจสอบสิทธิ์ ตอบว่า "ทำอะไรได้บ้าง" เกิดขึ้นหลัง Login เสมอ</td></tr>
+          <tr><th scope="row">password_hash()</th><td>แปลงรหัสผ่านเป็นค่าที่ถอดกลับไม่ได้ ใช้ตอนสร้าง/เปลี่ยนรหัสผ่าน</td></tr>
+          <tr><th scope="row">password_verify()</th><td>เทียบรหัสผ่านที่กรอกกับ hash ที่เก็บไว้ คืนค่า true/false ใช้ตอน Login</td></tr>
+          <tr><th scope="row">Session</th><td>ข้อมูลฝั่ง Server ที่จดจำสถานะผู้ใช้ระหว่างเปิดหลายหน้า</td></tr>
+          <tr><th scope="row">Cookie</th><td>ที่เก็บ Session ID ฝั่ง Browser (ชื่อมาตรฐานคือ PHPSESSID)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bridge" style="margin-top:20px">
+      <b>เชื่อมไปบทหน้า:</b> บทนี้บอกว่า "Session ID ต้องได้รับการป้องกันเหมือนข้อมูลลับ" — บทที่ 7 จะเจาะลึกว่าป้องกันยังไง: <code>session_regenerate_id()</code>, Secure Cookie, Idle/Absolute Timeout, และการโจมตีที่เล็งเป้าไปที่ Session โดยเฉพาะคือ Session Fixation กับ Session Hijacking
+    </div>
+  </section>
+
+  <footer>
+    DB Security Chapter 6 · เรียบเรียงจากสไลด์ "ระบบ Login/Logout และการจัดการรหัสผ่าน" (Asst.Prof. Monlica Wattana, Ph.D — CP423324)
+  </footer>
+
 </Layout>

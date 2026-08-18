@@ -76,8 +76,8 @@ export const courses = [
           { n: 3, slug: "dbsec/ch3", title: "พื้นฐาน PHP", ready: true },
           { n: 4, slug: "dbsec/ch4", title: "PHP กับ MySQL (I)", ready: true },
           { n: 5, slug: "dbsec/ch5", title: "PHP กับ MySQL (II)", ready: true },
-          { n: 6, slug: "dbsec/ch6", title: "บทที่ 6", ready: false },
-          { n: 7, slug: "dbsec/ch7", title: "บทที่ 7", ready: false },
+          { n: 6, slug: "dbsec/ch6", title: "ระบบ Login/Logout และรหัสผ่าน", ready: true },
+          { n: 7, slug: "dbsec/ch7", title: "Session Security และ Login Protection", ready: true },
         ],
       },
       {

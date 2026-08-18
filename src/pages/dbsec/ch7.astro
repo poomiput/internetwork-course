@@ -1,14 +1,299 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import ComingSoon from "../../components/ComingSoon.astro";
 ---
-<Layout title="บทที่ 7" description="DB Security บทที่ 7 — ยังไม่มีเนื้อหา รอไฟล์ต้นฉบับ">
-  <ComingSoon
-    n={7}
-    title="บทที่ 7"
-    accent="var(--sage)"
-    blurb="คาดว่าเกี่ยวกับความปลอดภัยของ Login (เนื้อหาสัปดาห์ล่าสุดตามที่พูดถึงในแนวข้อสอบ) — ยังไม่ยืนยันจนกว่าจะได้ไฟล์ต้นฉบับ"
-    courseLabel="DB Security"
-    courseTotal={7}
-  />
+<Layout title="Session Security และ Login Protection" description="DB Security บทที่ 7 — Session Fixation vs Hijacking, session_regenerate_id, Idle/Absolute Timeout, Secure Cookie, Login Attempt Limiting และ CAPTCHA">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--sage)">DB Security · Chapter 7 of 7</p>
+    <h1>Session Security และ Login Protection</h1>
+    <p class="deck">เนื้อหาสัปดาห์ล่าสุดก่อนสอบ — บทที่ 6 สร้างระบบ Login ให้ทำงานได้ บทนี้ทำให้ระบบนั้น "ป้องกันการโจมตี" ได้ด้วย ตั้งแต่การขโมย Session ไปจนถึงการเดารหัสผ่านซ้ำๆ</p>
+    <div class="credit-bar">
+      <span>Session Fixation</span><span>Session Hijacking</span><span>Timeout</span><span>Secure Cookie</span><span>Rate Limiting</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">01</span>
+      <h2>Session ID คือกุญแจ ไม่ใช่แค่หมายเลข</h2>
+    </div>
+    <p class="sec-sub">Password ปกป้องขั้นตอน<b>ก่อน</b> Login — Session ID ปกป้องสถานะ<b>หลัง</b> Login ใครก็ตามที่ถือ Session ID ตัวเดียวกับผู้ใช้ ระบบจะปฏิบัติราวกับเป็นผู้ใช้คนนั้นทันที โดยไม่ต้องรู้รหัสผ่านเลย</p>
+
+    <div class="fixnote" style="background:var(--coral-soft, var(--card))">
+      <b style="color:var(--coral)">กฎการป้องกัน Session ID:</b> คาดเดายาก · ไม่ใส่ใน URL · ไม่บันทึกลง Log · ส่งผ่าน Cookie ที่มี Security Flags · เปลี่ยนค่าใหม่ทันทีเมื่อสิทธิ์เปลี่ยน (เช่นหลัง Login)
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">02</span>
+      <h2>รูปแบบการโจมตีระบบ Login</h2>
+    </div>
+    <p class="sec-sub">แบ่งเป็น 3 กลุ่ม — ข้อสอบมักถามว่าสถานการณ์หนึ่งๆ จัดอยู่กลุ่มไหน และป้องกันด้วยอะไร</p>
+
+    <div class="grid-3">
+      <div class="card" style="border-left:4px solid var(--coral)">
+        <h3 style="color:var(--coral)">1. Injection Attacks</h3>
+        <ul><li><b>SQL Injection</b> — แทรกโค้ด SQL ผ่านช่อง username/password</li></ul>
+        <p style="margin:8px 0 0;font-size:.85rem;color:var(--ink-2)">ป้องกัน: Prepared Statement (บทที่ 4)</p>
+      </div>
+      <div class="card" style="border-left:4px solid var(--gold)">
+        <h3 style="color:var(--gold)">2. Password-based Attacks</h3>
+        <ul>
+          <li><b>Brute Force</b> — ลองรหัสผ่านทุกแบบซ้ำๆ กับบัญชีเดียว</li>
+          <li><b>Password Spraying</b> — ใช้รหัสผ่านยอดฮิตไม่กี่คำ ลองกับหลายบัญชี</li>
+          <li><b>Credential Stuffing</b> — เอา username/password ที่หลุดจากเว็บอื่นมาลองซ้ำ</li>
+          <li><b>Username Enumeration</b> — เดาว่า username มีอยู่จริงไหมจากข้อความ error ที่ต่างกัน</li>
+        </ul>
+      </div>
+      <div class="card" style="border-left:4px solid var(--slate)">
+        <h3 style="color:var(--slate)">3. Session-based Attacks</h3>
+        <ul>
+          <li><b>Session Fixation</b> — ยัดเยียด Session ID ให้เหยื่อ<b>ก่อน</b>ที่จะ Login</li>
+          <li><b>Session Hijacking</b> — ขโมย Session ID ที่<b>กำลังใช้งานอยู่</b>ของเหยื่อ</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">03</span>
+      <h2>Session Fixation vs Session Hijacking</h2>
+    </div>
+    <p class="sec-sub">คำที่สอบชอบเอามาให้จับคู่หรือแยกความแตกต่าง — จุดต่างสำคัญที่สุดคือ "จังหวะเวลา" ที่ผู้โจมตีเข้าคุม Session</p>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col">ประเด็น</th><th scope="col">Session Fixation</th><th scope="col">Session Hijacking</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">จังหวะโจมตี</th><td><b>ก่อน</b> เหยื่อ Login</td><td><b>ระหว่าง</b>ที่เหยื่อกำลังใช้งาน Session อยู่</td></tr>
+          <tr><th scope="row">ต้องรู้รหัสผ่านไหม</th><td>ไม่ต้อง — ยัดเยียด Session ID ให้เหยื่อไว้ล่วงหน้า</td><td>ไม่ต้อง — ขโมย Session ID ที่ใช้งานอยู่โดยตรง</td></tr>
+          <tr><th scope="row">ช่องทางหลัก</th><td>ระบบไม่เปลี่ยน Session ID หลัง Login</td><td>เครือข่ายไม่ปลอดภัย, XSS, Log หลุด, อุปกรณ์สาธารณะ, Cookie ไม่มี Security Flags</td></tr>
+          <tr><th scope="row">การป้องกันหลัก</th><td><code>session_regenerate_id(true)</code> ทันทีหลัง Login สำเร็จ</td><td>Secure Cookie Flags + HTTPS + ปิดช่องทางขโมย Session ID</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="attack-flow" style="margin-top:20px">
+      <div class="af-step af-attack">
+        <span class="af-label">Attack</span>
+        <h4>ยัดเยียด Session ID</h4>
+        <p>ผู้โจมตีส่งลิงก์ที่มี Session ID ที่ตัวเองรู้ค่าอยู่แล้วให้เหยื่อคลิก</p>
+      </div>
+      <div class="af-step af-risk">
+        <span class="af-label">Risk</span>
+        <h4>เหยื่อ Login ด้วย Session เดิม</h4>
+        <p>ถ้าระบบไม่เปลี่ยน Session ID หลัง Login ผู้โจมตีที่ถือ Session ID เดิมอยู่ ก็กลายเป็นผู้ใช้ที่ Login แล้วทันที</p>
+      </div>
+      <div class="af-step af-fix">
+        <span class="af-label">Fix</span>
+        <h4>session_regenerate_id(true)</h4>
+        <p>สร้าง Session ID ใหม่ทันทีหลัง Login สำเร็จ ทำให้ Session ID เก่าที่ผู้โจมตียัดเยียดไว้ใช้งานไม่ได้</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">04</span>
+      <h2>9 มาตรการป้องกัน PHP Session</h2>
+    </div>
+    <p class="sec-sub">โค้ดชุดนี้คือสิ่งที่ต้องนำไปวางในทุกระบบ Login จริง — ข้อ 1-3 คือกลุ่มที่ออกสอบบ่อยที่สุด</p>
+
+    <div class="filecard">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">login_process.php — (1) เปลี่ยน Session ID หลัง Login</span>
+      </div>
+      <pre><code><span class="fc-attr">session_regenerate_id</span>(<span class="fc-tag">true</span>);
+<span class="fc-attr">$_SESSION</span>[<span class="fc-str">'user_id'</span>]  = <span class="fc-attr">$user</span>[<span class="fc-str">'id'</span>];
+<span class="fc-attr">$_SESSION</span>[<span class="fc-str">'role'</span>]     = <span class="fc-attr">$user</span>[<span class="fc-str">'role'</span>];
+<span class="fc-attr">$_SESSION</span>[<span class="fc-str">'login_time'</span>]    = time();
+<span class="fc-attr">$_SESSION</span>[<span class="fc-str">'last_activity'</span>] = time();
+<span class="fc-attr">$_SESSION</span>[<span class="fc-str">'user_agent'</span>]    = <span class="fc-attr">$_SERVER</span>[<span class="fc-str">'HTTP_USER_AGENT'</span>];</code></pre>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="filecard">
+        <div class="fc-head">
+          <span class="fc-dots"><span></span><span></span><span></span></span>
+          <span class="fc-name">(2a) Idle Timeout</span>
+        </div>
+        <pre><code><span class="fc-tag">const</span> IDLE_TIMEOUT = 900; <span class="fc-cm">// 15 นาที</span>
+
+<span class="fc-tag">if</span> (time() - <span class="fc-attr">$_SESSION</span>[<span class="fc-str">'last_activity'</span>]
+    &gt; IDLE_TIMEOUT) &#123;
+    <span class="fc-cm">// ทำลาย session</span>
+&#125;
+<span class="fc-attr">$_SESSION</span>[<span class="fc-str">'last_activity'</span>] = time();</code></pre>
+        <div class="notes"><p style="margin:0;font-size:.85rem;color:var(--ink-2)">รีเซ็ตทุกครั้งที่มีการใช้งาน — เผลอทิ้งไว้เฉยๆ นานเกินจะโดนเตะออก</p></div>
+      </div>
+      <div class="filecard">
+        <div class="fc-head">
+          <span class="fc-dots"><span></span><span></span><span></span></span>
+          <span class="fc-name">(2b) Absolute Timeout</span>
+        </div>
+        <pre><code><span class="fc-tag">const</span> ABSOLUTE_TIMEOUT = 28800; <span class="fc-cm">// 8 ชม.</span>
+
+<span class="fc-tag">if</span> (time() - <span class="fc-attr">$_SESSION</span>[<span class="fc-str">'login_time'</span>]
+    &gt; ABSOLUTE_TIMEOUT) &#123;
+    <span class="fc-cm">// ทำลาย session</span>
+&#125;</code></pre>
+        <div class="notes"><p style="margin:0;font-size:.85rem;color:var(--ink-2)">นับจากเวลา Login ตรงๆ ไม่รีเซ็ตแม้จะใช้งานตลอด — จำกัดอายุ Session สูงสุด</p></div>
+      </div>
+    </div>
+
+    <div class="filecard" style="margin-top:20px">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">config.php — (3) Secure Session Cookie (ต้องเรียก<b>ก่อน</b> session_start)</span>
+      </div>
+      <pre><code>session_set_cookie_params([
+    <span class="fc-str">'lifetime'</span> =&gt; 0,
+    <span class="fc-str">'path'</span>     =&gt; <span class="fc-str">'/'</span>,
+    <span class="fc-str">'secure'</span>   =&gt; <span class="fc-attr">$isHttps</span>,
+    <span class="fc-str">'httponly'</span> =&gt; <span class="fc-tag">true</span>,
+    <span class="fc-str">'samesite'</span> =&gt; <span class="fc-str">'Lax'</span>,
+]);
+session_start();</code></pre>
+      <div class="notes">
+        <p style="margin:0;font-size:.86rem;color:var(--ink-2)"><code>httponly:true</code> กัน JavaScript อ่าน Cookie (กัน XSS ขโมย Session) · <code>secure:true</code> ส่งผ่าน HTTPS เท่านั้น · <code>samesite:'Lax'</code> กันเว็บอื่นแอบใช้ Cookie นี้ยิง request ข้ามไซต์</p>
+      </div>
+    </div>
+
+    <div class="grid-3" style="margin-top:20px">
+      <div class="card">
+        <h3>(5) ตรวจ User-Agent</h3>
+        <ul><li><code>hash_equals($_SESSION['user_agent'], $current)</code> ไม่ตรง = ทำลาย Session ทันที · IP เปลี่ยนแค่บันทึก Log เพราะเปลี่ยนได้ตามปกติ</li></ul>
+      </div>
+      <div class="card">
+        <h3>(6) Logout ปลอดภัย 3 ขั้น</h3>
+        <ul><li><code>$_SESSION = []</code> → หมดอายุ Cookie → <code>session_destroy()</code></li></ul>
+      </div>
+      <div class="card">
+        <h3>(7) Cache-Control</h3>
+        <ul><li><code>no-store, no-cache, must-revalidate</code> + <code>Pragma: no-cache</code> บนหน้าที่ต้อง Login กันปุ่ม Back เห็นข้อมูลเก่า</li></ul>
+      </div>
+    </div>
+
+    <div class="filecard" style="margin-top:20px">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">logout.php — (6) การทำลาย Session แบบปลอดภัย</span>
+      </div>
+      <pre><code><span class="fc-tag">function</span> <span class="fc-attr">destroy_session_safely</span>() &#123;
+    <span class="fc-attr">$_SESSION</span> = [];
+
+    <span class="fc-tag">if</span> (ini_get(<span class="fc-str">'session.use_cookies'</span>)) &#123;
+        setcookie(
+            session_name(), <span class="fc-str">''</span>, time() - 42000, <span class="fc-str">'/'</span>
+        );
+    &#125;
+    session_destroy();
+&#125;</code></pre>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">05</span>
+      <h2>จำกัดจำนวนครั้งที่ Login ผิด</h2>
+    </div>
+    <p class="sec-sub">ป้องกัน Brute Force และ Password Spraying ด้วยการนับความพยายาม ไม่ใช่แค่ตรวจรหัสผ่านถูก/ผิด</p>
+
+    <div class="grid-3">
+      <div class="card"><h3>Threshold</h3><ul><li>จำนวนครั้งสูงสุดที่ผิดได้ก่อนถูกจำกัด เช่น <b>5 ครั้ง</b></li></ul></div>
+      <div class="card"><h3>Observation Window</h3><ul><li>ช่วงเวลาที่นับความพยายาม เช่น <b>5 นาที</b> ล่าสุด</li></ul></div>
+      <div class="card"><h3>Lockout Duration</h3><ul><li>ระยะเวลาที่ถูกล็อกชั่วคราวหลังครบ Threshold</li></ul></div>
+    </div>
+
+    <div class="tablewrap" style="margin-top:16px">
+      <table>
+        <caption>Adaptive CAPTCHA ตามจำนวนครั้งที่ผิด</caption>
+        <thead><tr><th scope="col">จำนวนครั้งที่ผิด</th><th scope="col">การตอบสนอง</th></tr></thead>
+        <tbody>
+          <tr><td>1-2 ครั้ง</td><td>ข้อความ error ทั่วไป "Invalid username or password."</td></tr>
+          <tr><td>3-4 ครั้ง</td><td>เริ่มแสดง CAPTCHA เพิ่มเติมก่อน Login ครั้งถัดไป</td></tr>
+          <tr><td>5 ครั้ง</td><td>Temporary Lockout — ล็อกบัญชีชั่วคราว</td></tr>
+          <tr><td>หลังพ้นระยะล็อก</td><td>อนุญาตให้ลองใหม่ได้</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="fixnote" style="margin-top:16px">
+      <b>CAPTCHA ช่วยลด Automation แต่ไม่ควรใช้แทน Rate Limiting</b> — ต้องใช้ทั้งสองอย่างร่วมกัน ไม่ใช่เลือกอย่างใดอย่างหนึ่ง
+    </div>
+
+    <div class="filecard" style="margin-top:20px">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">login_process.php — บันทึกทุกความพยายาม Login</span>
+      </div>
+      <pre><code><span class="fc-attr">$logSql</span> = <span class="fc-str">'INSERT INTO login_attempts
+    (username, ip_address, success)
+    VALUES (?, ?, ?)'</span>;
+<span class="fc-attr">$logStmt</span>-&gt;bind_param(<span class="fc-str">'ssi'</span>, <span class="fc-attr">$username</span>, <span class="fc-attr">$ip</span>, <span class="fc-attr">$success</span>);
+<span class="fc-cm">// สังเกต: ไม่มีการบันทึกรหัสผ่านลง Log เด็ดขาด</span></code></pre>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">06</span>
+      <h2>ทดสอบระบบให้ครบ</h2>
+    </div>
+    <p class="sec-sub">4 สถานการณ์หลักที่ใช้ตรวจสอบว่า Session Security ทำงานจริง</p>
+
+    <div class="grid-2">
+      <div class="card"><h3>Cookie Security Flags</h3><ul><li>DevTools → Application → Cookies → <code>PHPSESSID</code> ต้องเห็น <code>HttpOnly=true</code>, <code>SameSite=Lax</code>, <code>Path=/</code></li></ul></div>
+      <div class="card"><h3>Idle Timeout</h3><ul><li>ปล่อยหน้าทิ้งไว้เกินเวลาที่กำหนดโดยไม่กด Refresh ต้องถูกเด้งพร้อมข้อความ "Session expired because of inactivity"</li></ul></div>
+      <div class="card"><h3>Login Attempt Limiting</h3><ul><li>กรอกรหัสผ่านผิดครบ Threshold ภายใน Observation Window ต้องได้ "Too many failed login attempts"</li></ul></div>
+      <div class="card"><h3>Cache-Control หลัง Logout</h3><ul><li>Logout แล้วกดปุ่ม Back ของ Browser ต้องไม่เห็นข้อมูลหน้าที่ต้อง Login ค้างอยู่</li></ul></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="drill">
+      <p class="dr-label">แบบฝึกหัด — จับคู่การโจมตีกับคำนิยาม</p>
+      <div class="match-row"><span>1. Session Fixation</span><span>ยัดเยียด Session ID ให้เหยื่อก่อน Login</span></div>
+      <div class="match-row"><span>2. Session Hijacking</span><span>ขโมย Session ID ที่กำลังใช้งานอยู่</span></div>
+      <div class="match-row"><span>3. Brute Force</span><span>ลองรหัสผ่านทุกแบบซ้ำๆ กับบัญชีเดียว</span></div>
+      <div class="match-row"><span>4. Password Spraying</span><span>ใช้รหัสผ่านยอดฮิตไม่กี่คำลองกับหลายบัญชี</span></div>
+      <div class="match-row"><span>5. Credential Stuffing</span><span>เอา username/password ที่หลุดจากเว็บอื่นมาลองซ้ำ</span></div>
+      <div class="match-row"><span>6. Username Enumeration</span><span>เดา username จริงจากข้อความ error ที่ต่างกัน</span></div>
+      <details>
+        <summary>เฉลย</summary>
+        <div class="answer">
+          <p>1→ยัดเยียด Session ID ก่อน Login · 2→ขโมย Session ที่ใช้งานอยู่ · 3→ลองรหัสผ่านทุกแบบกับบัญชีเดียว · 4→รหัสผ่านฮิตกับหลายบัญชี · 5→ข้อมูลหลุดจากเว็บอื่น · 6→เดา username จาก error message</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section>
+    <div class="tablewrap">
+      <table>
+        <caption>ศัพท์ที่ต้องรู้ — Session Security</caption>
+        <thead><tr><th scope="col">คำศัพท์</th><th scope="col">ความหมาย</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">session_regenerate_id(true)</th><td>สร้าง Session ID ใหม่ ป้องกัน Session Fixation ต้องเรียกทันทีหลัง Login สำเร็จ</td></tr>
+          <tr><th scope="row">Idle Timeout</th><td>หมดเวลาเมื่อไม่มีการใช้งานต่อเนื่องนานเกินกำหนด รีเซ็ตทุกครั้งที่ใช้งาน</td></tr>
+          <tr><th scope="row">Absolute Timeout</th><td>หมดเวลาตามอายุ Session สูงสุด นับจากตอน Login ไม่รีเซ็ต</td></tr>
+          <tr><th scope="row">HttpOnly</th><td>Cookie flag ที่กัน JavaScript อ่านค่า Cookie ป้องกันการขโมยผ่าน XSS</td></tr>
+          <tr><th scope="row">SameSite</th><td>Cookie flag ที่กันเว็บอื่นใช้ Cookie นี้ยิง request ข้ามไซต์ (Strict/Lax/None)</td></tr>
+          <tr><th scope="row">Rate Limiting</th><td>จำกัดจำนวนครั้งที่ Login ผิดในช่วงเวลาหนึ่ง ป้องกัน Brute Force</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bridge" style="margin-top:20px">
+      <b>ครบทั้ง 7 บทแล้ว:</b> ตั้งแต่ HTML/HTTP พื้นฐาน (บทที่ 1-2) → PHP และการกรองข้อมูล (บทที่ 3) → SQL Injection/CRUD ปลอดภัย (บทที่ 4-5) → Login/Logout และรหัสผ่าน (บทที่ 6) → มาถึง Session Security (บทที่ 7) — เนื้อหาทั้งหมดผูกกันเป็นเส้นเดียว: "อย่าเชื่อสิ่งที่มาจากฝั่ง Client และปกป้องทุกจุดที่บอกว่าผู้ใช้คนนี้คือใคร"
+    </div>
+  </section>
+
+  <footer>
+    DB Security Chapter 7 · เรียบเรียงจากสไลด์ "Session Security and Login Protection" (Asst.Prof. Monlica Wattana, Ph.D — CP423324)
+  </footer>
+
 </Layout>
