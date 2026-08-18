@@ -478,4 +478,63 @@ export const terms = {
     full: "",
     def: "Router ที่ถูกแต่งตั้งให้เป็นรากร่วมของ shared tree ใน PIM-SM เป็นจุดนัดพบระหว่างต้นทางกับผู้รับ — กำหนดได้ 3 วิธี: Static RP, Auto-RP (ของ Cisco) หรือ BSR (มาตรฐานเปิด)",
   },
+
+  // ---- DB Security: Chapter 1 — พื้นฐาน Web Application และ HTML ----
+  clientServerModel: {
+    term: "Client-Server Model",
+    full: "",
+    def: "สถาปัตยกรรมที่แบ่งหน้าที่เป็นสองฝั่ง — Client (ผู้ใช้/Browser) ส่ง Request ขอข้อมูล และ Server รอรับแล้วตอบกลับด้วย Response ทุกการโต้ตอบบนเว็บวิ่งอยู่บนโมเดลนี้",
+  },
+  statelessHttp: {
+    term: "Stateless",
+    full: "",
+    def: "คุณสมบัติของ HTTP ที่ Server ไม่จดจำสถานะระหว่าง Request แต่ละครั้ง มองทุก Request เป็นการเชื่อมต่อใหม่เสมอ — นี่คือเหตุผลที่ต้องมี Session/Cookie มาช่วยจำสถานะผู้ใช้ในภายหลัง",
+  },
+  queryString: {
+    term: "Query String",
+    full: "",
+    def: "ส่วนของ URL ที่ต่อท้ายเครื่องหมาย ? ใช้ส่งข้อมูลเพิ่มเติมไปกับ Request แบบ key=value คั่นด้วย & — มองเห็นได้ชัดเจนบน Address Bar จึงไม่เหมาะกับข้อมูลอ่อนไหว",
+  },
+  boxModel: {
+    term: "CSS Box Model",
+    full: "",
+    def: "โมเดลที่ทุก element บนหน้าเว็บถูกมองเป็นกล่องซ้อนกัน 4 ชั้น: content (เนื้อหา) → padding (ระยะในขอบ) → border (เส้นขอบ) → margin (ระยะนอกกล่อง)",
+  },
+  renderingEngine: {
+    term: "Rendering Engine",
+    full: "",
+    def: "ส่วนของ Browser ที่แปลงโค้ด HTML, CSS, JavaScript ให้กลายเป็นหน้าตาเว็บไซต์ที่มนุษย์มองเห็นและใช้งานได้",
+  },
+
+  // ---- DB Security: Chapter 2 — HTML Form และการส่งข้อมูล GET/POST ----
+  nameAttribute: {
+    term: "name Attribute",
+    full: "",
+    def: "แอตทริบิวต์ที่กำหนดชื่อของข้อมูลที่จะถูกส่งไปยัง Server เมื่อ Submit Form — ค่าที่ Server อ่านได้จะอ้างอิงจากชื่อนี้เสมอ ถ้า input ไม่มี name ข้อมูลนั้นจะไม่ถูกส่งไปเลย",
+  },
+  untrustedInput: {
+    term: "Untrusted Input",
+    full: "",
+    def: "หลักคิดพื้นฐานด้านความปลอดภัยเว็บ: ข้อมูลใดก็ตามที่มาจากฝั่งผู้ใช้ (Form, URL, Cookie, Header, DevTools) ต้องถือว่าไม่น่าเชื่อถือเสมอ จนกว่า Server จะตรวจสอบซ้ำแล้ว",
+  },
+  clientSideValidation: {
+    term: "Client-Side Validation",
+    full: "",
+    def: "การตรวจสอบข้อมูลที่เกิดบน Browser ก่อนส่ง Request เช่นผ่าน required หรือ JavaScript — ช่วยเรื่อง UX แต่ผู้ใช้สามารถปิดหรือแก้ไขผ่าน DevTools ได้ จึงห้ามใช้เป็นการป้องกันหลัก",
+  },
+  serverSideValidation: {
+    term: "Server-Side Validation",
+    full: "",
+    def: "การตรวจสอบข้อมูลที่ฝั่ง Server หลังได้รับ Request แล้ว ก่อนนำไปใช้บันทึกหรือประมวลผล — เป็นด่านที่ผู้ใช้แก้ไขเลี่ยงไม่ได้ จึงต้องเป็นด่านหลักเสมอ",
+  },
+  sanitizeInput: {
+    term: "Sanitize",
+    full: "",
+    def: "การทำความสะอาดข้อมูลจากผู้ใช้ก่อนนำไปใช้งาน เช่น ตัดช่องว่างส่วนเกิน หรือลบ/แปลงอักขระที่อาจเป็นอันตราย เป็นหนึ่งในขั้นตอนสำคัญคู่กับ Validate",
+  },
+  authorizeCheck: {
+    term: "Authorize",
+    full: "",
+    def: "การตรวจสอบสิทธิ์ของผู้ใช้ที่ฝั่ง Server เสมอ (เช่น role, user_id) โดยไม่เชื่อค่าที่ผู้ใช้ส่งมาโดยตรง เพราะค่าอย่าง role=admin ที่ส่งมาทาง Form ไม่ได้แปลว่าผู้ใช้เป็น Admin จริง",
+  },
 };

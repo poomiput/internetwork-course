@@ -71,8 +71,8 @@ export const courses = [
         title: "บทที่ 1-7",
         accent: "var(--blk)",
         chapters: [
-          { n: 1, slug: "dbsec/ch1", title: "บทที่ 1", ready: false },
-          { n: 2, slug: "dbsec/ch2", title: "บทที่ 2", ready: false },
+          { n: 1, slug: "dbsec/ch1", title: "พื้นฐาน Web Application และ HTML", ready: true },
+          { n: 2, slug: "dbsec/ch2", title: "HTML Form และ GET/POST", ready: true },
           { n: 3, slug: "dbsec/ch3", title: "บทที่ 3", ready: false },
           { n: 4, slug: "dbsec/ch4", title: "บทที่ 4", ready: false },
           { n: 5, slug: "dbsec/ch5", title: "บทที่ 5", ready: false },
