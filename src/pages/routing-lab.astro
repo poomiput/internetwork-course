@@ -1,558 +1,1157 @@
 ---
 import Layout from "../layouts/Layout.astro";
 ---
-<Layout title="IGP Routing Animation" description="ดูขั้นตอนการทำงานของ Distance Vector, EIGRP (DUAL) และ OSPF (Link-State) แบบ step-by-step หรือเล่นอัตโนมัติ">
+<Layout title="Protocol Animation Lab" description="ดูขั้นตอนการทำงานของ STP, EtherChannel, Distance Vector, EIGRP, OSPF, BGP และ PIM-SM แบบทีละสเต็ปหรือเล่นอัตโนมัติ">
 
   <header class="masthead">
     <p class="eyebrow" style="color:var(--fwd)">Internetwork · Interactive Lab</p>
-    <h1>IGP Routing Animation</h1>
-    <p class="deck">บทที่ 6-9 อธิบายด้วยข้อความและตารางว่าแต่ละ IGP ทำงานยังไง — หน้านี้ทำให้ <b>เห็นเป็นภาพเคลื่อนไหว</b> แทน เลือกโปรโตคอลด้านล่าง แล้วกดทีละสเต็ปหรือกด Play ให้เล่นอัตโนมัติก็ได้</p>
+    <h1>Protocol Animation Lab</h1>
+    <p class="deck">บทเรียนอธิบายด้วยข้อความและตารางว่าแต่ละโปรโตคอลทำงานยังไง — หน้านี้ทำให้ <b>เห็นเป็นภาพเคลื่อนไหว</b> แทน ทุก topology และตัวเลขในนี้ยกมาจากบทเรียนตรง ๆ ไม่ได้สมมติขึ้นใหม่</p>
     <div class="credit-bar">
-      <span>Distance Vector</span><span>EIGRP · DUAL</span><span>OSPF · Link-State</span>
+      <span>8 โปรโตคอล</span><span>กดทีละสเต็ป</span><span>หรือเล่นอัตโนมัติ</span><span>← → เลื่อนด้วยคีย์บอร์ด</span>
     </div>
   </header>
 
   <section>
-    <div class="lab-tabs" role="tablist">
-      <button type="button" class="lab-tab active" data-proto="dv" role="tab" aria-selected="true">
-        <span class="lab-tab-n">1</span> Distance Vector
-      </button>
-      <button type="button" class="lab-tab" data-proto="eigrp" role="tab" aria-selected="false">
-        <span class="lab-tab-n">2</span> EIGRP (DUAL)
-      </button>
-      <button type="button" class="lab-tab" data-proto="ospf" role="tab" aria-selected="false">
-        <span class="lab-tab-n">3</span> OSPF (Link-State)
-      </button>
-    </div>
+    <div class="rl-picker" id="rl-picker"></div>
 
-    <!-- ============================================================ -->
-    <!-- DISTANCE VECTOR STAGE -->
-    <!-- ============================================================ -->
-    <div class="lab-stage" data-stage="dv">
-      <div class="figwrap">
-        <svg id="dv-svg" viewBox="0 0 820 220" role="img" aria-label="Topology R1 เชื่อม R2 เชื่อม R3 เชื่อม Network X แบบเรียงเป็นเส้นตรง">
-          <line id="dv-link-r1-r2" class="lab-link" x1="130" y1="110" x2="380" y2="110"/>
-          <line id="dv-link-r2-r3" class="lab-link" x1="410" y1="110" x2="620" y2="110"/>
-          <line id="dv-link-r3-net" class="lab-link" x1="650" y1="110" x2="750" y2="110"/>
-
-          <rect x="60" y="85" width="70" height="50" rx="8" class="lab-node" fill="var(--card)" stroke="var(--ink-2)"/>
-          <text x="95" y="115" text-anchor="middle" class="lab-node-label">R1</text>
-
-          <rect x="345" y="85" width="70" height="50" rx="8" class="lab-node" fill="var(--card)" stroke="var(--ink-2)"/>
-          <text x="380" y="115" text-anchor="middle" class="lab-node-label">R2</text>
-
-          <rect x="585" y="85" width="70" height="50" rx="8" class="lab-node" fill="var(--card)" stroke="var(--ink-2)"/>
-          <text x="620" y="115" text-anchor="middle" class="lab-node-label">R3</text>
-
-          <ellipse id="dv-net" cx="785" cy="110" rx="34" ry="24" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="1.8"/>
-          <text x="785" y="115" text-anchor="middle" class="lab-node-label" font-size="11">X</text>
-
-          <g id="dv-fail-mark" style="display:none">
-            <line x1="685" y1="95" x2="715" y2="125" stroke="var(--blk)" stroke-width="3" stroke-linecap="round"/>
-            <line x1="715" y1="95" x2="685" y2="125" stroke="var(--blk)" stroke-width="3" stroke-linecap="round"/>
-          </g>
-
-          <g id="dv-packets"></g>
-        </svg>
-        <figcaption>Topology จำลอง — ปัญหา Count-to-Infinity ของ Distance Vector เมื่อลิงก์ที่แท้จริงขาดแต่ Router ยังเชื่อข้อมูลเก่าจากเพื่อนบ้าน</figcaption>
-      </div>
-
-      <div class="lab-panel">
-        <div class="lab-desc" id="dv-desc"></div>
-        <div class="tablewrap lab-table">
-          <table>
-            <caption>Routing Table ของแต่ละ Router (เส้นทางไป Network X)</caption>
-            <thead><tr><th scope="col">Router</th><th scope="col">Next Hop</th><th scope="col">Metric</th></tr></thead>
-            <tbody id="dv-table"></tbody>
-          </table>
+    <div class="rl-lab">
+      <div class="rl-viz">
+        <div class="rl-viz-head">
+          <div>
+            <span class="rl-viz-name" id="rl-name"></span>
+            <span class="rl-viz-chap" id="rl-chap"></span>
+          </div>
+          <span class="rl-counter" id="rl-counter"></span>
         </div>
-      </div>
-    </div>
 
-    <!-- ============================================================ -->
-    <!-- EIGRP STAGE -->
-    <!-- ============================================================ -->
-    <div class="lab-stage" data-stage="eigrp" hidden>
-      <div class="figwrap">
-        <svg id="eigrp-svg" viewBox="0 0 780 300" role="img" aria-label="Topology R1 เชื่อมกับ R3 และ R4 โดยตรง R3 เชื่อมกับ R4 ด้วย และ R4 เชื่อมกับ Network X">
-          <line id="eigrp-link-r1-r3" class="lab-link" x1="130" y1="135" x2="360" y2="75"/>
-          <line id="eigrp-link-r3-r4" class="lab-link" x1="420" y1="75" x2="600" y2="135"/>
-          <line id="eigrp-link-r1-r4" class="lab-link" x1="130" y1="160" x2="600" y2="160"/>
-          <line id="eigrp-link-r4-net" class="lab-link" x1="650" y1="150" x2="710" y2="150"/>
+        <div class="rl-canvas" id="rl-canvas"></div>
 
-          <rect x="60" y="130" width="70" height="50" rx="8" class="lab-node" fill="var(--card)" stroke="var(--ink-2)"/>
-          <text x="95" y="160" text-anchor="middle" class="lab-node-label">R1</text>
-
-          <rect x="355" y="45" width="70" height="50" rx="8" class="lab-node" fill="var(--card)" stroke="var(--ink-2)"/>
-          <text x="390" y="75" text-anchor="middle" class="lab-node-label">R3</text>
-
-          <rect x="595" y="130" width="70" height="50" rx="8" class="lab-node" fill="var(--card)" stroke="var(--ink-2)"/>
-          <text x="630" y="160" text-anchor="middle" class="lab-node-label">R4</text>
-
-          <ellipse id="eigrp-net" cx="740" cy="150" rx="32" ry="22" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="1.8"/>
-          <text x="740" y="155" text-anchor="middle" class="lab-node-label" font-size="11">X</text>
-
-          <g id="eigrp-fail-mark" style="display:none">
-            <line x1="230" y1="95" x2="260" y2="125" stroke="var(--blk)" stroke-width="3" stroke-linecap="round"/>
-            <line x1="260" y1="95" x2="230" y2="125" stroke="var(--blk)" stroke-width="3" stroke-linecap="round"/>
-          </g>
-
-          <g id="eigrp-packets"></g>
-        </svg>
-        <figcaption>Topology จากบทที่ 7 — Successor Route R1→R3→R4 (FD 3328) กับ Feasible Successor R1→R4 (RD 2816)</figcaption>
-      </div>
-
-      <div class="lab-panel">
-        <div class="lab-desc" id="eigrp-desc"></div>
-        <div class="tablewrap lab-table">
-          <table>
-            <caption>Topology Table ของ R1 (เส้นทางไป Network X)</caption>
-            <thead><tr><th scope="col">เส้นทาง</th><th scope="col">FD / RD</th><th scope="col">สถานะ</th></tr></thead>
-            <tbody id="eigrp-table"></tbody>
-          </table>
+        <div class="rl-controls">
+          <button type="button" id="rl-prev" class="rl-btn">‹ ก่อนหน้า</button>
+          <button type="button" id="rl-play" class="rl-btn rl-btn-primary">▶ เล่น</button>
+          <button type="button" id="rl-next" class="rl-btn">ถัดไป ›</button>
+          <button type="button" id="rl-reset" class="rl-btn rl-btn-ghost">⟲ เริ่มใหม่</button>
         </div>
-      </div>
-    </div>
 
-    <!-- ============================================================ -->
-    <!-- OSPF STAGE -->
-    <!-- ============================================================ -->
-    <div class="lab-stage" data-stage="ospf" hidden>
-      <div class="figwrap">
-        <svg id="ospf-svg" viewBox="0 0 620 420" role="img" aria-label="Topology สี่เหลี่ยม R1 R2 R3 R4 เชื่อมกันเป็นวง พร้อมเส้นทแยงมุมระหว่าง R1 กับ R3">
-          <line id="ospf-link-r1-r2" class="lab-link" x1="175" y1="100" x2="445" y2="100"/>
-          <line id="ospf-link-r2-r3" class="lab-link" x1="480" y1="135" x2="480" y2="305"/>
-          <line id="ospf-link-r3-r4" class="lab-link" x1="445" y1="340" x2="175" y2="340"/>
-          <line id="ospf-link-r4-r1" class="lab-link" x1="140" y1="305" x2="140" y2="135"/>
-          <line id="ospf-link-r1-r3" class="lab-link" x1="163" y1="122" x2="457" y2="318"/>
-
-          <rect x="105" y="75" width="70" height="50" rx="8" class="lab-node" fill="var(--card)" stroke="var(--ink-2)"/>
-          <text x="140" y="105" text-anchor="middle" class="lab-node-label">R1</text>
-
-          <rect x="445" y="75" width="70" height="50" rx="8" class="lab-node" fill="var(--card)" stroke="var(--ink-2)"/>
-          <text x="480" y="105" text-anchor="middle" class="lab-node-label">R2</text>
-
-          <rect x="445" y="315" width="70" height="50" rx="8" class="lab-node" fill="var(--card)" stroke="var(--ink-2)"/>
-          <text x="480" y="345" text-anchor="middle" class="lab-node-label">R3</text>
-
-          <rect x="105" y="315" width="70" height="50" rx="8" class="lab-node" fill="var(--card)" stroke="var(--ink-2)"/>
-          <text x="140" y="345" text-anchor="middle" class="lab-node-label">R4</text>
-
-          <g id="ospf-packets"></g>
-        </svg>
-        <figcaption>Topology หนึ่ง Area — สังเกตว่า LSDB เหมือนกันทุก Router แต่ Shortest Path Tree (SPT) ที่แต่ละตัวคำนวณเองจะคนละรูปทรง เพราะรากคือตัวเอง</figcaption>
+        <div class="rl-dots" id="rl-dots"></div>
       </div>
 
-      <div class="lab-panel">
-        <div class="lab-desc" id="ospf-desc"></div>
-        <div class="tablewrap lab-table">
-          <table>
-            <caption>Link-State Database (LSDB)</caption>
-            <thead><tr><th scope="col">Router</th><th scope="col">มี LSA ของใครบ้าง</th></tr></thead>
-            <tbody id="ospf-table"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div class="lab-controls">
-      <button type="button" id="lab-prev" class="lab-btn" aria-label="ย้อนกลับ">‹ ย้อนกลับ</button>
-      <button type="button" id="lab-play" class="lab-btn lab-btn-primary" aria-label="เล่น/หยุด">▶ Play</button>
-      <button type="button" id="lab-next" class="lab-btn" aria-label="ถัดไป">ถัดไป ›</button>
-      <button type="button" id="lab-reset" class="lab-btn lab-btn-ghost" aria-label="เริ่มใหม่">⟲ Reset</button>
-      <span class="lab-stepnum" id="lab-stepnum">1 / 1</span>
+      <aside class="rl-side">
+        <div class="rl-desc" id="rl-desc" aria-live="polite"></div>
+        <div class="rl-state" id="rl-state"></div>
+      </aside>
     </div>
   </section>
 
   <section>
     <div class="grid-3">
       <div class="card">
-        <h3>Distance Vector — บทเรียน</h3>
-        <p style="color:var(--ink-2);margin:0">ปัญหา Count-to-Infinity เกิดเพราะ Router เชื่อข้อมูลเก่าจากเพื่อนบ้านโดยไม่ตรวจสอบ — วิธีแก้จริงคือ Split Horizon, Route Poisoning และ Hold-down Timer ที่ RIP ใช้จริง</p>
+        <h3>อ่านสีในผังยังไง</h3>
+        <ul>
+          <li><b style="color:var(--fwd)">เขียวหนา</b> — เส้นทางที่ใช้งานจริงตอนนี้</li>
+          <li><b style="color:var(--gold)">เหลืองประ</b> — เส้นทางสำรอง / ยังไม่ถูกเลือก</li>
+          <li><b style="color:var(--blk)">แดง</b> — ถูกบล็อก หรือลิงก์ขาด</li>
+          <li><span style="color:var(--ink-3)">เทาจาง</span> — ยังไม่มีบทบาทในขั้นนี้</li>
+        </ul>
       </div>
       <div class="card">
-        <h3>EIGRP — บทเรียน</h3>
-        <p style="color:var(--ink-2);margin:0">จุดขายของ DUAL คือ Feasible Successor ที่คำนวณเตรียมไว้ล่วงหน้า — พอ Successor ล่ม สลับได้<b>ทันที</b>โดยไม่ต้องส่ง Query ถามใครเลย ต่างจาก Distance Vector ทั่วไปที่ต้องรอ</p>
+        <h3>ตัวเลขมาจากไหน</h3>
+        <p style="color:var(--ink-2);margin:0">ทุก topology ใช้ชื่ออุปกรณ์ ค่า cost, MAC, AS number และ metric เดียวกับที่เขียนไว้ในบทเรียน — เช่น D1 <code>d8b1.9028.af80</code> ที่ชนะเป็น Root Bridge, EIGRP FD 3328 / RD 2816 และ AS_Path <code>300 400 200 100</code> ของ BGP</p>
       </div>
       <div class="card">
-        <h3>OSPF — บทเรียน</h3>
-        <p style="color:var(--ink-2);margin:0">ทุก Router มี LSDB เหมือนกันเป๊ะหลัง flood เสร็จ แต่ SPF ที่แต่ละตัวรันเอง (ตั้งตัวเองเป็นราก) ทำให้ได้ Shortest Path Tree คนละรูปทรง — นี่คือหัวใจของ Link-State ที่ต่างจาก Distance Vector โดยสิ้นเชิง</p>
+        <h3>ใช้คีย์บอร์ดได้</h3>
+        <p style="color:var(--ink-2);margin:0"><code>←</code> <code>→</code> เลื่อนสเต็ป · <code>Space</code> เล่น/หยุด · <code>Home</code> กลับไปสเต็ปแรก — คลิกที่จุดใต้ปุ่มเพื่อกระโดดไปสเต็ปไหนก็ได้</p>
       </div>
     </div>
   </section>
 
   <footer>
-    Internetwork · Interactive Lab · จำลองการทำงานของ Distance Vector, EIGRP (DUAL) และ OSPF (Link-State) อ้างอิงเนื้อหาบทที่ 6-9
+    Internetwork · Interactive Lab · จำลองการทำงานของ STP, EtherChannel, Distance Vector, EIGRP, OSPF, BGP และ PIM-SM อ้างอิงเนื้อหาบทที่ 2, 5, 6, 7, 8, 9, 11, 12 และ 13
   </footer>
 
 </Layout>
 
-<style>
-  .lab-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
-  .lab-tab{
-    display:flex;align-items:center;gap:8px;
+<style is:global>
+  /* ---------- protocol picker ---------- */
+  .rl-picker{display:flex;flex-wrap:wrap;gap:18px;margin-bottom:22px}
+  .rl-group{display:flex;flex-direction:column;gap:7px}
+  .rl-group-title{
+    font-size:.64rem;letter-spacing:.13em;text-transform:uppercase;font-weight:700;
+    color:var(--ink-3);margin:0;padding-left:2px;
+  }
+  .rl-group-chips{display:flex;flex-wrap:wrap;gap:6px}
+  .rl-chip{
+    font-family:var(--sans);font-size:.83rem;font-weight:700;color:var(--ink-2);
     background:var(--card);border:1px solid var(--rule-soft);border-radius:999px;
-    padding:9px 18px 9px 10px;font-family:var(--sans);font-size:.88rem;font-weight:700;color:var(--ink-2);
-    cursor:pointer;transition:border-color .15s, color .15s;
+    padding:7px 15px;cursor:pointer;transition:border-color .15s,color .15s,background .15s;
+    min-height:38px;
   }
-  .lab-tab-n{
-    font-family:var(--mono);font-size:.72rem;width:20px;height:20px;border-radius:50%;
-    display:flex;align-items:center;justify-content:center;
-    background:var(--paper-2);color:var(--ink-3);
+  .rl-chip:hover{border-color:var(--accent);color:var(--ink)}
+  .rl-chip[aria-selected="true"]{
+    color:var(--ink);border-color:var(--accent);
+    background:color-mix(in srgb, var(--accent) 13%, var(--paper));
   }
-  .lab-tab:hover{border-color:var(--fwd)}
-  .lab-tab.active{color:var(--ink);border-color:var(--fwd)}
-  .lab-tab.active .lab-tab-n{background:var(--fwd);color:#fff}
+  .rl-chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-  .lab-stage{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:start}
-  @media (max-width:860px){ .lab-stage{grid-template-columns:1fr} }
+  /* ---------- lab shell ---------- */
+  .rl-lab{display:grid;grid-template-columns:1.45fr 1fr;gap:20px;align-items:start}
+  @media (max-width:900px){ .rl-lab{grid-template-columns:1fr} }
 
-  .lab-link{stroke:var(--rule);stroke-width:3;transition:stroke .3s, stroke-width .3s, opacity .3s}
-  .lab-link.lab-active{stroke:var(--fwd);stroke-width:4}
-  .lab-link.lab-fs{stroke:var(--gold);stroke-width:3;stroke-dasharray:7 5}
-  .lab-link.lab-dead{stroke:var(--rule);stroke-width:2;stroke-dasharray:3 4;opacity:.4}
-  .lab-node-label{font-family:var(--sans);font-weight:700;font-size:14px;fill:var(--ink)}
-  .lab-node{stroke-width:2}
+  .rl-viz{
+    background:var(--card);border:1px solid var(--rule-soft);border-radius:16px;
+    box-shadow:var(--shadow);overflow:hidden;
+  }
+  .rl-viz-head{
+    display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+    padding:13px 18px;border-bottom:1px solid var(--rule-soft);background:var(--paper-2);
+  }
+  .rl-viz-name{font-weight:800;font-size:.97rem;color:var(--ink)}
+  .rl-viz-chap{font-family:var(--mono);font-size:.72rem;color:var(--ink-3);margin-left:8px}
+  .rl-counter{font-family:var(--mono);font-size:.76rem;color:var(--ink-3);flex:none}
 
-  .lab-panel{display:flex;flex-direction:column;gap:14px}
-  .lab-desc{
-    background:var(--card);border:1px solid var(--rule-soft);border-left:4px solid var(--fwd);
-    border-radius:12px;padding:16px 18px;font-size:.92rem;color:var(--ink);line-height:1.6;
-    min-height:74px;box-shadow:var(--shadow);
-  }
-  .lab-table :global(table){font-size:.84rem}
+  .rl-canvas{padding:14px 16px 4px;overflow-x:auto}
+  .rl-canvas svg{display:block;margin:0 auto;max-width:100%;height:auto}
 
-  .lab-controls{
-    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-    margin-top:20px;padding-top:18px;border-top:1px solid var(--rule-soft);
+  /* ---------- controls: sit directly under the diagram ---------- */
+  .rl-controls{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    padding:12px 16px 0;
   }
-  .lab-btn{
-    font-family:var(--sans);font-size:.86rem;font-weight:700;color:var(--ink-2);
-    background:var(--card);border:1px solid var(--rule-soft);border-radius:10px;
-    padding:9px 16px;cursor:pointer;transition:border-color .15s, background .15s;
+  .rl-btn{
+    font-family:var(--sans);font-size:.85rem;font-weight:700;color:var(--ink-2);
+    background:var(--paper);border:1px solid var(--rule-soft);border-radius:9px;
+    padding:9px 15px;cursor:pointer;transition:border-color .15s,background .15s,color .15s;
+    min-height:40px;
   }
-  .lab-btn:hover{border-color:var(--fwd)}
-  .lab-btn-primary{background:var(--fwd);color:#fff;border-color:var(--fwd)}
-  .lab-btn-primary:hover{opacity:.9}
-  .lab-btn-ghost{color:var(--ink-3)}
-  .lab-stepnum{
-    margin-left:auto;font-family:var(--mono);font-size:.8rem;color:var(--ink-3);
+  .rl-btn:hover:not(:disabled){border-color:var(--fwd);color:var(--ink)}
+  .rl-btn:focus-visible{outline:2px solid var(--fwd);outline-offset:2px}
+  .rl-btn:disabled{opacity:.4;cursor:not-allowed}
+  .rl-btn-primary{background:var(--fwd);color:#fff;border-color:var(--fwd);min-width:104px}
+  .rl-btn-primary:hover:not(:disabled){opacity:.88;color:#fff}
+  .rl-btn-ghost{color:var(--ink-3)}
+
+  .rl-dots{display:flex;flex-wrap:wrap;gap:5px;padding:12px 16px 16px}
+  .rl-dot{
+    width:26px;height:5px;border-radius:999px;border:none;padding:0;cursor:pointer;
+    background:var(--rule);transition:background .15s;
   }
+  .rl-dot:hover{background:var(--ink-3)}
+  .rl-dot[aria-current="true"]{background:var(--fwd)}
+  .rl-dot:focus-visible{outline:2px solid var(--fwd);outline-offset:2px}
+
+  /* ---------- side panel ---------- */
+  .rl-side{display:flex;flex-direction:column;gap:14px;position:sticky;top:18px}
+  @media (max-width:900px){ .rl-side{position:static} }
+  .rl-desc{
+    background:var(--card);border:1px solid var(--rule-soft);border-left:4px solid var(--accent);
+    border-radius:12px;padding:16px 18px;font-size:.93rem;line-height:1.65;color:var(--ink);
+    box-shadow:var(--shadow);min-height:96px;
+  }
+  .rl-desc b{color:var(--ink)}
+  .rl-state{
+    background:var(--card);border:1px solid var(--rule-soft);border-radius:12px;
+    padding:14px 16px;box-shadow:var(--shadow);overflow-x:auto;
+  }
+  .rl-state table{width:100%;border-collapse:collapse;font-size:.83rem}
+  .rl-state caption{
+    text-align:left;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-3);font-weight:700;padding-bottom:9px;
+  }
+  .rl-state th,.rl-state td{
+    text-align:left;padding:7px 9px;border-bottom:1px solid var(--rule-soft);vertical-align:top;
+  }
+  .rl-state thead th{
+    font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);
+    border-bottom:1.5px solid var(--rule);font-weight:700;
+  }
+  .rl-state tbody tr:last-child th,.rl-state tbody tr:last-child td{border-bottom:none}
+  .rl-state tbody th{font-family:var(--mono);font-size:.79rem;font-weight:700;color:var(--ink);white-space:nowrap}
+  .rl-state td{color:var(--ink-2)}
+  .rl-ok{color:var(--fwd);font-weight:700}
+  .rl-no{color:var(--blk);font-weight:700}
+  .rl-alt{color:var(--gold);font-weight:700}
+
+  /* ---------- svg primitives ---------- */
+  .rl-link{stroke:var(--rule);stroke-width:2.5;fill:none;transition:stroke .35s,stroke-width .35s,opacity .35s}
+  .rl-link.is-active{stroke:var(--fwd);stroke-width:4}
+  .rl-link.is-alt{stroke:var(--gold);stroke-width:3;stroke-dasharray:7 5}
+  .rl-link.is-block{stroke:var(--blk);stroke-width:2.5;stroke-dasharray:5 4}
+  .rl-link.is-dead{stroke:var(--blk);stroke-width:2;stroke-dasharray:2 5;opacity:.45}
+  .rl-link.is-dim{opacity:.28}
+
+  .rl-linklabel{
+    font-family:var(--mono);font-size:9.5px;fill:var(--ink-3);
+    transition:fill .35s,font-weight .35s;
+  }
+  .rl-linklabel.is-on{fill:var(--ink-2);font-weight:700}
+
+  .rl-nodebox{fill:var(--card);stroke:var(--ink-2);stroke-width:2;transition:fill .35s,stroke .35s}
+  .rl-nodebox.is-hot{fill:color-mix(in srgb,var(--accent) 16%,var(--card));stroke:var(--accent);stroke-width:2.5}
+  .rl-nodebox.is-root{fill:color-mix(in srgb,var(--fwd) 16%,var(--card));stroke:var(--fwd);stroke-width:2.5}
+  .rl-nodebox.is-bad{fill:color-mix(in srgb,var(--blk) 12%,var(--card));stroke:var(--blk);stroke-width:2.5}
+  .rl-nodebox.is-dim{opacity:.45}
+
+  .rl-nodelabel{font-family:var(--sans);font-weight:700;font-size:13px;fill:var(--ink);pointer-events:none}
+  .rl-nodesub{font-family:var(--mono);font-size:8.5px;fill:var(--ink-3);pointer-events:none}
+  .rl-badge{font-family:var(--mono);font-size:9px;font-weight:700;pointer-events:none}
+
+  .rl-pkt{pointer-events:none}
+  @media (prefers-reduced-motion: no-preference){
+    .rl-pkt{transition:transform 1.05s cubic-bezier(.4,0,.25,1)}
+  }
+  .rl-pkt-body{fill:var(--accent);stroke:#fff;stroke-width:1.6}
+  .rl-pkt-text{font-family:var(--mono);font-size:9px;font-weight:700;fill:#fff;text-anchor:middle;dominant-baseline:middle}
 </style>
 
 <script>
-  type Step = {
-    desc: string;
-    packets?: { from: string; to: string }[];
-    active?: string[];
-    feasible?: string[];
-    dead?: string[];
-    showFail?: boolean;
-    table: string;
-  };
+  (function () {
+    /* ============================================================
+       TOPOLOGY + STEP DATA
+       Every value here is lifted from the chapter pages so the
+       animation matches what the student already read.
+       ============================================================ */
 
-  const NODES: Record<string, Record<string, { x: number; y: number }>> = {
-    dv: {
-      r1: { x: 95, y: 110 }, r2: { x: 380, y: 110 }, r3: { x: 620, y: 110 }, net: { x: 785, y: 110 },
-    },
-    eigrp: {
-      r1: { x: 95, y: 155 }, r3: { x: 390, y: 70 }, r4: { x: 630, y: 155 }, net: { x: 740, y: 150 },
-    },
-    ospf: {
-      r1: { x: 140, y: 100 }, r2: { x: 480, y: 100 }, r3: { x: 480, y: 340 }, r4: { x: 140, y: 340 },
-    },
-  };
+    var PROTOCOLS = [
+      /* ---------------------------------------------------- STP */
+      {
+        id: "stp", group: "Layer 2", label: "STP Root Election",
+        name: "STP — เลือก Root Bridge และบล็อกพอร์ต", chap: "บทที่ 2",
+        accent: "var(--slate)", viewBox: "0 0 640 320",
+        stateHead: ["สวิตช์ / พอร์ต", "บทบาท", "เหตุผล"],
+        nodes: [
+          { id: "d1", x: 180, y: 62, label: "D1", sub: "af80" },
+          { id: "d2", x: 470, y: 62, label: "D2", sub: "c300" },
+          { id: "a1", x: 325, y: 246, label: "A1", sub: "4580" }
+        ],
+        links: [
+          { id: "d1d2", a: "d1", b: "d2", label: "cost 4" },
+          { id: "a1d1_1", a: "a1", b: "d1", label: "F0/1 · 19", bend: -16 },
+          { id: "a1d1_2", a: "a1", b: "d1", label: "F0/2 · 19", bend: 16 },
+          { id: "a1d2_1", a: "a1", b: "d2", label: "F0/3 · 19", bend: -16 },
+          { id: "a1d2_2", a: "a1", b: "d2", label: "F0/4 · 19", bend: 16 }
+        ],
+        steps: [
+          {
+            desc: "เริ่มต้น ทุกสวิตช์เชื่อว่า<b>ตัวเองเป็น Root</b> — ต่างคนต่างส่ง BPDU ประกาศ Bridge ID ของตัวเองออกไปทุกพอร์ต",
+            pkt: [{ f: "d1", t: "d2" }, { f: "d2", t: "a1" }, { f: "a1", t: "d1" }],
+            state: [["ทั้งสามตัว", "อ้างเป็น Root", "ยังไม่ได้เทียบ BPDU กัน"]]
+          },
+          {
+            desc: "<b>Bridge ID = Priority + MAC</b> — VLAN 1 ได้ priority <code>32769</code> เท่ากันหมดทั้งสามตัว (32768 + sysid ext 1) จึงตัดสินด้วย Priority ไม่ได้",
+            state: [
+              ["D1", "priority 32769", "d8b1.9028.af80"],
+              ["D2", "priority 32769", "d8b1.905d.c300"],
+              ["A1", "priority 32769", "…4580"]
+            ]
+          },
+          {
+            desc: "เมื่อ Priority เสมอกัน ให้ดู <b>MAC ต่ำสุด</b> — D1 มี MAC ต่ำที่สุด จึงได้เป็น <b>Root Bridge</b> ทุกพอร์ตของ Root เป็น Designated ทั้งหมด",
+            node: { d1: "root" },
+            state: [["D1", "<span class='rl-ok'>Root Bridge ✓</span>", "MAC ต่ำสุดในโดเมน"]]
+          },
+          {
+            desc: "แต่ละสวิตช์ที่ไม่ใช่ Root เลือก <b>Root Port</b> จาก cost รวมที่ต่ำที่สุดไปถึง Root — A1 มีสองทางเลือก: ตรงไป D1 = <b>19</b> หรืออ้อมผ่าน D2 = 19 + 4 = <b>23</b>",
+            node: { d1: "root" },
+            link: { a1d1_1: "alt", a1d1_2: "alt", a1d2_1: "dim", a1d2_2: "dim", d1d2: "dim" },
+            state: [
+              ["A1 → D1", "cost 19", "<span class='rl-ok'>ทางตรง ถูกกว่า</span>"],
+              ["A1 → D2 → D1", "cost 23", "อ้อม แพงกว่า"]
+            ]
+          },
+          {
+            desc: "แต่ A1 มี <b>สองเส้น</b>ไป D1 ที่ cost เท่ากันเป๊ะ (19 = 19) → ต้องตัดสินด้วย <b>Port ID ที่ต่ำกว่า</b> ผลคือ F0/1 ได้เป็น Root Port ส่วน F0/2 กลายเป็น Alternate",
+            node: { d1: "root" },
+            link: { a1d1_1: "active", a1d1_2: "block", a1d2_1: "dim", a1d2_2: "dim", d1d2: "dim" },
+            state: [
+              ["A1 F0/1", "<span class='rl-ok'>Root Port ✓</span>", "Port ID ต่ำกว่า"],
+              ["A1 F0/2", "<span class='rl-no'>Alternate (BLK)</span>", "cost เท่ากันแต่ Port ID สูงกว่า"]
+            ]
+          },
+          {
+            desc: "ทุก segment ต้องมี <b>Designated Port</b> หนึ่งพอร์ตเสมอ — บน segment D2–A1 เทียบ root cost: D2 = <b>4</b> ส่วน A1 = <b>19</b> → D2 ชนะทั้งสองเส้น ฝั่ง A1 จึงกลายเป็น Alternate ทั้งคู่",
+            node: { d1: "root" },
+            link: { a1d1_1: "active", a1d1_2: "block", a1d2_1: "block", a1d2_2: "block", d1d2: "active" },
+            state: [
+              ["D2 (root cost 4)", "<span class='rl-ok'>Designated ทั้ง 2 เส้น</span>", "cost ต่ำกว่า A1"],
+              ["A1 F0/3, F0/4", "<span class='rl-no'>Alternate (BLK)</span>", "แพ้ในการเทียบ root cost"]
+            ]
+          },
+          {
+            desc: "จบการเลือก — เหลือ <b>เส้นทาง forwarding เพียงชุดเดียว</b> ที่ไม่มีลูป: A1 ออกทาง F0/1 ไป D1 และ D2 ต่อ D1 โดยตรง อีกสามพอร์ตของ A1 ถูกบล็อกไว้",
+            node: { d1: "root" },
+            link: { a1d1_1: "active", a1d1_2: "block", a1d2_1: "block", a1d2_2: "block", d1d2: "active" },
+            state: [
+              ["D1", "<span class='rl-ok'>Root Bridge</span>", "ทุกพอร์ต Designated"],
+              ["D2 Gi1/0/1", "<span class='rl-ok'>Root Port</span>", "cost 4 ไป Root"],
+              ["A1 F0/1", "<span class='rl-ok'>Root Port</span>", "cost 19 ไป Root"],
+              ["A1 F0/2-F0/4", "<span class='rl-no'>Blocking ×3</span>", "กันลูป"]
+            ]
+          }
+        ]
+      },
 
-  const STEPS: Record<string, Step[]> = {
-    dv: [
+      /* ------------------------------------------- ETHERCHANNEL */
       {
-        desc: "สถานะเริ่มต้น: R3 เชื่อมต่อ Network X โดยตรง (metric = 0) — R1 และ R2 ยังไม่รู้จัก X เลย",
-        table: `<tr><th scope="row">R1</th><td>—</td><td>ไม่รู้จัก</td></tr><tr><th scope="row">R2</th><td>—</td><td>ไม่รู้จัก</td></tr><tr><th scope="row">R3</th><td>connected</td><td>0</td></tr>`,
+        id: "po", group: "Layer 2", label: "EtherChannel",
+        name: "EtherChannel — รวมสายที่ STP เคยบล็อกทิ้ง", chap: "บทที่ 5",
+        accent: "var(--coral)", viewBox: "0 0 620 220",
+        stateHead: ["รายการ", "ก่อนรวม", "หลังรวม"],
+        nodes: [
+          { id: "a1", x: 140, y: 110, label: "A1", sub: "2960+" },
+          { id: "d2", x: 470, y: 110, label: "D2", sub: "3650" }
+        ],
+        links: [
+          { id: "l1", a: "a1", b: "d2", label: "Fa0/3", bend: -26 },
+          { id: "l2", a: "a1", b: "d2", label: "Fa0/4", bend: 26 }
+        ],
+        steps: [
+          {
+            desc: "A1 กับ D2 ต่อกันด้วยสายจริง <b>2 เส้น</b> (Fa0/3 และ Fa0/4) — แต่ STP มองเห็นเป็นสองพอร์ตแยกกัน ซึ่งแปลว่ามีลูป",
+            link: { l1: "alt", l2: "alt" },
+            state: [["สายกายภาพ", "2 เส้น", "2 เส้น"]]
+          },
+          {
+            desc: "STP จึง<b>บล็อก Fa0/4 ทิ้ง</b>เพื่อกันลูป — เหลือใช้งานจริงแค่เส้นเดียว แบนด์วิดท์อีกครึ่งถูกทิ้งเปล่า และ Root Cost = <b>19</b>",
+            link: { l1: "active", l2: "block" },
+            state: [
+              ["Fa0/3", "<span class='rl-ok'>Forwarding</span>", "—"],
+              ["Fa0/4", "<span class='rl-no'>Blocking</span>", "—"],
+              ["Root Cost", "19", "—"]
+            ]
+          },
+          {
+            desc: "สั่งรวมสายด้วย <code>channel-group 1 mode on</code> <b>ทั้งสองฝั่ง</b> — ถ้าตั้งข้างเดียวจะไม่เกิด bundle",
+            link: { l1: "alt", l2: "alt" },
+            state: [["คำสั่ง", "—", "channel-group 1 mode on"]]
+          },
+          {
+            desc: "สวิตช์ตรวจว่าค่าพื้นฐานของสมาชิก<b>ตรงกันทุกเส้น</b>ไหม — speed, duplex, port mode, native VLAN และ allowed VLAN ถ้าไม่ตรงแม้ข้อเดียว bundle จะไม่ขึ้น",
+            link: { l1: "alt", l2: "alt" },
+            pkt: [{ f: "a1", t: "d2", label: "chk" }, { f: "d2", t: "a1", label: "chk" }],
+            state: [
+              ["speed / duplex", "—", "<span class='rl-ok'>ตรงกัน ✓</span>"],
+              ["port mode", "—", "<span class='rl-ok'>ตรงกัน ✓</span>"],
+              ["native / allowed VLAN", "—", "<span class='rl-ok'>ตรงกัน ✓</span>"]
+            ]
+          },
+          {
+            desc: "ผ่านการตรวจ → สายทั้งสองถูกรวมเป็นอินเทอร์เฟซตรรกะเดียวชื่อ <b>Port-channel 1 (Po1)</b>",
+            link: { l1: "active", l2: "active" },
+            state: [["Po1", "—", "<span class='rl-ok'>สร้างสำเร็จ (SU)</span>"]]
+          },
+          {
+            desc: "ตอนนี้ STP มองเห็นแค่ <b>Po1 เส้นเดียว</b> — ไม่มีอะไรให้บล็อกอีกแล้ว ทั้งสองสายจึงส่งข้อมูลได้พร้อมกัน และ Root Cost ลดจาก 19 เหลือ <b>12</b>",
+            link: { l1: "active", l2: "active" },
+            state: [
+              ["Fa0/3", "Forwarding", "<span class='rl-ok'>ใช้งาน (P)</span>"],
+              ["Fa0/4", "<span class='rl-no'>Blocking</span>", "<span class='rl-ok'>ใช้งาน (P)</span>"],
+              ["Root Cost", "19", "<span class='rl-ok'>12</span>"],
+              ["แบนด์วิดท์ที่ใช้ได้", "ครึ่งเดียว", "<span class='rl-ok'>ครบทั้งสองเส้น</span>"]
+            ]
+          }
+        ]
       },
-      {
-        desc: "R3 ส่ง Update บอก R2 ว่า “รู้จัก X ระยะ 1 hop” — R2 บันทึกเส้นทางใหม่",
-        packets: [{ from: "r3", to: "r2" }],
-        active: ["r2-r3"],
-        table: `<tr><th scope="row">R1</th><td>—</td><td>ไม่รู้จัก</td></tr><tr><th scope="row">R2</th><td>R3</td><td>1</td></tr><tr><th scope="row">R3</th><td>connected</td><td>0</td></tr>`,
-      },
-      {
-        desc: "R2 ส่งต่อบอก R1 ว่า “รู้จัก X ระยะ 2 hop” — ตอนนี้เครือข่ายบรรจบ (converged) ครบทุก Router แล้ว",
-        packets: [{ from: "r2", to: "r1" }],
-        active: ["r1-r2", "r2-r3"],
-        table: `<tr><th scope="row">R1</th><td>R2</td><td>2</td></tr><tr><th scope="row">R2</th><td>R3</td><td>1</td></tr><tr><th scope="row">R3</th><td>connected</td><td>0</td></tr>`,
-      },
-      {
-        desc: "🔴 ลิงก์ระหว่าง R3 กับ Network X ขาด! R3 ลบเส้นทางของตัวเองทิ้งทันที",
-        showFail: true,
-        dead: ["r3-net"],
-        table: `<tr><th scope="row">R1</th><td>R2</td><td>2</td></tr><tr><th scope="row">R2</th><td>R3</td><td>1</td></tr><tr><th scope="row">R3</th><td style="color:var(--blk)">ไม่มีเส้นทาง</td><td>—</td></tr>`,
-      },
-      {
-        desc: "R2 ยังไม่ถึงรอบ Update ถัดไป จึงยังเชื่อว่าตัวเองไปถึง X ได้ (ข้อมูลเก่า) — R2 ส่ง Update เดิมกลับไปหา R3 โดยไม่รู้ว่าเส้นทางจริงหายไปแล้ว",
-        packets: [{ from: "r2", to: "r3" }],
-        showFail: true,
-        dead: ["r3-net"],
-        active: ["r2-r3"],
-        table: `<tr><th scope="row">R1</th><td>R2</td><td>2</td></tr><tr><th scope="row">R2</th><td>R3</td><td>1 <span style="color:var(--blk)">(เก่า)</span></td></tr><tr><th scope="row">R3</th><td style="color:var(--blk)">ไม่มีเส้นทาง</td><td>—</td></tr>`,
-      },
-      {
-        desc: "R3 หลงเชื่อ! ติดตั้งเส้นทางใหม่ “ไป X ผ่าน R2” ทั้งที่ต้นตอเส้นทางนั้นวนกลับมาจากตัวเองอยู่ดี — นี่คือจุดเริ่ม loop",
-        showFail: true,
-        dead: ["r3-net"],
-        active: ["r2-r3"],
-        table: `<tr><th scope="row">R1</th><td>R2</td><td>2</td></tr><tr><th scope="row">R2</th><td>R3</td><td>1 <span style="color:var(--blk)">(เก่า)</span></td></tr><tr><th scope="row">R3</th><td style="color:var(--blk)">R2 (ผิด!)</td><td>2</td></tr>`,
-      },
-      {
-        desc: "R3 ส่ง Update ใหม่ “X metric 2” กลับไปหา R2 — R2 ต้องปรับเพิ่มตาม เพราะเส้นทางของ R2 ก็อิงจาก R3 อยู่ดี",
-        packets: [{ from: "r3", to: "r2" }],
-        showFail: true,
-        dead: ["r3-net"],
-        active: ["r2-r3"],
-        table: `<tr><th scope="row">R1</th><td>R2</td><td>2 <span style="color:var(--blk)">(เก่า)</span></td></tr><tr><th scope="row">R2</th><td>R3</td><td>3 <span style="color:var(--blk)">↑</span></td></tr><tr><th scope="row">R3</th><td style="color:var(--blk)">R2</td><td>2</td></tr>`,
-      },
-      {
-        desc: "วนแบบนี้ไปเรื่อย ๆ ตัวเลข metric เพิ่มขึ้นทีละ 1 ทุกรอบ — R2 กับ R3 “นับเลขขึ้นไปเรื่อย ๆ” โดยไม่มีใครรู้ว่าเส้นทางจริงหายไปแล้ว นี่คือที่มาของชื่อ Count-to-Infinity",
-        showFail: true,
-        dead: ["r3-net"],
-        active: ["r2-r3"],
-        table: `<tr><th scope="row">R1</th><td>R2</td><td>...</td></tr><tr><th scope="row">R2</th><td>R3</td><td>...⬆</td></tr><tr><th scope="row">R3</th><td style="color:var(--blk)">R2</td><td>...⬆</td></tr>`,
-      },
-      {
-        desc: "RIP กำหนด “Infinity” ไว้ที่ metric = 16 — พอตัวเลขวิ่งถึง 16 ทุก Router จึงยอมรับว่าเส้นทางนี้ “ไปไม่ถึงจริง ๆ” แล้วลบทิ้ง วิธีที่ป้องกันปัญหานี้ได้จริงคือ Split Horizon, Route Poisoning และ Hold-down Timer",
-        showFail: true,
-        dead: ["r1-r2", "r2-r3", "r3-net"],
-        table: `<tr><th scope="row">R1</th><td colspan="2" style="color:var(--ink-3)">Unreachable (metric ≥ 16)</td></tr><tr><th scope="row">R2</th><td colspan="2" style="color:var(--ink-3)">Unreachable (metric ≥ 16)</td></tr><tr><th scope="row">R3</th><td colspan="2" style="color:var(--ink-3)">Unreachable (metric ≥ 16)</td></tr>`,
-      },
-    ],
-    eigrp: [
-      {
-        desc: "R1, R3, R4 ส่ง Hello Packet หากันทุก 5 วินาที เพื่อค้นหาและตรวจสุขภาพเพื่อนบ้าน",
-        packets: [{ from: "r1", to: "r3" }, { from: "r3", to: "r4" }, { from: "r1", to: "r4" }],
-        table: `<tr><td colspan="3" style="color:var(--ink-3)">กำลังค้นหาเพื่อนบ้าน…</td></tr>`,
-      },
-      {
-        desc: "แต่ละ Router สร้าง Topology Table เก็บ<b>ทุกเส้นทาง</b>ที่ได้ยินจากเพื่อนบ้าน ไม่ใช่แค่เส้นที่ดีที่สุดเส้นเดียวแบบ Distance Vector ทั่วไป",
-        table: `<tr><td colspan="3" style="color:var(--ink-3)">กำลังสร้าง Topology Table…</td></tr>`,
-      },
-      {
-        desc: "R1 คำนวณ Feasible Distance ไปยัง Network X ได้ 2 เส้นทาง: ผ่าน R1→R3→R4 (FD = 3328) และผ่าน R1→R4 โดยตรง (RD = 2816)",
-        active: ["r1-r3", "r3-r4"],
-        feasible: ["r1-r4"],
-        table: `<tr><td>R1→R3→R4</td><td>FD 3328</td><td>กำลังเทียบ</td></tr><tr><td>R1→R4</td><td>RD 2816</td><td>กำลังเทียบ</td></tr>`,
-      },
-      {
-        desc: "3328 คือ FD ต่ำสุด → เส้นทาง <b>R1→R3→R4 เป็น Successor Route</b> ถูกติดตั้งลง RIB จริง",
-        active: ["r1-r3", "r3-r4"],
-        feasible: ["r1-r4"],
-        table: `<tr><td>R1→R3→R4</td><td>FD 3328</td><td style="color:var(--fwd);font-weight:700">Successor ✓</td></tr><tr><td>R1→R4</td><td>RD 2816</td><td>—</td></tr>`,
-      },
-      {
-        desc: "ตรวจ Feasibility Condition ของเส้นสำรอง: RD (2816) &lt; FD (3328) → <b>ผ่านเงื่อนไข</b> เก็บ R1→R4 ไว้เป็น Feasible Successor พร้อมสลับได้ทันที",
-        active: ["r1-r3", "r3-r4"],
-        feasible: ["r1-r4"],
-        table: `<tr><td>R1→R3→R4</td><td>FD 3328</td><td style="color:var(--fwd);font-weight:700">Successor ✓</td></tr><tr><td>R1→R4</td><td>RD 2816</td><td style="color:var(--gold);font-weight:700">Feasible Successor ✓</td></tr>`,
-      },
-      {
-        desc: "🔴 ลิงก์ R1–R3 ขาด! เส้นทาง Successor เดิมใช้ไม่ได้แล้ว",
-        showFail: true,
-        dead: ["r1-r3"],
-        feasible: ["r1-r4"],
-        table: `<tr><td>R1→R3→R4</td><td>—</td><td style="color:var(--blk)">ขาดการเชื่อมต่อ ✗</td></tr><tr><td>R1→R4</td><td>RD 2816</td><td style="color:var(--gold);font-weight:700">Feasible Successor ✓</td></tr>`,
-      },
-      {
-        desc: "R1 เช็ค Topology Table พบว่ามี Feasible Successor รออยู่แล้ว → <b>เลื่อนขึ้นเป็น Successor ทันที</b> ไม่ต้องคำนวณ DUAL ใหม่ ไม่ต้องส่ง Query เลย",
-        dead: ["r1-r3"],
-        active: ["r1-r4"],
-        table: `<tr><td>R1→R3→R4</td><td>—</td><td style="color:var(--blk)">ขาดการเชื่อมต่อ ✗</td></tr><tr><td>R1→R4</td><td>RD 2816</td><td style="color:var(--fwd);font-weight:700">Successor ✓ (สลับทันที)</td></tr>`,
-      },
-      {
-        desc: "เปรียบเทียบ: ถ้า R1 <b>ไม่มี</b> Feasible Successor เตรียมไว้ ต้องส่ง Query ไปถามเพื่อนบ้านทุกทิศทางก่อน แล้วรอ Reply ถึงจะหาเส้นทางใหม่ได้ — ช้ากว่ากันมาก นี่คือเหตุผลที่ EIGRP convergence เร็ว",
-        dead: ["r1-r3"],
-        active: ["r1-r4"],
-        table: `<tr><td colspan="3" style="color:var(--ink-3)">สรุป: Feasible Successor = ทางลัดที่ทำให้ไม่ต้องถามใครเลย</td></tr>`,
-      },
-    ],
-    ospf: [
-      {
-        desc: "R1 ตรวจพบการเปลี่ยนแปลงบน interface ของตัวเอง (เช่น ลิงก์ใหม่ขึ้น) → สร้าง Router LSA (Type 1) ของตัวเอง",
-        table: `<tr><th scope="row">R1</th><td>LSA ของตัวเอง</td></tr><tr><th scope="row">R2</th><td>—</td></tr><tr><th scope="row">R3</th><td>—</td></tr><tr><th scope="row">R4</th><td>—</td></tr>`,
-      },
-      {
-        desc: "R1 flood LSA ออก<b>ทุก interface พร้อมกัน</b> ไปยัง R2, R4 และ R3 (ทางทแยงมุม)",
-        packets: [{ from: "r1", to: "r2" }, { from: "r1", to: "r4" }, { from: "r1", to: "r3" }],
-        active: ["r1-r2", "r4-r1", "r1-r3"],
-        table: `<tr><th scope="row">R1</th><td>LSA ของตัวเอง</td></tr><tr><th scope="row">R2</th><td>+ LSA ของ R1</td></tr><tr><th scope="row">R3</th><td>+ LSA ของ R1</td></tr><tr><th scope="row">R4</th><td>+ LSA ของ R1</td></tr>`,
-      },
-      {
-        desc: "R2 และ R4 ได้รับ LSA ของ R1 แล้ว flood ต่อให้เพื่อนบ้านของตัวเอง (R3) — R3 ได้รับซ้ำจากสองทาง แต่รู้จาก Sequence Number ว่าเคยเห็นแล้ว จึงไม่ประมวลผลซ้ำ",
-        packets: [{ from: "r2", to: "r3" }, { from: "r4", to: "r3" }],
-        active: ["r1-r2", "r4-r1", "r1-r3", "r2-r3", "r3-r4"],
-        table: `<tr><th scope="row">R1</th><td>LSA ของตัวเอง</td></tr><tr><th scope="row">R2</th><td>+ LSA ของ R1</td></tr><tr><th scope="row">R3</th><td>+ LSA ของ R1 (รับซ้ำ 2 ทาง)</td></tr><tr><th scope="row">R4</th><td>+ LSA ของ R1</td></tr>`,
-      },
-      {
-        desc: "ภายในไม่กี่วินาที ทุก Router มี LSDB <b>เหมือนกันทุกตัว</b> — เห็น topology เดียวกันหมด (สมมติว่า R2, R3, R4 ก็ flood LSA ของตัวเองไปแล้วเช่นกัน)",
-        active: ["r1-r2", "r2-r3", "r3-r4", "r4-r1", "r1-r3"],
-        table: `<tr><th scope="row">R1</th><td>LSA ครบทั้ง 4 ตัว</td></tr><tr><th scope="row">R2</th><td>LSA ครบทั้ง 4 ตัว</td></tr><tr><th scope="row">R3</th><td>LSA ครบทั้ง 4 ตัว</td></tr><tr><th scope="row">R4</th><td>LSA ครบทั้ง 4 ตัว</td></tr>`,
-      },
-      {
-        desc: "แต่ละ Router รัน Dijkstra SPF บน LSDB ของตัวเอง โดย<b>ตั้งตัวเองเป็นราก (root)</b> ของต้นไม้",
-        active: ["r1-r2", "r2-r3", "r3-r4", "r4-r1", "r1-r3"],
-        table: `<tr><td colspan="2" style="color:var(--ink-3)">กำลังรัน SPF แยกกันในแต่ละ Router…</td></tr>`,
-      },
-      {
-        desc: "ผลลัพธ์จากมุมมอง <b>R1</b>: SPT ของ R1 ใช้ลิงก์ R1-R2, R1-R4, R1-R3 เป็นเส้นทางตรงที่สุดไปหาทุกตัว (สมมติ cost เท่ากันทุกลิงก์)",
-        active: ["r1-r2", "r4-r1", "r1-r3"],
-        dead: ["r2-r3", "r3-r4"],
-        table: `<tr><td colspan="2">SPT ของ R1: รากคือ R1 → แตกออกตรงไปหา R2, R3, R4</td></tr>`,
-      },
-      {
-        desc: "ผลลัพธ์จากมุมมอง <b>R3</b>: LSDB เดียวกันเป๊ะ แต่ SPT กลับหน้าตาคนละแบบ เพราะรากคือ R3 — นี่คือหัวใจของ Link-State ที่ต่างจาก Distance Vector",
-        active: ["r2-r3", "r3-r4", "r1-r3"],
-        dead: ["r1-r2", "r4-r1"],
-        table: `<tr><td colspan="2">SPT ของ R3: รากคือ R3 → แตกออกตรงไปหา R1, R2, R4</td></tr>`,
-      },
-    ],
-  };
 
-  const LINK_ID: Record<string, Record<string, string>> = {
-    dv: { "r1-r2": "dv-link-r1-r2", "r2-r3": "dv-link-r2-r3", "r3-net": "dv-link-r3-net" },
-    eigrp: {
-      "r1-r3": "eigrp-link-r1-r3", "r3-r4": "eigrp-link-r3-r4",
-      "r1-r4": "eigrp-link-r1-r4", "r4-net": "eigrp-link-r4-net",
-    },
-    ospf: {
-      "r1-r2": "ospf-link-r1-r2", "r2-r3": "ospf-link-r2-r3",
-      "r3-r4": "ospf-link-r3-r4", "r4-r1": "ospf-link-r4-r1", "r1-r3": "ospf-link-r1-r3",
-    },
-  };
+      /* ------------------------------------------ DISTANCE VECTOR */
+      {
+        id: "dv", group: "IGP", label: "Distance Vector",
+        name: "Distance Vector — ปัญหา Count-to-Infinity", chap: "บทที่ 6",
+        accent: "var(--slate)", viewBox: "0 0 700 160",
+        stateHead: ["Router", "Next Hop", "Metric"],
+        nodes: [
+          { id: "r1", x: 80, y: 80, label: "R1" },
+          { id: "r2", x: 270, y: 80, label: "R2" },
+          { id: "r3", x: 460, y: 80, label: "R3" },
+          { id: "net", x: 630, y: 80, label: "X", kind: "net" }
+        ],
+        links: [
+          { id: "r1r2", a: "r1", b: "r2" },
+          { id: "r2r3", a: "r2", b: "r3" },
+          { id: "r3net", a: "r3", b: "net" }
+        ],
+        steps: [
+          {
+            desc: "สถานะเริ่มต้น — R3 ต่อกับ Network X โดยตรง (metric 0) ส่วน R1 และ R2 ยังไม่รู้จัก X เลย",
+            link: { r3net: "active" },
+            state: [["R1", "—", "ไม่รู้จัก"], ["R2", "—", "ไม่รู้จัก"], ["R3", "connected", "0"]]
+          },
+          {
+            desc: "R3 ส่ง Update บอก R2 ว่า “รู้จัก X ระยะ 1 hop” — R2 บันทึกเส้นทางใหม่ลงตาราง",
+            pkt: [{ f: "r3", t: "r2", label: "1" }],
+            link: { r2r3: "active", r3net: "active" },
+            state: [["R1", "—", "ไม่รู้จัก"], ["R2", "R3", "1"], ["R3", "connected", "0"]]
+          },
+          {
+            desc: "R2 ส่งต่อบอก R1 ว่า “รู้จัก X ระยะ 2 hop” — ตอนนี้เครือข่าย <b>บรรจบครบแล้ว (converged)</b>",
+            pkt: [{ f: "r2", t: "r1", label: "2" }],
+            link: { r1r2: "active", r2r3: "active", r3net: "active" },
+            state: [["R1", "R2", "2"], ["R2", "R3", "1"], ["R3", "connected", "0"]]
+          },
+          {
+            desc: "🔴 <b>ลิงก์ R3 ↔ Network X ขาด!</b> R3 ลบเส้นทางของตัวเองทิ้งทันที แต่ R1 กับ R2 ยังไม่รู้เรื่อง",
+            link: { r1r2: "active", r2r3: "active", r3net: "dead" },
+            node: { r3: "bad" },
+            state: [["R1", "R2", "2"], ["R2", "R3", "1"], ["R3", "<span class='rl-no'>ไม่มีเส้นทาง</span>", "—"]]
+          },
+          {
+            desc: "R2 ยังไม่ถึงรอบ update ถัดไป จึงยังเชื่อข้อมูลเก่าของตัวเอง แล้ว<b>ส่ง update เดิมกลับไปหา R3</b> โดยไม่รู้ว่าเส้นทางจริงหายไปแล้ว",
+            pkt: [{ f: "r2", t: "r3", label: "1" }],
+            link: { r2r3: "active", r3net: "dead" },
+            node: { r3: "bad" },
+            state: [["R1", "R2", "2"], ["R2", "R3", "1 <span class='rl-no'>(เก่า)</span>"], ["R3", "<span class='rl-no'>ไม่มีเส้นทาง</span>", "—"]]
+          },
+          {
+            desc: "R3 <b>หลงเชื่อ</b> — ติดตั้งเส้นทาง “ไป X ผ่าน R2” ทั้งที่ต้นตอของเส้นทางนั้นก็คือตัว R3 เอง นี่คือจุดที่ลูปเริ่มขึ้น",
+            link: { r2r3: "block", r3net: "dead" },
+            node: { r3: "bad" },
+            state: [["R1", "R2", "2"], ["R2", "R3", "1 <span class='rl-no'>(เก่า)</span>"], ["R3", "<span class='rl-no'>R2 (ผิด!)</span>", "2"]]
+          },
+          {
+            desc: "R3 ส่ง update ใหม่ “X metric 2” กลับไปหา R2 → R2 ต้องปรับเพิ่มตาม เพราะเส้นทางของ R2 ก็อิงจาก R3 อยู่ดี",
+            pkt: [{ f: "r3", t: "r2", label: "2" }],
+            link: { r2r3: "block", r3net: "dead" },
+            node: { r3: "bad" },
+            state: [["R1", "R2", "2 <span class='rl-no'>(เก่า)</span>"], ["R2", "R3", "3 ⬆"], ["R3", "<span class='rl-no'>R2</span>", "2"]]
+          },
+          {
+            desc: "วนแบบนี้ไม่จบ — metric เพิ่มขึ้นทีละ 1 ทุกรอบ R2 กับ R3 “นับเลขขึ้นไปเรื่อย ๆ” โดยไม่มีใครรู้ว่าปลายทางหายไปแล้ว นี่คือที่มาของชื่อ <b>Count-to-Infinity</b>",
+            link: { r2r3: "block", r3net: "dead" },
+            node: { r3: "bad" },
+            state: [["R1", "R2", "… ⬆"], ["R2", "R3", "… ⬆"], ["R3", "<span class='rl-no'>R2</span>", "… ⬆"]]
+          },
+          {
+            desc: "RIP กำหนด “Infinity” ไว้ที่ metric <b>16</b> — พอนับถึง 16 ทุก Router จึงยอมรับว่าเส้นทางนี้ไปไม่ถึงจริง ๆ แล้วลบทิ้ง · วิธีที่ป้องกันปัญหานี้ได้จริงคือ <b>Split Horizon, Route Poisoning และ Hold-down Timer</b>",
+            link: { r1r2: "dead", r2r3: "dead", r3net: "dead" },
+            state: [
+              ["R1", "<span class='rl-no'>Unreachable</span>", "≥ 16"],
+              ["R2", "<span class='rl-no'>Unreachable</span>", "≥ 16"],
+              ["R3", "<span class='rl-no'>Unreachable</span>", "≥ 16"]
+            ]
+          }
+        ]
+      },
 
-  let currentProto = "dv";
-  let currentIndex = 0;
-  let playTimer: ReturnType<typeof setInterval> | null = null;
+      /* -------------------------------------------------- EIGRP */
+      {
+        id: "eigrp", group: "IGP", label: "EIGRP (DUAL)",
+        name: "EIGRP — Feasible Successor สลับได้ทันที", chap: "บทที่ 7",
+        accent: "var(--coral)", viewBox: "0 0 700 280",
+        stateHead: ["เส้นทาง", "FD / RD", "สถานะ"],
+        nodes: [
+          { id: "r1", x: 90, y: 175, label: "R1" },
+          { id: "r3", x: 330, y: 62, label: "R3" },
+          { id: "r4", x: 540, y: 175, label: "R4" },
+          { id: "net", x: 640, y: 175, label: "X", kind: "net", r: 22 }
+        ],
+        links: [
+          { id: "r1r3", a: "r1", b: "r3" },
+          { id: "r3r4", a: "r3", b: "r4" },
+          { id: "r1r4", a: "r1", b: "r4", label: "RD 2816" },
+          { id: "r4net", a: "r4", b: "net" }
+        ],
+        steps: [
+          {
+            desc: "R1, R3 และ R4 ส่ง <b>Hello Packet</b> หากันทุก 5 วินาที เพื่อค้นหาและตรวจสุขภาพเพื่อนบ้าน",
+            pkt: [{ f: "r1", t: "r3" }, { f: "r3", t: "r4" }, { f: "r1", t: "r4" }],
+            state: [["—", "—", "กำลังค้นหาเพื่อนบ้าน…"]]
+          },
+          {
+            desc: "แต่ละ Router สร้าง <b>Topology Table</b> เก็บ<b>ทุกเส้นทาง</b>ที่ได้ยินจากเพื่อนบ้าน ไม่ใช่เก็บแค่เส้นที่ดีที่สุดเส้นเดียวแบบ Distance Vector ทั่วไป",
+            link: { r4net: "active" },
+            state: [["—", "—", "กำลังรวบรวมเส้นทาง…"]]
+          },
+          {
+            desc: "R1 คำนวณได้ 2 เส้นทางไป Network X — ผ่าน R3 (FD = <b>3328</b>) และตรงไป R4 (RD = <b>2816</b>)",
+            link: { r1r3: "alt", r3r4: "alt", r1r4: "alt", r4net: "active" },
+            state: [
+              ["R1→R3→R4", "FD 3328", "กำลังเทียบ"],
+              ["R1→R4", "RD 2816", "กำลังเทียบ"]
+            ]
+          },
+          {
+            desc: "3328 คือ FD ที่ต่ำที่สุด → เส้นทาง <b>R1→R3→R4 ได้เป็น Successor Route</b> ถูกติดตั้งลง RIB จริง",
+            link: { r1r3: "active", r3r4: "active", r1r4: "dim", r4net: "active" },
+            state: [
+              ["R1→R3→R4", "FD 3328", "<span class='rl-ok'>Successor ✓</span>"],
+              ["R1→R4", "RD 2816", "—"]
+            ]
+          },
+          {
+            desc: "ตรวจ <b>Feasibility Condition</b> ของเส้นสำรอง: RD (2816) &lt; FD (3328) → <b>ผ่านเงื่อนไข</b> จึงเก็บ R1→R4 ไว้เป็น <b>Feasible Successor</b> รอสลับได้ทันที",
+            link: { r1r3: "active", r3r4: "active", r1r4: "alt", r4net: "active" },
+            state: [
+              ["R1→R3→R4", "FD 3328", "<span class='rl-ok'>Successor ✓</span>"],
+              ["R1→R4", "RD 2816 &lt; 3328", "<span class='rl-alt'>Feasible Successor ✓</span>"]
+            ]
+          },
+          {
+            desc: "🔴 <b>ลิงก์ R1–R3 ขาด!</b> เส้นทาง Successor เดิมใช้ไม่ได้แล้ว",
+            link: { r1r3: "dead", r3r4: "dim", r1r4: "alt", r4net: "active" },
+            node: { r3: "bad" },
+            state: [
+              ["R1→R3→R4", "—", "<span class='rl-no'>ขาดการเชื่อมต่อ ✗</span>"],
+              ["R1→R4", "RD 2816", "<span class='rl-alt'>Feasible Successor ✓</span>"]
+            ]
+          },
+          {
+            desc: "R1 เช็ค Topology Table พบว่ามี Feasible Successor รออยู่แล้ว → <b>เลื่อนขึ้นเป็น Successor ทันที</b> ไม่ต้องคำนวณ DUAL ใหม่ ไม่ต้องส่ง Query ถามใครเลย",
+            link: { r1r3: "dead", r3r4: "dim", r1r4: "active", r4net: "active" },
+            state: [
+              ["R1→R3→R4", "—", "<span class='rl-no'>ขาดการเชื่อมต่อ ✗</span>"],
+              ["R1→R4", "FD 2816", "<span class='rl-ok'>Successor ✓ (สลับทันที)</span>"]
+            ]
+          },
+          {
+            desc: "เทียบให้เห็นภาพ — ถ้า R1 <b>ไม่มี</b> Feasible Successor เตรียมไว้ ต้องส่ง <b>Query</b> ไปถามเพื่อนบ้านทุกทิศแล้วรอ <b>Reply</b> กลับมาก่อน ถึงจะหาเส้นทางใหม่ได้ ช้ากว่ากันมาก นี่คือเหตุผลที่ EIGRP converge เร็ว",
+            link: { r1r3: "dead", r3r4: "dim", r1r4: "active", r4net: "active" },
+            state: [["สรุป", "—", "Feasible Successor = ทางลัดที่ทำให้ไม่ต้องถามใครเลย"]]
+          }
+        ]
+      },
 
-  function clearLinks(proto: string) {
-    const ids = LINK_ID[proto];
-    for (const key in ids) {
-      const el = document.getElementById(ids[key]);
-      if (el) el.setAttribute("class", "lab-link");
+      /* --------------------------------------------------- OSPF */
+      {
+        id: "ospf", group: "IGP", label: "OSPF (Link-State)",
+        name: "OSPF — Flood LSA แล้วต่างคนต่างรัน SPF", chap: "บทที่ 8-9",
+        accent: "var(--violet)", viewBox: "0 0 500 340",
+        stateHead: ["Router", "มี LSA ของใครบ้าง"],
+        nodes: [
+          { id: "r1", x: 120, y: 80, label: "R1" },
+          { id: "r2", x: 380, y: 80, label: "R2" },
+          { id: "r3", x: 380, y: 260, label: "R3" },
+          { id: "r4", x: 120, y: 260, label: "R4" }
+        ],
+        links: [
+          { id: "r1r2", a: "r1", b: "r2" },
+          { id: "r2r3", a: "r2", b: "r3" },
+          { id: "r3r4", a: "r3", b: "r4" },
+          { id: "r4r1", a: "r4", b: "r1" },
+          { id: "r1r3", a: "r1", b: "r3" }
+        ],
+        steps: [
+          {
+            desc: "R1 ตรวจพบการเปลี่ยนแปลงบน interface ของตัวเอง → สร้าง <b>Router LSA (Type 1)</b> ของตัวเองขึ้นมา",
+            node: { r1: "hot" },
+            state: [["R1", "LSA ของตัวเอง"], ["R2", "—"], ["R3", "—"], ["R4", "—"]]
+          },
+          {
+            desc: "R1 <b>flood LSA ออกทุก interface พร้อมกัน</b> — ไปถึง R2, R4 และ R3 (ทางเส้นทแยงมุม)",
+            node: { r1: "hot" },
+            pkt: [{ f: "r1", t: "r2" }, { f: "r1", t: "r4" }, { f: "r1", t: "r3" }],
+            link: { r1r2: "active", r4r1: "active", r1r3: "active" },
+            state: [["R1", "LSA ของตัวเอง"], ["R2", "+ LSA ของ R1"], ["R3", "+ LSA ของ R1"], ["R4", "+ LSA ของ R1"]]
+          },
+          {
+            desc: "R2 และ R4 <b>flood ต่อ</b>ให้เพื่อนบ้านของตัวเอง — R3 ได้รับซ้ำจากสองทาง แต่ดู <b>Sequence Number</b> แล้วรู้ว่าเคยเห็นแล้ว จึงไม่ประมวลผลซ้ำ",
+            pkt: [{ f: "r2", t: "r3" }, { f: "r4", t: "r3" }],
+            link: { r1r2: "active", r4r1: "active", r1r3: "active", r2r3: "active", r3r4: "active" },
+            state: [["R1", "LSA ของตัวเอง"], ["R2", "+ LSA ของ R1"], ["R3", "รับซ้ำ 2 ทาง → ทิ้งตัวที่ซ้ำ"], ["R4", "+ LSA ของ R1"]]
+          },
+          {
+            desc: "ภายในไม่กี่วินาที ทุก Router มี <b>LSDB เหมือนกันเป๊ะทุกตัว</b> — เห็น topology ชุดเดียวกันหมด",
+            link: { r1r2: "active", r2r3: "active", r3r4: "active", r4r1: "active", r1r3: "active" },
+            state: [["R1", "LSA ครบทั้ง 4 ตัว"], ["R2", "LSA ครบทั้ง 4 ตัว"], ["R3", "LSA ครบทั้ง 4 ตัว"], ["R4", "LSA ครบทั้ง 4 ตัว"]]
+          },
+          {
+            desc: "จากนั้นแต่ละ Router รัน <b>Dijkstra SPF</b> บน LSDB ของตัวเอง โดย<b>ตั้งตัวเองเป็นราก</b>ของต้นไม้",
+            link: { r1r2: "active", r2r3: "active", r3r4: "active", r4r1: "active", r1r3: "active" },
+            state: [["ทุกตัว", "กำลังรัน SPF แยกกันเอง…"]]
+          },
+          {
+            desc: "ผลจากมุมมองของ <b>R1</b> — SPT ของ R1 แตกออกจากตัวเองตรงไปหา R2, R3 และ R4 (สมมติ cost เท่ากันทุกลิงก์)",
+            node: { r1: "root" },
+            link: { r1r2: "active", r4r1: "active", r1r3: "active", r2r3: "dim", r3r4: "dim" },
+            state: [["SPT ของ R1", "รากคือ R1 → แตกตรงไปหา R2, R3, R4"]]
+          },
+          {
+            desc: "ผลจากมุมมองของ <b>R3</b> — LSDB ชุดเดียวกันเป๊ะ แต่ SPT ออกมาคนละรูปทรง เพราะรากคือ R3 · <b>นี่คือหัวใจของ Link-State ที่ต่างจาก Distance Vector โดยสิ้นเชิง</b>",
+            node: { r3: "root" },
+            link: { r2r3: "active", r3r4: "active", r1r3: "active", r1r2: "dim", r4r1: "dim" },
+            state: [["SPT ของ R3", "รากคือ R3 → แตกตรงไปหา R1, R2, R4"]]
+          }
+        ]
+      },
+
+      /* ----------------------------------------- BGP AS_PATH LOOP */
+      {
+        id: "bgploop", group: "BGP", label: "AS_Path Loop Prevention",
+        name: "BGP — กันลูปด้วย AS_Path", chap: "บทที่ 11",
+        accent: "var(--gold)", viewBox: "0 0 520 320",
+        stateHead: ["ขั้น", "ผู้ประกาศ", "AS_Path"],
+        nodes: [
+          { id: "as100", x: 120, y: 75, label: "AS 100", sub: "172.16.1.0/24" },
+          { id: "as200", x: 400, y: 75, label: "AS 200" },
+          { id: "as400", x: 400, y: 250, label: "AS 400" },
+          { id: "as300", x: 120, y: 250, label: "AS 300" }
+        ],
+        links: [
+          { id: "a", a: "as100", b: "as200" },
+          { id: "b", a: "as200", b: "as400" },
+          { id: "c", a: "as400", b: "as300" },
+          { id: "d", a: "as300", b: "as100" }
+        ],
+        steps: [
+          {
+            desc: "AS 100 เป็นเจ้าของเครือข่าย <b>172.16.1.0/24</b> และกำลังจะประกาศออกไปให้เพื่อนบ้าน",
+            node: { as100: "hot" },
+            state: [["เริ่มต้น", "AS 100", "(ยังว่าง)"]]
+          },
+          {
+            desc: "AS 100 ประกาศไป AS 200 — ทุก AS ที่ส่งต่อจะ<b>เติม ASN ของตัวเองเข้าไปข้างหน้า</b> AS_Path เสมอ",
+            pkt: [{ f: "as100", t: "as200", label: "100" }],
+            link: { a: "active" },
+            state: [["1", "AS 100 → AS 200", "<code>100</code>"]]
+          },
+          {
+            desc: "AS 200 ส่งต่อไป AS 400 พร้อมเติม ASN ของตัวเองเข้าไป",
+            pkt: [{ f: "as200", t: "as400", label: "200" }],
+            link: { a: "active", b: "active" },
+            state: [["1", "AS 100 → AS 200", "<code>100</code>"], ["2", "AS 200 → AS 400", "<code>200 100</code>"]]
+          },
+          {
+            desc: "AS 400 ส่งต่อไป AS 300 — AS_Path ยาวขึ้นเรื่อย ๆ ตามจำนวน AS ที่ผ่าน",
+            pkt: [{ f: "as400", t: "as300", label: "400" }],
+            link: { a: "active", b: "active", c: "active" },
+            state: [
+              ["1", "AS 100 → AS 200", "<code>100</code>"],
+              ["2", "AS 200 → AS 400", "<code>200 100</code>"],
+              ["3", "AS 400 → AS 300", "<code>400 200 100</code>"]
+            ]
+          },
+          {
+            desc: "AS 300 ประกาศกลับมาที่ <b>AS 100</b> ด้วย AS_Path <code>300 400 200 100</code> — เส้นทางวิ่งครบวงกลับมาที่ต้นทางเดิม",
+            pkt: [{ f: "as300", t: "as100", label: "300" }],
+            link: { a: "active", b: "active", c: "active", d: "alt" },
+            state: [
+              ["3", "AS 400 → AS 300", "<code>400 200 100</code>"],
+              ["4", "AS 300 → AS 100", "<code>300 400 200 100</code>"]
+            ]
+          },
+          {
+            desc: "AS 100 ตรวจ AS_Path ที่ได้รับ แล้ว<b>เห็นเลข 100 ของตัวเองอยู่ในนั้น</b> → สรุปได้ทันทีว่านี่คือ <b>ลูป</b> จึง<b>ทิ้งเส้นทางนี้ทิ้งทันที</b>",
+            node: { as100: "bad" },
+            link: { a: "active", b: "active", c: "active", d: "dead" },
+            state: [["4", "AS 300 → AS 100", "<span class='rl-no'>พบ 100 ของตัวเอง → LOOP ✗</span>"]]
+          },
+          {
+            desc: "จุดสำคัญ — BGP <b>ไม่ต้องรู้ topology ทั้งหมด</b>ของอินเทอร์เน็ตเลย แค่ดูว่ามีชื่อตัวเองอยู่ใน AS_Path หรือเปล่าก็กันลูปได้แล้ว นี่คือหลักการของ <b>Path Vector</b>",
+            link: { a: "active", b: "active", c: "active", d: "dead" },
+            state: [["สรุป", "Path Vector", "เห็น ASN ตัวเองใน AS_Path = ทิ้ง"]]
+          }
+        ]
+      },
+
+      /* --------------------------------------- BGP BEST PATH */
+      {
+        id: "bgpbest", group: "BGP", label: "Best-Path 13 ขั้น",
+        name: "BGP — เลือก Best Path ทีละขั้น", chap: "บทที่ 12",
+        accent: "var(--gold)", viewBox: "0 0 560 260",
+        stateHead: ["ขั้น", "เทียบอะไร", "ผล"],
+        nodes: [
+          { id: "p1", x: 100, y: 65, label: "AS 65100", sub: "path A" },
+          { id: "p2", x: 100, y: 195, label: "AS 65300", sub: "path B" },
+          { id: "r2", x: 340, y: 130, label: "R2", sub: "AS 65200" },
+          { id: "net", x: 500, y: 130, label: "172.16.1.0/24", kind: "net", r: 46 }
+        ],
+        links: [
+          { id: "a", a: "p1", b: "r2" },
+          { id: "b", a: "p2", b: "r2" },
+          { id: "out", a: "r2", b: "net" }
+        ],
+        steps: [
+          {
+            desc: "R2 (AS 65200) ได้รับ prefix <b>172.16.1.0/24</b> มาจาก 2 ทาง — ต้องเลือก<b>เส้นเดียว</b>ติดตั้งลง RIB",
+            link: { a: "alt", b: "alt", out: "dim" },
+            state: [["—", "รับมา 2 เส้นทาง", "ต้องตัดสิน"]]
+          },
+          {
+            desc: "ก่อนเข้า 13 ขั้น มีด่านแรกเสมอ: <b>Longest Prefix Match</b> — ถ้า prefix length ไม่เท่ากัน ตัวที่ยาวกว่าชนะทันทีโดยไม่ต้องดูอะไรอีก · กรณีนี้ /24 เท่ากันทั้งคู่ จึงไปต่อ",
+            link: { a: "alt", b: "alt", out: "dim" },
+            state: [["0", "Prefix Length", "/24 = /24 → เสมอ ไปต่อ"]]
+          },
+          {
+            desc: "<b>ขั้น 1 — Weight</b> (ของ Cisco เท่านั้น ค่าสูงชนะ) ไม่ได้ตั้งไว้ทั้งคู่ จึงเป็น 0 เท่ากัน",
+            link: { a: "alt", b: "alt", out: "dim" },
+            state: [["1", "Weight (สูงชนะ)", "0 = 0 → เสมอ ไปต่อ"]]
+          },
+          {
+            desc: "<b>ขั้น 2 — Local Preference</b> (ค่าสูงชนะ, default 100) · ตัวอย่างจริงจากบท: เส้นทางผ่าน <b>AS 65300 มี LocPrf 333</b> ชนะอีกเส้นที่ได้ 100 → <b>จบที่ขั้นนี้</b>",
+            link: { a: "dead", b: "active", out: "active" },
+            node: { p2: "root" },
+            state: [
+              ["1", "Weight", "0 = 0 เสมอ"],
+              ["2", "Local Preference", "<span class='rl-ok'>333 ชนะ 100 → AS 65300 ✓</span>"]
+            ]
+          },
+          {
+            desc: "สมมติอีกกรณี LocPrf เท่ากัน — ข้ามขั้น 3 (Locally Originated) และขั้น 4 (AIGP) มาถึง <b>ขั้น 5 — AS_Path (สั้นชนะ)</b> · เส้นผ่าน AS 65100 ยาว <b>1</b> ชนะเส้นที่ยาว <b>2</b> (<code>65300 65300</code>)",
+            link: { a: "active", b: "dead", out: "active" },
+            node: { p1: "root" },
+            state: [
+              ["2-4", "LocPrf / Local / AIGP", "เสมอทั้งหมด"],
+              ["5", "AS_Path (สั้นชนะ)", "<span class='rl-ok'>ยาว 1 ชนะ ยาว 2 → AS 65100 ✓</span>"]
+            ]
+          },
+          {
+            desc: "สมมติ AS_Path เท่ากันอีก — <b>ขั้น 6 — Origin</b> ลำดับคือ <b>IGP (i) &gt; EGP (e) &gt; Incomplete (?)</b> · เส้นผ่าน AS 65100 มี origin <code>i</code> ชนะอีกเส้นที่เป็น <code>?</code>",
+            link: { a: "active", b: "dead", out: "active" },
+            node: { p1: "root" },
+            state: [
+              ["5", "AS_Path", "เสมอ"],
+              ["6", "Origin", "<span class='rl-ok'>IGP (i) ชนะ Incomplete (?) ✓</span>"]
+            ]
+          },
+          {
+            desc: "สมมติ Origin เท่ากันอีก — <b>ขั้น 7 — MED (ต่ำชนะ)</b> · เทียบได้เพราะทั้งสองเส้นมาจาก <b>AS เดียวกัน</b> (เงื่อนไขบังคับของ MED) · MED <b>0</b> ชนะ MED <b>33</b>",
+            link: { a: "active", b: "dead", out: "active" },
+            node: { p1: "root" },
+            state: [
+              ["6", "Origin", "เสมอ"],
+              ["7", "MED (ต่ำชนะ)", "<span class='rl-ok'>0 ชนะ 33 ✓</span>"]
+            ]
+          },
+          {
+            desc: "ถ้ายังเสมอกันอีก ก็ไล่ต่อจนครบ 13 ขั้น: <b>8</b> eBGP ชนะ iBGP · <b>9</b> IGP metric ต่ำสุด · <b>10</b> เส้นทางที่เก่ากว่า · <b>11</b> Router ID ต่ำสุด · <b>12</b> Cluster List สั้นสุด · <b>13</b> Neighbor address ต่ำสุด",
+            link: { a: "active", b: "dim", out: "active" },
+            state: [
+              ["8-13", "ขั้นที่เหลือ", "eBGP → IGP metric → เก่าสุด → RID → Cluster → Neighbor"],
+              ["จำ", "<b>W-L-L</b>", "Weight → LocPref → Locally originated"],
+              ["จำ", "สูงชนะมีแค่ 2", "Weight กับ Local Preference เท่านั้น"]
+            ]
+          }
+        ]
+      },
+
+      /* ------------------------------------------------ PIM-SM */
+      {
+        id: "pim", group: "Multicast", label: "PIM-SM",
+        name: "PIM-SM — สร้าง Shared Tree แล้วสลับเป็น SPT", chap: "บทที่ 13",
+        accent: "var(--violet)", viewBox: "0 0 620 330",
+        stateHead: ["องค์ประกอบ", "สถานะ"],
+        nodes: [
+          { id: "src", x: 75, y: 60, label: "Source", sub: "10.1.1.2" },
+          { id: "fhr", x: 250, y: 60, label: "FHR" },
+          { id: "rp", x: 460, y: 165, label: "RP" },
+          { id: "lhr", x: 250, y: 270, label: "LHR" },
+          { id: "rcv", x: 75, y: 270, label: "Receiver" }
+        ],
+        links: [
+          { id: "sf", a: "src", b: "fhr" },
+          { id: "fr", a: "fhr", b: "rp" },
+          { id: "rl", a: "rp", b: "lhr" },
+          { id: "lr", a: "lhr", b: "rcv" },
+          { id: "fl", a: "fhr", b: "lhr", label: "ทางตรง" }
+        ],
+        steps: [
+          {
+            desc: "Receiver อยากดู stream กลุ่ม <b>239.1.1.1</b> → ส่ง <b>IGMP Join</b> ให้ Router ที่ต่ออยู่ใกล้ที่สุด (LHR)",
+            pkt: [{ f: "rcv", t: "lhr", label: "IGMP" }],
+            link: { lr: "active" },
+            state: [["Receiver", "ส่ง IGMP Join กลุ่ม 239.1.1.1"], ["Shared Tree", "ยังไม่มี"]]
+          },
+          {
+            desc: "LHR ส่ง <b>PIM Join (*,G)</b> ขึ้นไปหา <b>RP</b> → เกิด <b>Shared Tree (RPT)</b> จาก RP ลงมาถึง LHR · เครื่องหมาย <code>*</code> แปลว่า “ต้นทางใครก็ได้”",
+            pkt: [{ f: "lhr", t: "rp", label: "(*,G)" }],
+            link: { lr: "active", rl: "alt" },
+            state: [["LHR", "ส่ง PIM Join (*,G) ไป RP"], ["Shared Tree", "<span class='rl-alt'>กำลังสร้าง</span>"]]
+          },
+          {
+            desc: "ฝั่งต้นทาง — Source เริ่มส่งทราฟฟิกเข้ามาที่ <b>FHR</b> (Router ตัวแรกที่ต่อกับ Source)",
+            pkt: [{ f: "src", t: "fhr" }],
+            link: { sf: "active", lr: "active", rl: "alt" },
+            state: [["Source", "เริ่มส่งทราฟฟิก"], ["FHR", "ได้รับทราฟฟิกแล้ว"]]
+          },
+          {
+            desc: "FHR ห่อทราฟฟิกส่งเป็น <b>Register</b> แบบ unicast ไปให้ RP → ทำให้ <b>RP รู้จักต้นทาง</b>ว่าคือ 10.1.1.2",
+            pkt: [{ f: "fhr", t: "rp", label: "Reg" }],
+            link: { sf: "active", fr: "alt", rl: "alt", lr: "active" },
+            state: [["FHR", "ส่ง Register (unicast) ไป RP"], ["RP", "รู้จักต้นทาง 10.1.1.2 แล้ว"]]
+          },
+          {
+            desc: "RP ส่ง <b>PIM Join (S,G)</b> ย้อนกลับไปหา FHR → เกิด <b>Source Tree</b> ระหว่าง FHR กับ RP · ตอนนี้มีต้นไม้ <b>สองต้น</b> ต่อกันอยู่",
+            pkt: [{ f: "rp", t: "fhr", label: "(S,G)" }],
+            link: { sf: "active", fr: "active", rl: "active", lr: "active" },
+            state: [
+              ["Source Tree (S,G)", "<span class='rl-ok'>FHR → RP ✓</span>"],
+              ["Shared Tree (*,G)", "<span class='rl-ok'>RP → LHR ✓</span>"]
+            ]
+          },
+          {
+            desc: "ทราฟฟิกไหลครบเส้นทางแล้ว: <b>Source → FHR → RP → LHR → Receiver</b> · สังเกตว่าต้องอ้อมผ่าน RP",
+            pkt: [{ f: "src", t: "fhr" }, { f: "fhr", t: "rp" }, { f: "rp", t: "lhr" }, { f: "lhr", t: "rcv" }],
+            link: { sf: "active", fr: "active", rl: "active", lr: "active" },
+            node: { rp: "hot" },
+            state: [["เส้นทางปัจจุบัน", "Source → FHR → RP → LHR → Receiver"], ["ข้อสังเกต", "ต้องอ้อมผ่าน RP"]]
+          },
+          {
+            desc: "พอ LHR ได้รับ<b>แพ็กเก็ตแรก</b> มันก็เห็น IP ต้นทาง (10.1.1.2) ทันที → เริ่มกระบวนการ <b>SPT Switchover</b> · นี่คือ<b>พฤติกรรม default ของ Cisco</b>",
+            link: { sf: "active", fr: "active", rl: "active", lr: "active", fl: "alt" },
+            node: { lhr: "hot" },
+            state: [["LHR", "เห็น source = 10.1.1.2 จากแพ็กเก็ตแรก"], ["SPT Switchover", "<span class='rl-alt'>กำลังเริ่ม</span>"]]
+          },
+          {
+            desc: "LHR ส่ง <b>(S,G) Join ตรงไปหา FHR</b> → ทราฟฟิกวิ่งทางตรง <b>ไม่ผ่าน RP อีกต่อไป</b> · กับดักข้อสอบ: การสลับนี้เกิดขึ้น<b>แม้เส้นทางสั้นที่สุดจะผ่าน RP อยู่แล้วก็ตาม</b>",
+            pkt: [{ f: "src", t: "fhr" }, { f: "fhr", t: "lhr" }, { f: "lhr", t: "rcv" }],
+            link: { sf: "active", fl: "active", lr: "active", fr: "dim", rl: "dim" },
+            state: [
+              ["เส้นทางใหม่", "<span class='rl-ok'>Source → FHR → LHR → Receiver</span>"],
+              ["RP", "ไม่อยู่ในเส้นทางแล้ว"],
+              ["ชนิดต้นไม้", "<span class='rl-ok'>Source Tree / SPT (S,G)</span>"]
+            ]
+          }
+        ]
+      }
+    ];
+
+    /* ============================================================
+       RENDERER
+       ============================================================ */
+
+    var NS = "http://www.w3.org/2000/svg";
+    var current = PROTOCOLS[0];
+    var index = 0;
+    var timer = null;
+    var PLAY_MS = 2400;
+
+    var elCanvas = document.getElementById("rl-canvas");
+    var elDesc = document.getElementById("rl-desc");
+    var elState = document.getElementById("rl-state");
+    var elDots = document.getElementById("rl-dots");
+    var elName = document.getElementById("rl-name");
+    var elChap = document.getElementById("rl-chap");
+    var elCounter = document.getElementById("rl-counter");
+    var elPicker = document.getElementById("rl-picker");
+    var btnPlay = document.getElementById("rl-play");
+    var btnPrev = document.getElementById("rl-prev");
+    var btnNext = document.getElementById("rl-next");
+    var btnReset = document.getElementById("rl-reset");
+
+    function nodeById(proto, id) {
+      for (var i = 0; i < proto.nodes.length; i++) {
+        if (proto.nodes[i].id === id) return proto.nodes[i];
+      }
+      return null;
     }
-  }
 
-  function clearPackets(proto: string) {
-    const g = document.getElementById(`${proto}-packets`);
-    if (g) g.innerHTML = "";
-  }
+    /* Draw one link as a path, optionally bowed out by `bend` so
+       parallel links between the same pair stay visually distinct. */
+    function linkPath(proto, link) {
+      var a = nodeById(proto, link.a);
+      var b = nodeById(proto, link.b);
+      if (!a || !b) return { d: "", mx: 0, my: 0 };
+      var mx = (a.x + b.x) / 2;
+      var my = (a.y + b.y) / 2;
+      if (!link.bend) {
+        return { d: "M " + a.x + " " + a.y + " L " + b.x + " " + b.y, mx: mx, my: my };
+      }
+      var dx = b.x - a.x, dy = b.y - a.y;
+      var len = Math.sqrt(dx * dx + dy * dy) || 1;
+      var ox = (-dy / len) * link.bend;
+      var oy = (dx / len) * link.bend;
+      var cx = mx + ox * 2, cy = my + oy * 2;
+      return {
+        d: "M " + a.x + " " + a.y + " Q " + cx + " " + cy + " " + b.x + " " + b.y,
+        mx: mx + ox, my: my + oy
+      };
+    }
 
-  function spawnPacket(proto: string, from: string, to: string) {
-    const nodes = NODES[proto];
-    const a = nodes[from];
-    const b = nodes[to];
-    if (!a || !b) return;
-    const g = document.getElementById(`${proto}-packets`);
-    if (!g) return;
-    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    circle.setAttribute("cx", String(a.x));
-    circle.setAttribute("cy", String(a.y));
-    circle.setAttribute("r", "8");
-    const fill = proto === "dv" ? "var(--slate)" : proto === "eigrp" ? "var(--coral)" : "var(--violet)";
-    circle.setAttribute("fill", fill);
-    circle.setAttribute("stroke", "#fff");
-    circle.setAttribute("stroke-width", "2");
-    (circle.style as any).transition = "cx 1s ease, cy 1s ease";
-    g.appendChild(circle);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        circle.setAttribute("cx", String(b.x));
-        circle.setAttribute("cy", String(b.y));
+    function buildSVG(proto) {
+      var svg = document.createElementNS(NS, "svg");
+      svg.setAttribute("viewBox", proto.viewBox);
+      svg.setAttribute("role", "img");
+      svg.setAttribute("aria-label", "ผังจำลองการทำงานของ " + proto.label);
+
+      var gLinks = document.createElementNS(NS, "g");
+      var gLabels = document.createElementNS(NS, "g");
+      var gNodes = document.createElementNS(NS, "g");
+      var gPkts = document.createElementNS(NS, "g");
+      gPkts.setAttribute("id", "rl-pkts");
+
+      proto.links.forEach(function (link) {
+        var geo = linkPath(proto, link);
+        var p = document.createElementNS(NS, "path");
+        p.setAttribute("d", geo.d);
+        p.setAttribute("class", "rl-link");
+        p.setAttribute("data-link", link.id);
+        gLinks.appendChild(p);
+
+        if (link.label) {
+          var t = document.createElementNS(NS, "text");
+          t.setAttribute("x", geo.mx);
+          t.setAttribute("y", geo.my - 6);
+          t.setAttribute("text-anchor", "middle");
+          t.setAttribute("class", "rl-linklabel");
+          t.setAttribute("data-linklabel", link.id);
+          t.textContent = link.label;
+          gLabels.appendChild(t);
+        }
       });
+
+      proto.nodes.forEach(function (n) {
+        var g = document.createElementNS(NS, "g");
+        if (n.kind === "net") {
+          var rx = n.r || 30;
+          var el = document.createElementNS(NS, "ellipse");
+          el.setAttribute("cx", n.x);
+          el.setAttribute("cy", n.y);
+          el.setAttribute("rx", rx);
+          el.setAttribute("ry", 24);
+          el.setAttribute("class", "rl-nodebox");
+          el.setAttribute("data-node", n.id);
+          g.appendChild(el);
+        } else {
+          var w = 84, h = 48;
+          var r = document.createElementNS(NS, "rect");
+          r.setAttribute("x", n.x - w / 2);
+          r.setAttribute("y", n.y - h / 2);
+          r.setAttribute("width", w);
+          r.setAttribute("height", h);
+          r.setAttribute("rx", 9);
+          r.setAttribute("class", "rl-nodebox");
+          r.setAttribute("data-node", n.id);
+          g.appendChild(r);
+        }
+        var lbl = document.createElementNS(NS, "text");
+        lbl.setAttribute("x", n.x);
+        lbl.setAttribute("y", n.sub ? n.y - 2 : n.y + 4);
+        lbl.setAttribute("text-anchor", "middle");
+        lbl.setAttribute("class", "rl-nodelabel");
+        lbl.textContent = n.label;
+        g.appendChild(lbl);
+
+        if (n.sub) {
+          var sub = document.createElementNS(NS, "text");
+          sub.setAttribute("x", n.x);
+          sub.setAttribute("y", n.y + 13);
+          sub.setAttribute("text-anchor", "middle");
+          sub.setAttribute("class", "rl-nodesub");
+          sub.textContent = n.sub;
+          g.appendChild(sub);
+        }
+        gNodes.appendChild(g);
+      });
+
+      svg.appendChild(gLinks);
+      svg.appendChild(gLabels);
+      svg.appendChild(gNodes);
+      svg.appendChild(gPkts);
+      return svg;
+    }
+
+    function clearPackets() {
+      var host = elCanvas.querySelector("#rl-pkts");
+      if (host) host.textContent = "";
+    }
+
+    function spawnPacket(proto, spec) {
+      var a = nodeById(proto, spec.f);
+      var b = nodeById(proto, spec.t);
+      var host = elCanvas.querySelector("#rl-pkts");
+      if (!a || !b || !host) return;
+
+      var g = document.createElementNS(NS, "g");
+      g.setAttribute("class", "rl-pkt");
+      g.style.transform = "translate(" + a.x + "px," + a.y + "px)";
+
+      if (spec.label) {
+        var w = Math.max(26, String(spec.label).length * 7 + 12);
+        var rect = document.createElementNS(NS, "rect");
+        rect.setAttribute("x", -w / 2);
+        rect.setAttribute("y", -9);
+        rect.setAttribute("width", w);
+        rect.setAttribute("height", 18);
+        rect.setAttribute("rx", 9);
+        rect.setAttribute("class", "rl-pkt-body");
+        g.appendChild(rect);
+        var t = document.createElementNS(NS, "text");
+        t.setAttribute("class", "rl-pkt-text");
+        t.setAttribute("y", 1);
+        t.textContent = spec.label;
+        g.appendChild(t);
+      } else {
+        var c = document.createElementNS(NS, "circle");
+        c.setAttribute("r", 8);
+        c.setAttribute("class", "rl-pkt-body");
+        g.appendChild(c);
+      }
+
+      host.appendChild(g);
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          g.style.transform = "translate(" + b.x + "px," + b.y + "px)";
+        });
+      });
+    }
+
+    function renderStep(proto, i) {
+      if (!proto.steps[i]) return;
+      var step = proto.steps[i];
+
+      clearPackets();
+
+      /* links + their labels */
+      var linkState = step.link || {};
+      elCanvas.querySelectorAll("[data-link]").forEach(function (el) {
+        var s = linkState[el.getAttribute("data-link")];
+        el.setAttribute("class", "rl-link" + (s ? " is-" + s : ""));
+      });
+      elCanvas.querySelectorAll("[data-linklabel]").forEach(function (el) {
+        var s = linkState[el.getAttribute("data-linklabel")];
+        var on = s === "active" || s === "alt";
+        el.setAttribute("class", "rl-linklabel" + (on ? " is-on" : ""));
+      });
+
+      /* nodes */
+      var nodeState = step.node || {};
+      elCanvas.querySelectorAll("[data-node]").forEach(function (el) {
+        var s = nodeState[el.getAttribute("data-node")];
+        el.setAttribute("class", "rl-nodebox" + (s ? " is-" + s : ""));
+      });
+
+      /* packets */
+      (step.pkt || []).forEach(function (p) { spawnPacket(proto, p); });
+
+      /* text + state table */
+      elDesc.innerHTML = step.desc;
+
+      var rows = step.state || [];
+      var html = "<table><caption>" + proto.label + "</caption><thead><tr>";
+      proto.stateHead.forEach(function (h) { html += "<th scope='col'>" + h + "</th>"; });
+      html += "</tr></thead><tbody>";
+      rows.forEach(function (r) {
+        html += "<tr>";
+        r.forEach(function (cell, ci) {
+          html += ci === 0 ? "<th scope='row'>" + cell + "</th>" : "<td>" + cell + "</td>";
+        });
+        html += "</tr>";
+      });
+      html += "</tbody></table>";
+      elState.innerHTML = html;
+
+      /* counter + dots + button states */
+      elCounter.textContent = "ขั้นที่ " + (i + 1) + " / " + proto.steps.length;
+      elDots.querySelectorAll(".rl-dot").forEach(function (d, di) {
+        d.setAttribute("aria-current", di === i ? "true" : "false");
+      });
+      btnPrev.disabled = i === 0;
+      btnNext.disabled = i === proto.steps.length - 1;
+    }
+
+    function buildDots(proto) {
+      elDots.textContent = "";
+      proto.steps.forEach(function (s, i) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "rl-dot";
+        b.setAttribute("aria-label", "ไปที่ขั้นที่ " + (i + 1));
+        b.addEventListener("click", function () { stop(); go(i); });
+        elDots.appendChild(b);
+      });
+    }
+
+    function go(i) {
+      index = Math.max(0, Math.min(current.steps.length - 1, i));
+      renderStep(current, index);
+      if (index === current.steps.length - 1) stop();
+    }
+
+    function stop() {
+      if (timer) { clearInterval(timer); timer = null; }
+      btnPlay.textContent = "▶ เล่น";
+    }
+
+    function play() {
+      if (timer) { stop(); return; }
+      /* rewind immediately (and render) so the counter never lies */
+      if (index >= current.steps.length - 1) { index = 0; renderStep(current, 0); }
+      btnPlay.textContent = "⏸ หยุด";
+      timer = setInterval(function () {
+        if (index >= current.steps.length - 1) { stop(); return; }
+        index += 1;
+        renderStep(current, index);
+      }, PLAY_MS);
+    }
+
+    function selectProto(proto) {
+      stop();
+      current = proto;
+      index = 0;
+
+      elPicker.querySelectorAll(".rl-chip").forEach(function (c) {
+        c.setAttribute("aria-selected", c.getAttribute("data-proto") === proto.id ? "true" : "false");
+      });
+
+      document.querySelector(".rl-lab").style.setProperty("--accent", proto.accent);
+      elName.textContent = proto.name;
+      elChap.textContent = proto.chap;
+
+      elCanvas.textContent = "";
+      elCanvas.appendChild(buildSVG(proto));
+      buildDots(proto);
+      renderStep(proto, 0);
+    }
+
+    /* ---------- picker ---------- */
+    (function buildPicker() {
+      var groups = [];
+      PROTOCOLS.forEach(function (p) {
+        var g = null;
+        for (var i = 0; i < groups.length; i++) if (groups[i].name === p.group) g = groups[i];
+        if (!g) { g = { name: p.group, items: [] }; groups.push(g); }
+        g.items.push(p);
+      });
+
+      groups.forEach(function (g) {
+        var wrap = document.createElement("div");
+        wrap.className = "rl-group";
+        var title = document.createElement("p");
+        title.className = "rl-group-title";
+        title.textContent = g.name;
+        wrap.appendChild(title);
+
+        var chips = document.createElement("div");
+        chips.className = "rl-group-chips";
+        g.items.forEach(function (p) {
+          var b = document.createElement("button");
+          b.type = "button";
+          b.className = "rl-chip";
+          b.setAttribute("data-proto", p.id);
+          b.setAttribute("aria-selected", "false");
+          b.style.setProperty("--accent", p.accent);
+          b.textContent = p.label;
+          b.addEventListener("click", function () { selectProto(p); });
+          chips.appendChild(b);
+        });
+        wrap.appendChild(chips);
+        elPicker.appendChild(wrap);
+      });
+    })();
+
+    /* ---------- controls ---------- */
+    btnPrev.addEventListener("click", function () { stop(); go(index - 1); });
+    btnNext.addEventListener("click", function () { stop(); go(index + 1); });
+    btnReset.addEventListener("click", function () { stop(); go(0); });
+    btnPlay.addEventListener("click", play);
+
+    document.addEventListener("keydown", function (e) {
+      var tag = (e.target && e.target.tagName) || "";
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (e.key === "ArrowRight") { stop(); go(index + 1); }
+      else if (e.key === "ArrowLeft") { stop(); go(index - 1); }
+      else if (e.key === "Home") { stop(); go(0); }
+      else if (e.key === " " || e.code === "Space") {
+        if (document.activeElement && document.activeElement.classList.contains("rl-btn")) return;
+        e.preventDefault();
+        play();
+      }
     });
-  }
 
-  function renderStep(proto: string, index: number) {
-    const steps = STEPS[proto];
-    const step = steps[index];
-    clearLinks(proto);
-    clearPackets(proto);
-
-    const failMark = document.getElementById(`${proto}-fail-mark`);
-    if (failMark) failMark.style.display = step.showFail ? "" : "none";
-
-    (step.active || []).forEach((key) => {
-      const id = LINK_ID[proto][key];
-      const el = id && document.getElementById(id);
-      if (el) el.classList.add("lab-active");
-    });
-    (step.feasible || []).forEach((key) => {
-      const id = LINK_ID[proto][key];
-      const el = id && document.getElementById(id);
-      if (el) el.classList.add("lab-fs");
-    });
-    (step.dead || []).forEach((key) => {
-      const id = LINK_ID[proto][key];
-      const el = id && document.getElementById(id);
-      if (el) el.classList.add("lab-dead");
+    /* pause autoplay when the browser tab is hidden */
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) stop();
     });
 
-    (step.packets || []).forEach((p) => spawnPacket(proto, p.from, p.to));
-
-    const desc = document.getElementById(`${proto}-desc`);
-    if (desc) desc.innerHTML = step.desc;
-    const table = document.getElementById(`${proto}-table`);
-    if (table) table.innerHTML = step.table;
-
-    const stepnum = document.getElementById("lab-stepnum");
-    if (stepnum) stepnum.textContent = `${index + 1} / ${steps.length}`;
-  }
-
-  function goTo(index: number) {
-    const steps = STEPS[currentProto];
-    currentIndex = Math.max(0, Math.min(steps.length - 1, index));
-    renderStep(currentProto, currentIndex);
-    if (currentIndex === steps.length - 1) stopPlay();
-  }
-
-  function stopPlay() {
-    if (playTimer) { clearInterval(playTimer); playTimer = null; }
-    const btn = document.getElementById("lab-play");
-    if (btn) btn.textContent = "▶ Play";
-  }
-
-  function togglePlay() {
-    if (playTimer) { stopPlay(); return; }
-    const steps = STEPS[currentProto];
-    if (currentIndex >= steps.length - 1) currentIndex = -1;
-    const btn = document.getElementById("lab-play");
-    if (btn) btn.textContent = "⏸ Pause";
-    playTimer = setInterval(() => {
-      const s = STEPS[currentProto];
-      if (currentIndex >= s.length - 1) { stopPlay(); return; }
-      currentIndex += 1;
-      renderStep(currentProto, currentIndex);
-    }, 2200);
-  }
-
-  function switchProto(proto: string) {
-    stopPlay();
-    currentProto = proto;
-    currentIndex = 0;
-    document.querySelectorAll<HTMLElement>(".lab-tab").forEach((btn) => {
-      const active = btn.dataset.proto === proto;
-      btn.classList.toggle("active", active);
-      btn.setAttribute("aria-selected", String(active));
-    });
-    document.querySelectorAll<HTMLElement>(".lab-stage").forEach((stage) => {
-      stage.hidden = stage.dataset.stage !== proto;
-    });
-    renderStep(proto, 0);
-  }
-
-  document.querySelectorAll<HTMLElement>(".lab-tab").forEach((btn) => {
-    btn.addEventListener("click", () => switchProto(btn.dataset.proto || "dv"));
-  });
-  document.getElementById("lab-next")?.addEventListener("click", () => { stopPlay(); goTo(currentIndex + 1); });
-  document.getElementById("lab-prev")?.addEventListener("click", () => { stopPlay(); goTo(currentIndex - 1); });
-  document.getElementById("lab-reset")?.addEventListener("click", () => { stopPlay(); goTo(0); });
-  document.getElementById("lab-play")?.addEventListener("click", togglePlay);
-
-  switchProto("dv");
+    selectProto(PROTOCOLS[0]);
+  })();
 </script>
