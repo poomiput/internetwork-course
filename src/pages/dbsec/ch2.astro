@@ -119,18 +119,18 @@ import Term from "../../components/Term.astro";
       <div class="filecard">
         <div class="fc-head"><span class="fc-dots"><span></span><span></span><span></span></span><span class="fc-name">method="get" — Query String Parameters</span></div>
         <pre><code>student_register.html?
-fullname=Alice+Green
-&amp;email=alice%40kku.ac.th
-&amp;password=123456
-&amp;role=user</code></pre>
+<span class="fc-attr">fullname</span>=<span class="fc-str">Alice+Green</span>
+&amp;<span class="fc-attr">email</span>=<span class="fc-str">alice%40kku.ac.th</span>
+&amp;<span class="fc-attr">password</span>=<span class="fc-str">123456</span>
+&amp;<span class="fc-attr">role</span>=<span class="fc-str">user</span></code></pre>
         <div class="notes"><p style="margin:0;font-size:.86rem;color:var(--ink-2)">มองเห็นได้ตรง ๆ คัดลอกไปวางที่อื่นได้ แก้ไขเองในแถบ URL ได้เลย — <b>ห้ามใช้กับข้อมูลอ่อนไหวเด็ดขาด</b></p></div>
       </div>
       <div class="filecard">
         <div class="fc-head"><span class="fc-dots"><span></span><span></span><span></span></span><span class="fc-name">method="post" — Payload / Form Data</span></div>
-        <pre><code>fullname: Alice Green
-email: alice@kku.ac.th
-password: 123456
-role: user</code></pre>
+        <pre><code><span class="fc-attr">fullname</span>: <span class="fc-str">Alice Green</span>
+<span class="fc-attr">email</span>: <span class="fc-str">alice@kku.ac.th</span>
+<span class="fc-attr">password</span>: <span class="fc-str">123456</span>
+<span class="fc-attr">role</span>: <span class="fc-str">user</span></code></pre>
         <div class="notes"><p style="margin:0;font-size:.86rem;color:var(--ink-2)">URL สั้นสะอาด ไม่มีข้อมูลติดไปด้วย แต่ <b>POST ไม่ได้ปลอดภัยอัตโนมัติ</b> — ต้องใช้ HTTPS ร่วมด้วยเสมอ และยังเปิดดูได้จาก DevTools ฝั่ง Client อยู่ดี</p></div>
       </div>
     </div>

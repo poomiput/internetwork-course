@@ -45,18 +45,18 @@ import Term from "../../components/Term.astro";
       <div class="flow-step" data-n="1">
         <h4>Browser ส่ง HTTP Request</h4>
         <p>ผู้ใช้พิมพ์หรือคลิกลิงก์ Browser แปลง URL เป็นคำขอ</p>
-        <code class="fs-code">GET /course/detail.php?id=5 HTTP/1.1
-Host: www.kku.ac.th</code>
+        <code class="fs-code"><span style="color:var(--slate);font-weight:700">GET</span> /course/detail.php?id=<span style="color:var(--fwd);font-weight:700">5</span> HTTP/1.1
+<span style="color:var(--gold)">Host:</span> www.kku.ac.th</code>
       </div>
       <div class="flow-step" data-n="2">
         <h4>Server รับคำขอและแตกค่า</h4>
         <p>PHP บน Server อ่าน Query String แล้วแตกเป็นตัวแปรให้ใช้งานทันที</p>
-        <code class="fs-code">$_GET = [ "id" =&gt; "5" ];</code>
+        <code class="fs-code"><span style="color:var(--slate)">$_GET</span> = [ <span style="color:var(--fwd)">"id"</span> =&gt; <span style="color:var(--fwd)">"5"</span> ];</code>
       </div>
       <div class="flow-step" data-n="3">
         <h4>Server ประกอบคำสั่งไปถาม Database</h4>
         <p>โค้ดฝั่ง Server นำค่าที่ได้ไปสร้างคำสั่ง SQL เพื่อดึงข้อมูลจริงจาก Database</p>
-        <code class="fs-code">SELECT * FROM courses WHERE id = 5</code>
+        <code class="fs-code"><span style="color:var(--slate);font-weight:700">SELECT</span> * <span style="color:var(--slate);font-weight:700">FROM</span> courses <span style="color:var(--slate);font-weight:700">WHERE</span> id = <span style="background:var(--coral-soft);color:var(--coral);font-weight:700;border-radius:3px;padding:0 4px">5</span></code>
       </div>
       <div class="flow-step" data-n="4">
         <h4>Database ตอบผลลัพธ์กลับ</h4>
@@ -65,8 +65,8 @@ Host: www.kku.ac.th</code>
       <div class="flow-step" data-n="5">
         <h4>Server ส่ง Response กลับ Browser</h4>
         <p>PHP ประกอบผลลัพธ์เป็น HTML แล้วส่งกลับเป็นหน้าเว็บที่มองเห็น</p>
-        <code class="fs-code">HTTP/1.1 200 OK
-Content-Type: text/html</code>
+        <code class="fs-code">HTTP/1.1 <span style="color:var(--fwd);font-weight:700">200 OK</span>
+<span style="color:var(--gold)">Content-Type:</span> text/html</code>
       </div>
     </div>
 
@@ -136,8 +136,8 @@ Content-Type: text/html</code>
         <span class="fc-dots"><span></span><span></span><span></span></span>
         <span class="fc-name">สิ่งที่ PHP เห็น หลัง URL นี้เข้ามา</span>
       </div>
-      <pre><code>$_GET = [
-    "id" =&gt; "5"
+      <pre><code><span class="fc-attr">$_GET</span> = [
+    <span class="fc-str">"id"</span> =&gt; <span class="fc-str">"5"</span>
 ];</code></pre>
     </div>
   </section>
