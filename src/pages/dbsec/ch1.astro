@@ -7,9 +7,9 @@ import Term from "../../components/Term.astro";
   <header class="masthead">
     <p class="eyebrow" style="color:var(--blk)">DB Security · Chapter 1 of 7</p>
     <h1>พื้นฐาน Web Application &amp; HTML</h1>
-    <p class="deck">ก่อนจะเจาะช่องโหว่ได้ ต้องรู้ก่อนว่าเว็บ "ทำงานปกติ" ยังไง — บทนี้ตามรอยคลิกเดียวของผู้ใช้ตั้งแต่ Browser ไปจนถึง Database แล้วย้อนกลับมาดูว่า HTML/CSS ประกอบร่างเป็นหน้าเว็บได้อย่างไร</p>
+    <p class="deck">ก่อนจะเจาะช่องโหว่ได้ ต้องรู้ก่อนว่าเว็บ "ทำงานปกติ" ยังไง — บทนี้ตามรอยข้อมูลจาก URL ที่พิมพ์ ไปจนถึงคำสั่งที่ยิงเข้า Database จริง ๆ แล้วย้อนกลับมาดูว่า HTML/CSS ประกอบร่างเป็นหน้าเว็บได้อย่างไร</p>
     <div class="credit-bar">
-      <span>Client → Server → Database</span><span>HTTP Request/Response</span><span>GET vs POST</span><span>HTML + CSS</span>
+      <span>Client-Server Model</span><span>HTTP Request/Response</span><span>GET vs POST</span><span>HTML + CSS</span>
     </div>
   </header>
 
@@ -19,15 +19,15 @@ import Term from "../../components/Term.astro";
         <h3>โจทย์ของบทนี้</h3>
         <ul>
           <li>เว็บทุกหน้าวิ่งอยู่บน <Term id="clientServerModel">Client-Server Model</Term> — Client ส่งคำขอ (Request) และ Server ตอบกลับ (Response) เสมอ ไม่มีทางลัด</li>
-          <li>HTTP เป็น <Term id="statelessHttp">Stateless</Term> — Server จำอะไรจาก Request ก่อนหน้าไม่ได้เลย ทุกคำขอเริ่มนับหนึ่งใหม่ นี่คือที่มาของปัญหาที่ Session/Cookie ต้องเข้ามาแก้ภายหลัง</li>
-          <li>ข้อมูลที่ผู้ใช้กรอกจะถูกส่งด้วยวิธีใดวิธีหนึ่งใน 2 แบบ — <b>GET</b> หรือ <b>POST</b> — และการเลือกผิดวิธีคือจุดเริ่มต้นของช่องโหว่หลายชนิดที่จะเจอในบทหลัง</li>
+          <li>HTTP เป็น <Term id="statelessHttp">Stateless</Term> — Server จำอะไรจาก Request ก่อนหน้าไม่ได้เลย นี่คือที่มาของปัญหาที่ Session/Cookie ต้องเข้ามาแก้ในบทที่ 6-7</li>
+          <li>ข้อมูลที่ผู้ใช้กรอกจะถูกส่งด้วย <b>GET</b> หรือ <b>POST</b> — เลือกผิดวิธีคือจุดเริ่มต้นของช่องโหว่หลายชนิดที่จะเจอในบทหลัง</li>
         </ul>
       </div>
       <div class="card">
         <h3>ทำไมต้องเรียนเรื่องนี้ก่อนเข้า Security</h3>
         <ul>
           <li>ช่องโหว่เว็บแทบทั้งหมด (SQL Injection, XSS, Session Hijacking) คือการ "ใช้กลไกปกติของเว็บผิดที่ผิดทาง" — ต้องรู้กลไกปกติก่อน ถึงจะเห็นว่าอะไรผิดปกติ</li>
-          <li>โครงสร้าง HTML Form ในบทที่ 2 คือประตูที่ข้อมูลของผู้ใช้ไหลเข้าสู่ระบบ — และเป็นจุดเริ่มต้นของแนวข้อสอบเรื่อง Login/Logout ในบทที่ 6-7</li>
+          <li>URL ที่พิมพ์เข้าไป จะกลายเป็นค่าใน <code>$_GET</code> ของ PHP โดยตรง — จุดที่ SQL Injection เริ่มต้นในบทที่ 4-5</li>
           <li>เข้าใจ Request/Response แล้วจะอ่าน Network tab ใน Browser DevTools ออก — เครื่องมือหลักที่ใช้ตรวจสอบว่าข้อมูลอะไรถูกส่งไปจริง ๆ</li>
         </ul>
       </div>
@@ -36,98 +36,74 @@ import Term from "../../components/Term.astro";
 
   <section>
     <div class="sec-head">
-      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
-        <circle cx="13" cy="13" r="11.5" fill="none" stroke="var(--blk)" stroke-width="1.6"/>
-        <circle cx="13" cy="13" r="4" fill="var(--blk)"/>
-      </svg>
-      <h2>กายวิภาคของการสื่อสารบนเว็บ</h2>
+      <span class="sec-tag">01</span>
+      <h2>คลิกหนึ่งครั้ง เกิดอะไรขึ้นบ้าง</h2>
     </div>
-    <p class="sec-sub">คลิกลิงก์หนึ่งครั้ง ข้อมูลเดินทางผ่าน 4 จุด — Client, Internet, Server, Database — และเดินทางกลับเป็นคู่เสมอ (ขอ-ตอบ)</p>
+    <p class="sec-sub">ตามรอยข้อมูลตั้งแต่ Browser ส่งคำขอ จนถึงคำสั่งที่ไปถึง Database จริง — จุดที่ 3 คือจุดที่ต้องจำไว้ให้ขึ้นใจ</p>
 
-    <div class="figwrap">
-      <figure>
-        <svg viewBox="0 0 980 300" role="img" aria-label="แผนภาพ Client ส่ง Request ผ่าน Internet ไปยัง Server จากนั้น Server ส่ง query หรือ update ไปยัง Database แล้ว Database ตอบข้อมูลกลับมาให้ Server ประกอบเป็น Response ส่งย้อนกลับไปยัง Client ผ่าน Internet อีกครั้ง">
-          <defs>
-            <marker id="db-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ink-3)"/>
-            </marker>
-          </defs>
+    <div class="flow">
+      <div class="flow-step" data-n="1">
+        <h4>Browser ส่ง HTTP Request</h4>
+        <p>ผู้ใช้พิมพ์หรือคลิกลิงก์ Browser แปลง URL เป็นคำขอ</p>
+        <code class="fs-code">GET /course/detail.php?id=5 HTTP/1.1
+Host: www.kku.ac.th</code>
+      </div>
+      <div class="flow-step" data-n="2">
+        <h4>Server รับคำขอและแตกค่า</h4>
+        <p>PHP บน Server อ่าน Query String แล้วแตกเป็นตัวแปรให้ใช้งานทันที</p>
+        <code class="fs-code">$_GET = [ "id" =&gt; "5" ];</code>
+      </div>
+      <div class="flow-step" data-n="3">
+        <h4>Server ประกอบคำสั่งไปถาม Database</h4>
+        <p>โค้ดฝั่ง Server นำค่าที่ได้ไปสร้างคำสั่ง SQL เพื่อดึงข้อมูลจริงจาก Database</p>
+        <code class="fs-code">SELECT * FROM courses WHERE id = 5</code>
+      </div>
+      <div class="flow-step" data-n="4">
+        <h4>Database ตอบผลลัพธ์กลับ</h4>
+        <p>ได้แถวข้อมูลที่ตรงเงื่อนไขกลับมาเป็นตาราง ส่งต่อให้ PHP ประมวลผล</p>
+      </div>
+      <div class="flow-step" data-n="5">
+        <h4>Server ส่ง Response กลับ Browser</h4>
+        <p>PHP ประกอบผลลัพธ์เป็น HTML แล้วส่งกลับเป็นหน้าเว็บที่มองเห็น</p>
+        <code class="fs-code">HTTP/1.1 200 OK
+Content-Type: text/html</code>
+      </div>
+    </div>
 
-          <rect x="20" y="115" width="150" height="70" rx="10" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2.2"/>
-          <text x="95" y="145" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">Client</text>
-          <text x="95" y="165" text-anchor="middle" font-size="10" fill="var(--ink-2)">Web Browser</text>
-
-          <rect x="250" y="115" width="150" height="70" rx="10" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="2.2"/>
-          <text x="325" y="145" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">Internet</text>
-          <text x="325" y="165" text-anchor="middle" font-size="10" fill="var(--ink-2)">HTTP / HTTPS</text>
-
-          <rect x="530" y="115" width="150" height="70" rx="10" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2.2"/>
-          <text x="605" y="145" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">Server</text>
-          <text x="605" y="165" text-anchor="middle" font-size="10" fill="var(--ink-2)">Web Server / App</text>
-
-          <rect x="800" y="115" width="150" height="70" rx="10" fill="var(--card)" stroke="var(--blk)" stroke-width="2.6"/>
-          <text x="875" y="145" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">Database</text>
-          <text x="875" y="165" text-anchor="middle" font-size="10" fill="var(--ink-2)">MySQL</text>
-
-          <line x1="170" y1="138" x2="250" y2="138" stroke="var(--ink-2)" stroke-width="2.2" marker-end="url(#db-arrow)"/>
-          <text x="210" y="126" text-anchor="middle" font-size="10.5" fill="var(--ink)" font-weight="700">Request</text>
-          <line x1="250" y1="163" x2="170" y2="163" stroke="var(--ink-3)" stroke-width="2" marker-end="url(#db-arrow)"/>
-          <text x="210" y="183" text-anchor="middle" font-size="10.5" fill="var(--ink-3)">Response</text>
-
-          <line x1="400" y1="138" x2="530" y2="138" stroke="var(--ink-2)" stroke-width="2.2" marker-end="url(#db-arrow)"/>
-          <text x="465" y="126" text-anchor="middle" font-size="10.5" fill="var(--ink)" font-weight="700">forward request</text>
-          <line x1="530" y1="163" x2="400" y2="163" stroke="var(--ink-3)" stroke-width="2" marker-end="url(#db-arrow)"/>
-          <text x="465" y="183" text-anchor="middle" font-size="10.5" fill="var(--ink-3)">response</text>
-
-          <line x1="680" y1="138" x2="800" y2="138" stroke="var(--blk)" stroke-width="2.2" marker-end="url(#db-arrow)"/>
-          <text x="740" y="126" text-anchor="middle" font-size="10.5" fill="var(--blk)" font-weight="700">query / update</text>
-          <line x1="800" y1="163" x2="680" y2="163" stroke="var(--blk)" stroke-width="2" marker-end="url(#db-arrow)" opacity="0.7"/>
-          <text x="740" y="183" text-anchor="middle" font-size="10.5" fill="var(--blk)" opacity="0.85">data</text>
-
-          <text x="490" y="250" text-anchor="middle" font-size="11.5" fill="var(--ink-2)">แต่ละลูกศรเดินทางเป็นคู่เสมอ — ทุก Request ต้องมี Response กลับมาปิดจบ</text>
-        </svg>
-        <figcaption>Server ไม่ได้ตอบจากตัวเองเสมอไป — หลายครั้งต้องแวะไปถาม Database ก่อน แล้วค่อยประกอบผลลัพธ์เป็น Response ส่งกลับ Client</figcaption>
-      </figure>
+    <div class="fixnote" style="background:var(--coral-soft);margin-top:20px">
+      <b style="color:var(--coral)">สังเกตจุดที่ 3 ให้ดี:</b> ค่า <code>id</code> จาก URL ถูกต่อเข้าไปในคำสั่ง SQL ตรง ๆ โดยไม่มีการตรวจสอบเลย — ถ้าผู้ใช้พิมพ์อย่างอื่นแทนตัวเลขล่ะ จะเกิดอะไรขึ้น? นี่คือจุดเริ่มต้นของ <b>SQL Injection</b> ที่จะเรียนละเอียดตอนถึงบทที่ 4-5 (PHP + MySQL) — จำภาพนี้ไว้ก่อน แล้วจะกลับมาเจออีกครั้ง
     </div>
 
     <div class="grid-3" style="margin-top:20px">
       <div class="card">
         <h3>User Agent</h3>
-        <ul>
-          <li>ทำหน้าที่เป็นตัวแทนผู้ใช้ ส่ง Request ไปยัง Server และรับไฟล์กลับมาแสดงผล</li>
-        </ul>
+        <ul><li>ทำหน้าที่เป็นตัวแทนผู้ใช้ ส่ง Request ไปยัง Server และรับไฟล์กลับมาแสดงผล</li></ul>
       </div>
       <div class="card">
         <h3><Term id="renderingEngine">Rendering Engine</Term></h3>
-        <ul>
-          <li>แปลงโค้ด HTML, CSS, JavaScript ให้กลายเป็นหน้าตาเว็บไซต์ที่มนุษย์อ่านออก</li>
-        </ul>
+        <ul><li>แปลงโค้ด HTML, CSS, JavaScript ให้กลายเป็นหน้าตาเว็บไซต์ที่มนุษย์อ่านออก</li></ul>
       </div>
       <div class="card">
         <h3>Security</h3>
-        <ul>
-          <li>ดูแลการตรวจสอบใบรับรอง SSL/TLS และการจัดการ Cookies ของแต่ละเว็บไซต์</li>
-        </ul>
+        <ul><li>ดูแลการตรวจสอบใบรับรอง SSL/TLS และการจัดการ Cookies ของแต่ละเว็บไซต์</li></ul>
       </div>
     </div>
 
     <div class="fixnote" style="background:var(--slate-soft);margin-top:20px">
-      <b style="color:var(--slate)"><Term id="statelessHttp">Stateless</Term> แปลว่าอะไรในทางปฏิบัติ:</b> พอกด "ถัดไป" บนหน้าเว็บ Server จะมองว่าเป็นคนละคนกับที่เพิ่งกด Login ไปเมื่อกี้ ถ้าไม่มีกลไกอื่นมาช่วยจำ (เช่น Session ที่จะเรียนในบทที่ 6) ระบบจะถามรหัสผ่านซ้ำทุกหน้า — นี่คือเหตุผลที่ต้องมี Cookie/Session เข้ามาเสริม ไม่ใช่ข้อบกพร่องของ HTTP แต่เป็นการออกแบบตั้งแต่ต้น
+      <b style="color:var(--slate)"><Term id="statelessHttp">Stateless</Term> แปลว่าอะไรในทางปฏิบัติ:</b> พอกด "ถัดไป" บนหน้าเว็บ Server จะมองว่าเป็นคนละคนกับที่เพิ่งกด Login ไปเมื่อกี้ ถ้าไม่มีกลไกอื่นมาช่วยจำ (เช่น Session ที่จะเรียนในบทที่ 6) ระบบจะถามรหัสผ่านซ้ำทุกหน้า — นี่คือการออกแบบตั้งแต่ต้น ไม่ใช่ข้อบกพร่อง
     </div>
   </section>
 
   <section>
     <div class="sec-head">
-      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
-        <path d="M4 13h18M4 13l5-5M4 13l5 5" fill="none" stroke="var(--blk)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      <span class="sec-tag">02</span>
       <h2>โครงสร้างของ URL</h2>
     </div>
-    <p class="sec-sub">ทุก URL แตกออกเป็น 4 ส่วนเสมอ — ส่วนสุดท้าย (Query String) คือจุดที่ข้อมูลของผู้ใช้มักหลุดออกมาปนกับที่อยู่เว็บ</p>
+    <p class="sec-sub">ทุก URL แตกออกเป็น 4 ส่วนเสมอ — ส่วนสุดท้าย (Query String) คือจุดที่ข้อมูลของผู้ใช้หลุดเข้ามาปนกับที่อยู่เว็บ และเป็นค่าที่ PHP อ่านผ่าน <code>$_GET</code> โดยตรง</p>
 
     <div class="figwrap">
       <figure>
-        <svg viewBox="0 0 600 70" role="img" aria-label="ตัวอย่าง URL: https:// สีส้มคือ scheme, www.kku.ac.th สีดำคือ domain name, /course/detail.php สีฟ้าคือ path, และ ?id=5 สีทองคือ query string">
+        <svg viewBox="0 0 600 70" role="img" aria-label="ตัวอย่าง URL: https:// สีน้ำตาลแดงคือ scheme, www.kku.ac.th สีดำคือ domain name, /course/detail.php สีฟ้าคือ path, และ ?id=5 สีทองคือ query string">
           <text x="20" y="42" font-family="var(--mono)" font-size="21" font-weight="700">
             <tspan fill="var(--blk)">https://</tspan><tspan fill="var(--ink)">www.kku.ac.th</tspan><tspan fill="var(--slate)">/course/detail.php</tspan><tspan fill="var(--gold)">?id=5</tspan>
           </text>
@@ -154,15 +130,22 @@ import Term from "../../components/Term.astro";
         <ul><li>ข้อมูลเพิ่มเติมหลังเครื่องหมาย <code>?</code> คั่นด้วย <code>&amp;</code> เช่น <code>?id=5</code></li></ul>
       </div>
     </div>
+
+    <div class="filecard" style="margin-top:20px">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">สิ่งที่ PHP เห็น หลัง URL นี้เข้ามา</span>
+      </div>
+      <pre><code>$_GET = [
+    "id" =&gt; "5"
+];</code></pre>
+    </div>
   </section>
 
   <section>
     <div class="sec-head">
-      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
-        <rect x="3" y="6" width="20" height="14" rx="3" fill="none" stroke="var(--blk)" stroke-width="1.8"/>
-        <line x1="3" y1="11" x2="23" y2="11" stroke="var(--blk)" stroke-width="1.8"/>
-      </svg>
-      <h2>GET vs POST — ทางแยกที่ส่งผลต่อความปลอดภัยตั้งแต่ต้น</h2>
+      <span class="sec-tag">03</span>
+      <h2>GET กับ POST — ทางแยกที่ส่งผลต่อความปลอดภัยตั้งแต่ต้น</h2>
     </div>
     <p class="sec-sub">HTML Form ทุกอันต้องเลือกวิธีส่งข้อมูลอย่างใดอย่างหนึ่ง — เลือกผิดวิธีตั้งแต่บทนี้ จะกลายเป็นช่องโหว่ตัวจริงตอนเรียน Login ในบทที่ 6</p>
 
@@ -179,144 +162,164 @@ import Term from "../../components/Term.astro";
       </table>
     </div>
 
-    <div class="exam" style="margin-top:20px">
-      <h4>role=admin ไม่ได้แปลว่าเป็น Admin จริง <span class="tag">เชื่อมโยงบทหลัง</span></h4>
-      <p>ถึง POST จะไม่โชว์ข้อมูลบน URL แต่ก็ <b>ไม่ได้ปลอดภัยอัตโนมัติ</b> — ผู้ใช้ยังแก้ไขค่าที่ส่งไปได้ผ่าน Browser DevTools อยู่ดี ไม่ว่าจะ GET หรือ POST</p>
-      <p>หลักการที่ต้องจำไว้ตลอดวิชานี้: <b>Server ต้องตรวจสอบข้อมูลทุกครั้งที่ได้รับ ไม่เชื่อค่าที่ผู้ใช้ส่งมาโดยตรงเด็ดขาด</b> — รายละเอียดเรื่องนี้จะลงลึกอีกครั้งในบทที่ 2 และกลายเป็นแกนหลักของบทที่ 6-7 (Login/Logout และ Session Security)</p>
+    <div class="attack-flow" style="margin-top:20px">
+      <div class="af-step af-attack">
+        <span class="af-label">Attack</span>
+        <h4>แก้ค่าใน URL ตรง ๆ</h4>
+        <p>เดิม <code>?role=user</code> ผู้ไม่หวังดีพิมพ์แก้เป็น <code>?role=admin</code> เองในแถบที่อยู่ ไม่ต้องใช้เครื่องมือพิเศษเลย</p>
+      </div>
+      <div class="af-step af-risk">
+        <span class="af-label">Risk</span>
+        <h4>ระบบเชื่อค่าที่ส่งมา</h4>
+        <p>ถ้าโค้ดฝั่ง Server อ่านค่า <code>role</code> จาก Request แล้วให้สิทธิ์ตามนั้นทันที ผู้ใช้ทั่วไปก็ปลอมเป็น Admin ได้</p>
+      </div>
+      <div class="af-step af-fix">
+        <span class="af-label">Fix</span>
+        <h4>ตรวจสิทธิ์จาก Server เสมอ</h4>
+        <p>สิทธิ์ต้องมาจาก Session/Database ที่ Server ควบคุมเอง ไม่ใช่ค่าที่ผู้ใช้ส่งมาโดยตรง — รายละเอียดเต็มอยู่ในบทที่ 2 และ 6-7</p>
+      </div>
     </div>
   </section>
 
   <section>
     <div class="sec-head">
-      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
-        <circle cx="13" cy="13" r="10" fill="none" stroke="var(--blk)" stroke-width="1.8"/>
-        <text x="13" y="17" text-anchor="middle" font-size="11" font-weight="700" fill="var(--blk)">?</text>
-      </svg>
-      <h2>HTTP Status Code — Server ตอบกลับมายังไง</h2>
+      <span class="sec-tag">04</span>
+      <h2>HTTP Status Code</h2>
     </div>
     <p class="sec-sub">ตัวเลข 3 หลักในทุก Response บอกผลลัพธ์ของ Request นั้นทันที ไม่ต้องอ่านเนื้อหาก็รู้ว่าสำเร็จหรือพัง</p>
 
     <div class="grid-3">
-      <div class="knob">
-        <span class="where c3">2xx</span>
-        <h3>Success</h3>
-        <p class="why" style="margin:0">คำขอสำเร็จ — <code>200 OK</code>, <code>201 Created</code></p>
+      <div class="card">
+        <h3><span class="sec-tag" style="background:var(--fwd)">2xx</span>&nbsp; Success</h3>
+        <ul><li>คำขอสำเร็จ — <code>200 OK</code>, <code>201 Created</code></li></ul>
       </div>
-      <div class="knob">
-        <span class="where c2">3xx</span>
-        <h3>Redirection</h3>
-        <p class="why" style="margin:0">มีการเปลี่ยนเส้นทาง — <code>301 Moved Permanently</code>, <code>302 Found</code></p>
+      <div class="card">
+        <h3><span class="sec-tag" style="background:var(--gold)">3xx</span>&nbsp; Redirection</h3>
+        <ul><li>เปลี่ยนเส้นทาง — <code>301 Moved Permanently</code>, <code>302 Found</code></li></ul>
       </div>
-      <div class="knob">
-        <span class="where c1">4xx</span>
-        <h3>Client Error</h3>
-        <p class="why" style="margin:0">Client ส่งคำขอผิดพลาด — <code>400 Bad Request</code>, <code>401 Unauthorized</code>, <code>404 Not Found</code></p>
+      <div class="card">
+        <h3><span class="sec-tag" style="background:var(--coral)">4xx</span>&nbsp; Client Error</h3>
+        <ul><li>Client ผิดพลาด — <code>400 Bad Request</code>, <code>401 Unauthorized</code>, <code>404 Not Found</code></li></ul>
       </div>
-      <div class="knob">
-        <span class="where c1">5xx</span>
-        <h3>Server Error</h3>
-        <p class="why" style="margin:0">Server ทำงานผิดพลาด — <code>500 Internal Server Error</code>, <code>503 Service Unavailable</code></p>
+      <div class="card">
+        <h3><span class="sec-tag" style="background:var(--blk)">5xx</span>&nbsp; Server Error</h3>
+        <ul><li>Server ผิดพลาด — <code>500 Internal Server Error</code>, <code>503 Service Unavailable</code></li></ul>
       </div>
-      <div class="knob">
-        <span class="where c3">1xx</span>
-        <h3>Informational</h3>
-        <p class="why" style="margin:0">แจ้งข้อมูลเบื้องต้นระหว่างทำงาน — <code>100 Continue</code></p>
+      <div class="card">
+        <h3><span class="sec-tag" style="background:var(--slate)">1xx</span>&nbsp; Informational</h3>
+        <ul><li>แจ้งข้อมูลเบื้องต้นระหว่างทำงาน — <code>100 Continue</code></li></ul>
       </div>
     </div>
   </section>
 
   <section>
     <div class="sec-head">
-      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
-        <path d="M6 3 L4 13 L6 23" fill="none" stroke="var(--blk)" stroke-width="1.8" stroke-linecap="round"/>
-        <path d="M20 3 L22 13 L20 23" fill="none" stroke="var(--blk)" stroke-width="1.8" stroke-linecap="round"/>
-      </svg>
+      <span class="sec-tag">05</span>
       <h2>HTML เบื้องต้น</h2>
     </div>
-    <p class="sec-sub">โครงสร้างเอกสารพื้นฐานที่จะเห็นซ้ำตลอดทั้งวิชา — และสองแอตทริบิวต์ที่จะกลับมาเจอบ่อยที่สุดตอนเขียน CSS/JavaScript</p>
+    <p class="sec-sub">โครงสร้างเอกสารที่จะเห็นซ้ำตลอดทั้งวิชา — และสองแอตทริบิวต์ที่จะกลับมาเจอบ่อยที่สุดตอนเขียน CSS/JavaScript</p>
 
-    <div class="grid-2">
-      <div class="knob">
-        <span class="where c1">โครงสร้างเอกสาร</span>
-        <h3>DOCTYPE, head, body</h3>
-        <pre>&lt;!DOCTYPE html&gt;
-&lt;html lang="th"&gt;
-&lt;head&gt;
-  &lt;meta charset="UTF-8"&gt;
-  &lt;title&gt;หน้าเว็บแรกของฉัน&lt;/title&gt;
-&lt;/head&gt;
-&lt;body&gt;
-  &lt;h1&gt;สวัสดี HTML&lt;/h1&gt;
-  &lt;p&gt;นี่คือย่อหน้าแรกของหน้าเว็บ&lt;/p&gt;
-&lt;/body&gt;
-&lt;/html&gt;</pre>
-        <p class="why" style="margin:0"><code>&lt;!DOCTYPE html&gt;</code> บอกมาตรฐาน HTML5 · <code>&lt;head&gt;</code> เก็บข้อมูลกำกับหน้า (title, meta, CSS) · <code>&lt;body&gt;</code> คือเนื้อหาที่ผู้ใช้เห็นจริงในเบราว์เซอร์</p>
+    <div class="filecard">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">index.html</span>
       </div>
-      <div class="knob">
-        <span class="where c2">Element vs Attribute</span>
-        <h3>ส่วนประกอบของแท็กหนึ่งตัว</h3>
-        <pre>&lt;a href="http://www.kku.ac.th"&gt;Link to KKU&lt;/a&gt;</pre>
-        <p class="why">Element คือส่วนประกอบทั้งก้อน (แท็กเปิด + เนื้อหา + แท็กปิด) ส่วน Attribute คือข้อมูลเพิ่มเติมในแท็กเปิด เช่น <code>href</code>, <code>src</code>, <code>alt</code>, <code>id</code>, <code>class</code></p>
-        <p class="why" style="margin:0"><b><code>class</code> vs <code>id</code>:</b> <code>class</code> ใช้ซ้ำได้หลาย element เพื่อจัดกลุ่มสไตล์เดียวกัน ส่วน <code>id</code> ควรมีแค่ตัวเดียวในหน้า — ทั้งคู่คือจุดที่ JavaScript ใช้ "จับ" element เพื่ออ่านหรือแก้ไขค่า ซึ่งจะกลับมาสำคัญมากตอนพูดถึงช่องโหว่ที่ยิงโค้ดแทรกเข้าไปในหน้าเว็บ</p>
+      <pre><code>&lt;<span class="fc-tag">!DOCTYPE html</span>&gt;
+&lt;<span class="fc-tag">html</span> <span class="fc-attr">lang</span>=<span class="fc-str">"th"</span>&gt;
+&lt;<span class="fc-tag">head</span>&gt;
+  &lt;<span class="fc-tag">meta</span> <span class="fc-attr">charset</span>=<span class="fc-str">"UTF-8"</span>&gt;
+  &lt;<span class="fc-tag">title</span>&gt;หน้าเว็บแรกของฉัน&lt;/<span class="fc-tag">title</span>&gt;
+&lt;/<span class="fc-tag">head</span>&gt;
+&lt;<span class="fc-tag">body</span>&gt;
+  &lt;<span class="fc-tag">h1</span>&gt;สวัสดี HTML&lt;/<span class="fc-tag">h1</span>&gt;
+  &lt;<span class="fc-tag">p</span>&gt;นี่คือย่อหน้าแรกของหน้าเว็บ&lt;/<span class="fc-tag">p</span>&gt;
+&lt;/<span class="fc-tag">body</span>&gt;
+&lt;/<span class="fc-tag">html</span>&gt;</code></pre>
+      <div class="notes">
+        <ol>
+          <li><code>&lt;!DOCTYPE html&gt;</code> บอกมาตรฐาน HTML5</li>
+          <li><code>&lt;head&gt;</code> เก็บข้อมูลกำกับหน้า (title, meta, CSS) — ไม่แสดงบนหน้าจอ</li>
+          <li><code>&lt;body&gt;</code> คือเนื้อหาที่ผู้ใช้เห็นจริงในเบราว์เซอร์</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3>Element vs Attribute</h3>
+        <ul>
+          <li><code>&lt;a href="..."&gt;Link&lt;/a&gt;</code> — Element คือทั้งก้อน (แท็กเปิด + เนื้อหา + แท็กปิด)</li>
+          <li>Attribute คือข้อมูลเพิ่มเติมในแท็กเปิด เช่น <code>href</code>, <code>src</code>, <code>alt</code>, <code>id</code>, <code>class</code></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><code>class</code> vs <code>id</code></h3>
+        <ul>
+          <li><code>class</code> ใช้ซ้ำได้หลาย element เพื่อจัดกลุ่มสไตล์เดียวกัน</li>
+          <li><code>id</code> ควรมีแค่ตัวเดียวในหน้า — ทั้งคู่คือจุดที่ JavaScript ใช้ "จับ" element เพื่ออ่าน/แก้ไขค่า ซึ่งจะสำคัญมากตอนพูดถึงช่องโหว่ที่ยิงโค้ดแทรกเข้าไปในหน้าเว็บ (XSS)</li>
+        </ul>
       </div>
     </div>
   </section>
 
   <section>
     <div class="sec-head">
-      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
-        <rect x="3" y="3" width="20" height="20" rx="4" fill="none" stroke="var(--blk)" stroke-width="1.8"/>
-        <line x1="8" y1="9" x2="18" y2="9" stroke="var(--blk)" stroke-width="1.8"/>
-        <line x1="8" y1="14" x2="18" y2="14" stroke="var(--blk)" stroke-width="1.8"/>
-        <line x1="8" y1="19" x2="14" y2="19" stroke="var(--blk)" stroke-width="1.8"/>
-      </svg>
+      <span class="sec-tag">06</span>
       <h2>CSS เบื้องต้น</h2>
     </div>
-    <p class="sec-sub">CSS ย่อมาจาก Cascading Style Sheets — เขียนได้ 3 ที่ ใช้แนวคิดกล่องเดียวกันทั้งหมด</p>
+    <p class="sec-sub">Cascading Style Sheets — เขียนได้ 3 ที่ ใช้แนวคิดกล่องเดียวกันทั้งหมด</p>
 
     <div class="grid-3">
-      <div class="knob">
-        <span class="where c1">1. Inline</span>
-        <h3>attribute style โดยตรง</h3>
-        <pre>&lt;p style="color: blue;"&gt;
+      <div class="filecard">
+        <div class="fc-head"><span class="fc-dots"><span></span><span></span><span></span></span><span class="fc-name">1. Inline</span></div>
+        <pre><code>&lt;<span class="fc-tag">p</span> <span class="fc-attr">style</span>=<span class="fc-str">"color: blue;"</span>&gt;
   ข้อความ
-&lt;/p&gt;</pre>
-        <p class="why" style="margin:0">ตกแต่งเฉพาะ element เดียว ผสมกับเนื้อหาเลย</p>
+&lt;/<span class="fc-tag">p</span>&gt;</code></pre>
       </div>
-      <div class="knob">
-        <span class="where c2">2. Internal</span>
-        <h3>แท็ก &lt;style&gt; ใน &lt;head&gt;</h3>
-        <pre>&lt;style&gt;
-  p &#123; color: green; &#125;
-&lt;/style&gt;</pre>
-        <p class="why" style="margin:0">คุมทุก <code>&lt;p&gt;</code> ในหน้านี้หน้าเดียว</p>
+      <div class="filecard">
+        <div class="fc-head"><span class="fc-dots"><span></span><span></span><span></span></span><span class="fc-name">2. Internal</span></div>
+        <pre><code>&lt;<span class="fc-tag">style</span>&gt;
+  p <span class="fc-blank">&#123;</span> color: green; <span class="fc-blank">&#125;</span>
+&lt;/<span class="fc-tag">style</span>&gt;</code></pre>
       </div>
-      <div class="knob">
-        <span class="where c3">3. External</span>
-        <h3>ไฟล์ .css แยก + &lt;link&gt;</h3>
-        <pre>&lt;link rel="stylesheet"
-      href="style.css"&gt;</pre>
-        <p class="why" style="margin:0">คุมได้หลายหน้าเว็บพร้อมกันจากไฟล์เดียว — วิธีที่ใช้จริงในโปรเจกต์</p>
+      <div class="filecard">
+        <div class="fc-head"><span class="fc-dots"><span></span><span></span><span></span></span><span class="fc-name">3. External</span></div>
+        <pre><code>&lt;<span class="fc-tag">link</span> <span class="fc-attr">rel</span>=<span class="fc-str">"stylesheet"</span>
+      <span class="fc-attr">href</span>=<span class="fc-str">"style.css"</span>&gt;</code></pre>
       </div>
     </div>
+    <p class="sec-sub" style="margin-left:0;margin-top:10px">External คือวิธีที่ใช้จริงในโปรเจกต์ — คุมได้หลายหน้าเว็บพร้อมกันจากไฟล์เดียว</p>
 
     <div class="figwrap" style="margin-top:20px">
       <figure>
         <svg viewBox="0 0 340 300" role="img" aria-label="Box Model: กล่องซ้อนกัน 4 ชั้นจากนอกสุดคือ margin, border, padding และ content อยู่ตรงกลาง">
           <rect x="10" y="10" width="320" height="280" rx="10" fill="var(--coral-soft)" opacity="0.5"/>
           <text x="24" y="30" font-size="12" font-weight="700" fill="var(--coral)">margin</text>
-
           <rect x="45" y="45" width="250" height="210" rx="8" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/>
           <text x="59" y="65" font-size="12" font-weight="700" fill="var(--ink-2)">border</text>
-
           <rect x="75" y="75" width="190" height="150" rx="6" fill="var(--fwd)" opacity="0.18"/>
           <text x="89" y="95" font-size="12" font-weight="700" fill="var(--fwd)">padding</text>
-
           <rect x="110" y="115" width="120" height="70" rx="6" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.6"/>
           <text x="170" y="155" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">content</text>
         </svg>
         <figcaption><Term id="boxModel">Box Model</Term> — ทุก element บนหน้าเว็บถูกมองเป็นกล่องซ้อนกันแบบนี้เสมอ ไม่ว่าจะเป็นข้อความ รูปภาพ หรือปุ่ม</figcaption>
       </figure>
+    </div>
+  </section>
+
+  <section>
+    <div class="drill">
+      <span class="dr-label">แบบฝึกหัดท้ายบท · จับคู่คำกับความหมาย</span>
+      <h4>จับคู่ศัพท์ด้านซ้าย กับความหมายด้านขวา (สลับลำดับแล้ว)</h4>
+      <div class="match-row"><span>1. Client-Server Model</span><span class="blank">ก. ส่วนของ Browser ที่แปลง HTML/CSS/JS เป็นหน้าเว็บที่มองเห็น</span></div>
+      <div class="match-row"><span>2. Stateless</span><span class="blank">ข. โมเดลกล่อง 4 ชั้น: content → padding → border → margin</span></div>
+      <div class="match-row"><span>3. Query String</span><span class="blank">ค. Server ไม่จดจำสถานะระหว่าง Request แต่ละครั้ง</span></div>
+      <div class="match-row"><span>4. Box Model</span><span class="blank">ง. สถาปัตยกรรมแบ่งหน้าที่ — Client ส่งคำขอ Server ตอบกลับ</span></div>
+      <div class="match-row"><span>5. Rendering Engine</span><span class="blank">จ. ข้อมูลต่อท้าย URL หลัง ? คั่นด้วย &amp;</span></div>
+      <details>
+        <summary>เฉลย</summary>
+        <div class="answer">1-ง &nbsp; 2-ค &nbsp; 3-จ &nbsp; 4-ข &nbsp; 5-ก</div>
+      </details>
     </div>
   </section>
 

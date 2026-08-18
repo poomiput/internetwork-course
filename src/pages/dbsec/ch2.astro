@@ -15,41 +15,33 @@ import Term from "../../components/Term.astro";
 
   <section>
     <div class="sec-head">
-      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
-        <path d="M4 13h18M4 13l5-5M4 13l5 5" fill="none" stroke="var(--blk)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      <span class="sec-tag">01</span>
       <h2>การทำงานของ HTML Form</h2>
     </div>
-    <p class="sec-sub">จากกรอกข้อมูลหนึ่งช่อง จนถึง Server บันทึกลง Database — 6 ขั้นตอนที่เกิดขึ้นทุกครั้งที่กด Submit</p>
+    <p class="sec-sub">จากกรอกข้อมูลหนึ่งช่อง จนถึง Server บันทึกลง Database — จุดที่ 5 คือจุดที่สำคัญที่สุดของทั้งวิชานี้</p>
 
-    <div class="pathway">
-      <div class="pw-step">
-        <span class="n" style="color:var(--blk)">ขั้น 01</span>
+    <div class="flow">
+      <div class="flow-step" data-n="1">
         <h4>ผู้ใช้กรอกข้อมูล</h4>
         <p>กรอกค่าลงในแต่ละช่อง <code>&lt;input&gt;</code> ภายใน <code>&lt;form&gt;</code></p>
       </div>
-      <div class="pw-step">
-        <span class="n" style="color:var(--blk)">ขั้น 02</span>
+      <div class="flow-step" data-n="2">
         <h4>Browser รวบรวมค่า</h4>
-        <p>เก็บค่าจาก input ทุกตัวที่มี attribute <code>name</code> เท่านั้น — ตัวที่ไม่มี name จะถูกข้ามไป</p>
+        <p>เก็บค่าจาก input ทุกตัวที่มี attribute <code>name</code> เท่านั้น — ตัวที่ไม่มี name จะถูกข้ามไปเฉย ๆ</p>
       </div>
-      <div class="pw-step">
-        <span class="n" style="color:var(--blk)">ขั้น 03</span>
-        <h4>สร้าง HTTP Request</h4>
-        <p>Browser ประกอบข้อมูลเป็นคำขอตาม <code>action</code> และ <code>method</code> ที่ระบุไว้</p>
+      <div class="flow-step" data-n="3">
+        <h4>Browser สร้าง HTTP Request</h4>
+        <p>ประกอบข้อมูลเป็นคำขอตาม <code>action</code> และ <code>method</code> ที่ระบุไว้ในฟอร์ม</p>
       </div>
-      <div class="pw-step">
-        <span class="n" style="color:var(--blk)">ขั้น 04</span>
+      <div class="flow-step" data-n="4">
         <h4>ส่งด้วย GET หรือ POST</h4>
         <p>ข้อมูลเดินทางผ่าน Query String (GET) หรือ Message Body (POST)</p>
       </div>
-      <div class="pw-step">
-        <span class="n" style="color:var(--blk)">ขั้น 05</span>
+      <div class="flow-step" data-n="5">
         <h4>Server รับและตรวจสอบ</h4>
-        <p>จุดสำคัญที่สุดของบทนี้ — Server ต้องตรวจซ้ำ ไม่เชื่อค่าที่ส่งมาทันที</p>
+        <p><b>Server ต้องตรวจซ้ำเสมอ ไม่เชื่อค่าที่ส่งมาทันที</b> — ไม่ว่าฟอร์มจะจำกัดตัวเลือกไว้แค่ไหนก็ตาม</p>
       </div>
-      <div class="pw-step">
-        <span class="n" style="color:var(--blk)">ขั้น 06</span>
+      <div class="flow-step" data-n="6">
         <h4>ประมวลผล/บันทึก</h4>
         <p>ผ่านการตรวจสอบแล้วเท่านั้น ถึงจะนำไปใช้งานหรือเขียนลง Database</p>
       </div>
@@ -58,37 +50,47 @@ import Term from "../../components/Term.astro";
 
   <section>
     <div class="sec-head">
-      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
-        <rect x="3" y="6" width="20" height="14" rx="3" fill="none" stroke="var(--blk)" stroke-width="1.8"/>
-        <line x1="3" y1="11" x2="23" y2="11" stroke="var(--blk)" stroke-width="1.8"/>
-      </svg>
+      <span class="sec-tag">02</span>
       <h2>&lt;form&gt; และ name / id / value</h2>
     </div>
     <p class="sec-sub">สามแอตทริบิวต์ที่หน้าตาคล้ายกันแต่ทำหน้าที่ต่างกันโดยสิ้นเชิง — สับสนสามตัวนี้คือสาเหตุอันดับต้น ๆ ของฟอร์มที่ส่งข้อมูลไม่ถูกช่อง</p>
 
-    <div class="grid-2">
-      <div class="knob">
-        <span class="where c1">โครงสร้าง</span>
-        <h3>action + method</h3>
-        <pre>&lt;form action="login.php" method="post"&gt;
-  &lt;label for="user"&gt;Username:&lt;/label&gt;
-  &lt;input type="text" id="user" name="username"&gt;
-
-  &lt;label for="pass"&gt;Password:&lt;/label&gt;
-  &lt;input type="password" id="pass" name="password"&gt;
-
-  &lt;input type="submit" value="Login"&gt;
-&lt;/form&gt;</pre>
-        <p class="why" style="margin:0"><code>action</code> คือ URL ปลายทางบน Server ที่จะประมวลผล (เช่น <code>login.php</code>) ส่วน <code>method</code> คือวิธีส่ง — มาตรฐานที่ใช้บ่อยที่สุดคือ <code>get</code> และ <code>post</code></p>
+    <div class="filecard">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">login.html</span>
       </div>
-      <div class="knob">
-        <span class="where c2">ตัวอย่าง</span>
-        <h3><Term id="nameAttribute">name</Term> vs id vs value</h3>
-        <pre>&lt;input type="radio" id="user"
-       name="role" value="user"&gt;
-&lt;label for="user"&gt;User&lt;/label&gt;</pre>
-        <p class="why">แต่ละแอตทริบิวต์ตอบคำถามคนละข้อ:</p>
-        <p class="why" style="margin:0"><b>id</b> = "นี่คือ element ตัวไหน" (เชื่อมกับ <code>&lt;label for&gt;</code>) · <b>name</b> = "ข้อมูลนี้ชื่ออะไรตอนส่งไป Server" · <b>value</b> = "ถ้าถูกเลือก/ส่ง ค่าที่ไปคืออะไร"</p>
+      <pre><code>&lt;<span class="fc-tag">form</span> <span class="fc-attr">action</span>=<span class="fc-str">"login.php"</span> <span class="fc-attr">method</span>=<span class="fc-str">"post"</span>&gt;
+  &lt;<span class="fc-tag">label</span> <span class="fc-attr">for</span>=<span class="fc-str">"user"</span>&gt;Username:&lt;/<span class="fc-tag">label</span>&gt;
+  &lt;<span class="fc-tag">input</span> <span class="fc-attr">type</span>=<span class="fc-str">"text"</span> <span class="fc-attr">id</span>=<span class="fc-str">"user"</span> <span class="fc-attr">name</span>=<span class="fc-str">"username"</span>&gt;
+
+  &lt;<span class="fc-tag">label</span> <span class="fc-attr">for</span>=<span class="fc-str">"pass"</span>&gt;Password:&lt;/<span class="fc-tag">label</span>&gt;
+  &lt;<span class="fc-tag">input</span> <span class="fc-attr">type</span>=<span class="fc-str">"password"</span> <span class="fc-attr">id</span>=<span class="fc-str">"pass"</span> <span class="fc-attr">name</span>=<span class="fc-str">"password"</span>&gt;
+
+  &lt;<span class="fc-tag">input</span> <span class="fc-attr">type</span>=<span class="fc-str">"submit"</span> <span class="fc-attr">value</span>=<span class="fc-str">"Login"</span>&gt;
+&lt;/<span class="fc-tag">form</span>&gt;</code></pre>
+      <div class="notes">
+        <ol>
+          <li><code>action="login.php"</code> — URL ปลายทางบน Server ที่จะประมวลผลฟอร์มนี้</li>
+          <li><code>method="post"</code> — วิธีส่งข้อมูล มาตรฐานที่ใช้บ่อยที่สุดคือ <code>get</code> และ <code>post</code></li>
+          <li><code>id="user"</code> ผูกกับ <code>&lt;label for="user"&gt;</code> — ไม่ถูกส่งไป Server</li>
+          <li><code>name="username"</code> — ชื่อที่ Server จะใช้อ่านค่านี้ (<code>$_POST['username']</code>)</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="grid-3" style="margin-top:20px">
+      <div class="card">
+        <h3>id</h3>
+        <ul><li>"นี่คือ element ตัวไหน" ใช้เชื่อมกับ <code>&lt;label for&gt;</code> — ไม่เกี่ยวกับข้อมูลที่ส่งไป Server เลย</li></ul>
+      </div>
+      <div class="card">
+        <h3><Term id="nameAttribute">name</Term></h3>
+        <ul><li>"ข้อมูลนี้ชื่ออะไรตอนส่งไป Server" — ถ้าไม่มี <code>name</code> ข้อมูลจะไม่ถูกส่งไปเลย</li></ul>
+      </div>
+      <div class="card">
+        <h3>value</h3>
+        <ul><li>"ถ้าถูกเลือก/ส่ง ค่าที่ไปคืออะไร" — เช่นค่าของ radio หรือข้อความเริ่มต้นใน input</li></ul>
       </div>
     </div>
 
@@ -97,7 +99,6 @@ import Term from "../../components/Term.astro";
         <caption>Form Element ที่ใช้บ่อย</caption>
         <thead><tr><th scope="col">Element</th><th scope="col">การใช้งาน</th></tr></thead>
         <tbody>
-          <tr><th scope="row">&lt;label&gt;</th><td>ป้ายกำกับ ผูกกับ input ผ่าน <code>for</code> = <code>id</code> ของ input นั้น</td></tr>
           <tr><th scope="row">&lt;select&gt; / &lt;option&gt;</th><td>รายการตัวเลือกแบบ Drop-down</td></tr>
           <tr><th scope="row">&lt;textarea&gt;</th><td>ช่องกรอกข้อความหลายบรรทัด</td></tr>
           <tr><th scope="row">&lt;fieldset&gt; / &lt;legend&gt;</th><td>จัดกลุ่มข้อมูลในฟอร์มพร้อมหัวข้อกำกับกลุ่ม</td></tr>
@@ -109,55 +110,55 @@ import Term from "../../components/Term.astro";
 
   <section>
     <div class="sec-head">
-      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
-        <path d="M13 3v20M3 13h20" stroke="var(--blk)" stroke-width="1.8" stroke-linecap="round"/>
-      </svg>
+      <span class="sec-tag">03</span>
       <h2>GET กับ POST หน้าตาจริงใน DevTools</h2>
     </div>
     <p class="sec-sub">ฟอร์มเดียวกัน กรอกข้อมูลเหมือนกัน แต่เปลี่ยน <code>method</code> แล้วสิ่งที่เห็นใน Network tab ต่างกันโดยสิ้นเชิง</p>
 
     <div class="grid-2">
-      <div class="knob">
-        <span class="where c1">method="get"</span>
-        <h3>ข้อมูลไปโผล่ที่ Address Bar</h3>
-        <p class="why">DevTools → Network → Query String Parameters</p>
-        <p class="out">student_register.html?
+      <div class="filecard">
+        <div class="fc-head"><span class="fc-dots"><span></span><span></span><span></span></span><span class="fc-name">method="get" — Query String Parameters</span></div>
+        <pre><code>student_register.html?
 fullname=Alice+Green
-&email=alice%40kku.ac.th
-&password=123456
-&role=user</p>
-        <p class="why" style="margin:0">มองเห็นได้ตรง ๆ คัดลอกไปวางที่อื่นได้ แก้ไขเองในแถบ URL ได้เลย — <b>ห้ามใช้กับข้อมูลอ่อนไหวเด็ดขาด</b></p>
+&amp;email=alice%40kku.ac.th
+&amp;password=123456
+&amp;role=user</code></pre>
+        <div class="notes"><p style="margin:0;font-size:.86rem;color:var(--ink-2)">มองเห็นได้ตรง ๆ คัดลอกไปวางที่อื่นได้ แก้ไขเองในแถบ URL ได้เลย — <b>ห้ามใช้กับข้อมูลอ่อนไหวเด็ดขาด</b></p></div>
       </div>
-      <div class="knob">
-        <span class="where c3">method="post"</span>
-        <h3>ข้อมูลอยู่ใน Message Body</h3>
-        <p class="why">DevTools → Network → Payload / Form Data</p>
-        <p class="out">student_register.html
-
-fullname: Alice Green
+      <div class="filecard">
+        <div class="fc-head"><span class="fc-dots"><span></span><span></span><span></span></span><span class="fc-name">method="post" — Payload / Form Data</span></div>
+        <pre><code>fullname: Alice Green
 email: alice@kku.ac.th
 password: 123456
-role: user</p>
-        <p class="why" style="margin:0">URL สั้นสะอาด ไม่มีข้อมูลติดไปด้วย แต่ <b>POST ไม่ได้ปลอดภัยอัตโนมัติ</b> — ต้องใช้ HTTPS ร่วมด้วยเสมอ และยังเปิดดูได้จาก DevTools ฝั่ง Client อยู่ดี</p>
+role: user</code></pre>
+        <div class="notes"><p style="margin:0;font-size:.86rem;color:var(--ink-2)">URL สั้นสะอาด ไม่มีข้อมูลติดไปด้วย แต่ <b>POST ไม่ได้ปลอดภัยอัตโนมัติ</b> — ต้องใช้ HTTPS ร่วมด้วยเสมอ และยังเปิดดูได้จาก DevTools ฝั่ง Client อยู่ดี</p></div>
       </div>
     </div>
   </section>
 
   <section>
     <div class="sec-head">
-      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
-        <path d="M13 4 L23 21 L3 21 Z" fill="none" stroke="var(--coral)" stroke-width="1.8" stroke-linejoin="round"/>
-        <line x1="13" y1="10" x2="13" y2="15.5" stroke="var(--coral)" stroke-width="1.8" stroke-linecap="round"/>
-        <circle cx="13" cy="18.3" r="1.1" fill="var(--coral)"/>
-      </svg>
+      <span class="sec-tag">04</span>
       <h2><Term id="untrustedInput">Untrusted Input</Term> — ข้อมูลจากผู้ใช้เชื่อไม่ได้เสมอ</h2>
     </div>
     <p class="sec-sub">แนวคิดที่สำคัญที่สุดของบทนี้ และเป็นรากฐานของช่องโหว่เว็บแทบทุกชนิดที่จะเจอตลอดวิชา</p>
 
-    <div class="exam">
-      <h4>ผู้ใช้แก้ไข URL ได้ตรง ๆ <span class="tag">ตัวอย่างจริง</span></h4>
-      <p><b>ข้อมูลที่ส่งเดิม:</b> <code>?username=alice&amp;password=123456&amp;role=user</code></p>
-      <p style="margin:0"><b>ผู้ไม่หวังดีแก้ไข:</b> <code>?username=admin&amp;password=admin123&amp;role=admin</code></p>
+    <div class="attack-flow">
+      <div class="af-step af-attack">
+        <span class="af-label">Attack</span>
+        <h4>แก้ไข URL ตรง ๆ</h4>
+        <p>ข้อมูลเดิม <code>?username=alice&amp;password=123456&amp;role=user</code> ผู้ไม่หวังดีแก้เป็น <code>?username=admin&amp;password=admin123&amp;role=admin</code></p>
+      </div>
+      <div class="af-step af-risk">
+        <span class="af-label">Risk</span>
+        <h4>Server เชื่อค่าที่ส่งมา</h4>
+        <p>ถ้าฝั่ง Server อ่านค่า <code>role</code> แล้วอนุญาตตามนั้นทันทีโดยไม่ตรวจ ผู้ใช้ทั่วไปก็ได้สิทธิ์ Admin ไปฟรี ๆ</p>
+      </div>
+      <div class="af-step af-fix">
+        <span class="af-label">Fix</span>
+        <h4>ตรวจซ้ำที่ Server เสมอ</h4>
+        <p>ตรวจสิทธิ์จริงจาก Session/Database ทุกครั้งที่รับ Request ไม่ว่าค่าที่ส่งมาจะดูถูกต้องแค่ไหนก็ตาม</p>
+      </div>
     </div>
 
     <div class="grid-2" style="margin-top:20px">
@@ -180,50 +181,58 @@ role: user</p>
     </div>
 
     <div class="fixnote" style="background:var(--gold-soft);margin-top:20px">
-      <b style="color:var(--gold)">HTML validation ช่วยจัดรูปแบบ ไม่ใช่ระบบความปลอดภัย:</b> ต่อให้ใส่ <code>required</code>, <code>type="email"</code>, <code>pattern</code> หรือ <code>maxlength</code> ครบทุกช่อง ผู้ใช้ก็ยังปิด validation ในเบราว์เซอร์ แก้ HTML ผ่าน DevTools หรือส่ง Request เองโดยไม่ผ่านหน้าเว็บได้เสมอ เช่น ฟอร์มมี radio ให้เลือกแค่ <code>user</code> กับ <code>admin</code> แต่ผู้ใช้ยังส่งค่า <code>role=superadmin</code> เข้ามาตรง ๆ ได้ — HTML ช่วยจัดการข้อมูลเบื้องต้นได้เท่านั้น Server ต้องตรวจซ้ำเสมอ
+      <b style="color:var(--gold)">HTML validation ช่วยจัดรูปแบบ ไม่ใช่ระบบความปลอดภัย:</b> ต่อให้ใส่ <code>required</code>, <code>type="email"</code>, <code>pattern</code> หรือ <code>maxlength</code> ครบทุกช่อง ฟอร์มมี radio ให้เลือกแค่ <code>user</code> กับ <code>admin</code> ผู้ใช้ก็ยังส่งค่า <code>role=superadmin</code> เข้ามาตรง ๆ ได้อยู่ดี ผ่านการปิด validation ในเบราว์เซอร์ แก้ HTML ผ่าน DevTools หรือส่ง Request เองโดยไม่ผ่านหน้าเว็บเลย — HTML ช่วยจัดการข้อมูลเบื้องต้นได้เท่านั้น Server ต้องตรวจซ้ำเสมอ
     </div>
   </section>
 
   <section>
     <div class="sec-head">
-      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
-        <path d="M13 2 L23 7 V13 C23 19 18.5 23 13 24 C7.5 23 3 19 3 13 V7 Z" fill="none" stroke="var(--blk)" stroke-width="1.7" stroke-linejoin="round"/>
-      </svg>
+      <span class="sec-tag">05</span>
       <h2>แนวทางจัดการ Input อย่างปลอดภัย</h2>
     </div>
-    <p class="sec-sub">6 หลักที่ใช้ประกอบกัน ไม่ใช่เลือกใช้แค่ข้อใดข้อหนึ่ง — และเป็นกรอบคิดที่จะใช้ซ้ำตลอดวิชานี้</p>
+    <p class="sec-sub">6 หลักที่ใช้ประกอบกัน ไม่ใช่เลือกใช้แค่ข้อใดข้อหนึ่ง — กรอบคิดที่จะใช้ซ้ำตลอดวิชานี้</p>
 
-    <div class="cascade">
-      <div class="rung" style="border-top-color:var(--slate)">
-        <span class="step-n" style="color:var(--slate)">1</span>
-        <h4>Validate</h4>
-        <p class="what">ตรวจรูปแบบให้ถูกต้อง เช่น email, phone, ความยาว password</p>
+    <div class="grid-3">
+      <div class="card">
+        <h3><span class="sec-tag" style="background:var(--slate)">1</span>&nbsp; Validate</h3>
+        <ul><li>ตรวจรูปแบบให้ถูกต้อง เช่น email, phone, ความยาว password</li></ul>
       </div>
-      <div class="rung" style="border-top-color:var(--fwd)">
-        <span class="step-n" style="color:var(--fwd)">2</span>
-        <h4><Term id="sanitizeInput">Sanitize</Term></h4>
-        <p class="what">ทำความสะอาดข้อมูล ตัดช่องว่าง ลบ/แปลงอักขระที่ไม่ต้องการ</p>
+      <div class="card">
+        <h3><span class="sec-tag" style="background:var(--fwd)">2</span>&nbsp; <Term id="sanitizeInput">Sanitize</Term></h3>
+        <ul><li>ทำความสะอาดข้อมูล ตัดช่องว่าง ลบ/แปลงอักขระที่ไม่ต้องการ</li></ul>
       </div>
-      <div class="rung" style="border-top-color:var(--blk)">
-        <span class="step-n" style="color:var(--blk)">3</span>
-        <h4><Term id="authorizeCheck">Authorize</Term></h4>
-        <p class="what">ตรวจสิทธิ์จากฝั่ง Server เสมอ ไม่เชื่อค่า role ที่ผู้ใช้ส่งมา</p>
+      <div class="card">
+        <h3><span class="sec-tag" style="background:var(--blk)">3</span>&nbsp; <Term id="authorizeCheck">Authorize</Term></h3>
+        <ul><li>ตรวจสิทธิ์จากฝั่ง Server เสมอ ไม่เชื่อค่า role ที่ผู้ใช้ส่งมา</li></ul>
       </div>
-      <div class="rung" style="border-top-color:var(--gold)">
-        <span class="step-n" style="color:var(--gold)">4</span>
-        <h4>Use POST</h4>
-        <p class="what">ข้อมูลสำคัญไม่ควรอยู่ใน URL — ใช้ POST เสมอ</p>
+      <div class="card">
+        <h3><span class="sec-tag" style="background:var(--gold)">4</span>&nbsp; Use POST</h3>
+        <ul><li>ข้อมูลสำคัญไม่ควรอยู่ใน URL — ใช้ POST เสมอ</li></ul>
       </div>
-      <div class="rung" style="border-top-color:var(--violet)">
-        <span class="step-n" style="color:var(--violet)">5</span>
-        <h4>Use HTTPS</h4>
-        <p class="what">ป้องกันข้อมูลถูกดักฟังระหว่างทาง ไม่ว่าจะ GET หรือ POST</p>
+      <div class="card">
+        <h3><span class="sec-tag" style="background:var(--violet)">5</span>&nbsp; Use HTTPS</h3>
+        <ul><li>ป้องกันข้อมูลถูกดักฟังระหว่างทาง ไม่ว่าจะ GET หรือ POST</li></ul>
       </div>
-      <div class="rung" style="border-top-color:var(--coral)">
-        <span class="step-n" style="color:var(--coral)">6</span>
-        <h4>Never Trust</h4>
-        <p class="what">หลักแม่บทที่ครอบทุกข้อ — ข้อมูลจากผู้ใช้ต้องผ่านการตรวจสอบก่อนใช้งานเสมอ</p>
+      <div class="card">
+        <h3><span class="sec-tag" style="background:var(--coral)">6</span>&nbsp; Never Trust</h3>
+        <ul><li>หลักแม่บทที่ครอบทุกข้อ — ข้อมูลจากผู้ใช้ต้องผ่านการตรวจสอบก่อนใช้งานเสมอ</li></ul>
       </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="drill">
+      <span class="dr-label">แบบฝึกหัดท้ายบท · จับคู่คำกับความหมาย</span>
+      <h4>จับคู่ศัพท์ด้านซ้าย กับความหมายด้านขวา (สลับลำดับแล้ว)</h4>
+      <div class="match-row"><span>1. name Attribute</span><span class="blank">ก. ตรวจข้อมูลบน Browser ก่อนส่ง ช่วย UX แต่เลี่ยงได้ ห้ามใช้เป็นด่านหลัก</span></div>
+      <div class="match-row"><span>2. Untrusted Input</span><span class="blank">ข. ตรวจข้อมูลที่ Server หลังรับแล้ว เป็นด่านที่ผู้ใช้เลี่ยงไม่ได้</span></div>
+      <div class="match-row"><span>3. Client-Side Validation</span><span class="blank">ค. ตรวจสิทธิ์ของผู้ใช้จากฝั่ง Server เสมอ ไม่เชื่อค่าที่ส่งมาโดยตรง</span></div>
+      <div class="match-row"><span>4. Server-Side Validation</span><span class="blank">ง. ชื่อของข้อมูลที่จะถูกส่งไป Server — ไม่มีค่านี้แล้วข้อมูลจะไม่ถูกส่งไปเลย</span></div>
+      <div class="match-row"><span>5. Authorize</span><span class="blank">จ. หลักคิดว่าข้อมูลจากผู้ใช้ต้องไม่น่าเชื่อถือเสมอ จนกว่า Server จะตรวจซ้ำแล้ว</span></div>
+      <details>
+        <summary>เฉลย</summary>
+        <div class="answer">1-ง &nbsp; 2-จ &nbsp; 3-ก &nbsp; 4-ข &nbsp; 5-ค</div>
+      </details>
     </div>
   </section>
 
