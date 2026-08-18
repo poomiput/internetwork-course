@@ -1,14 +1,263 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import ComingSoon from "../../components/ComingSoon.astro";
+import Term from "../../components/Term.astro";
 ---
-<Layout title="บทที่ 4" description="DB Security บทที่ 4 — ยังไม่มีเนื้อหา รอไฟล์ต้นฉบับ">
-  <ComingSoon
-    n={4}
-    title="บทที่ 4"
-    accent="var(--sage)"
-    blurb="รอไฟล์ต้นฉบับ (สไลด์/PDF) ก่อนเริ่มเขียนเนื้อหาบทนี้"
-    courseLabel="DB Security"
-    courseTotal={7}
-  />
+<Layout title="PHP กับฐานข้อมูล MySQL I" description="DB Security บทที่ 4 — เชื่อมต่อ PHP กับ MySQL, INSERT/SELECT ด้วย Prepared Statement, bind_param() ชนิดข้อมูล s/i/d/b และ SQL Injection">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--sage)">DB Security · Chapter 4 of 7</p>
+    <h1>PHP กับฐานข้อมูล MySQL (I)</h1>
+    <p class="deck">จุดที่บทที่ 1 เตือนไว้มาถึงแล้ว — ตอนที่ PHP เอาค่าจากผู้ใช้ไปต่อเข้าคำสั่ง SQL ตรงๆ คือจุดเริ่มต้นของ SQL Injection บทนี้เรียนวิธีคุยกับ MySQL แบบที่ผู้ใช้ไม่มีทางแทรกคำสั่งเข้ามาได้เลย</p>
+    <div class="credit-bar">
+      <span>mysqli</span><span>Prepared Statement</span><span>bind_param()</span><span>SQL Injection</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">01</span>
+      <h2>MySQL พื้นฐาน — ตาราง คอลัมน์ และกฎ</h2>
+    </div>
+    <p class="sec-sub">ก่อนต่อ PHP เข้ากับฐานข้อมูล ต้องรู้ก่อนว่าตารางถูกสร้างและควบคุมด้วยอะไรบ้าง</p>
+
+    <div class="filecard">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">schema.sql</span>
+      </div>
+      <pre><code><span class="fc-tag">CREATE</span> <span class="fc-tag">DATABASE</span> db_event_registration;
+
+<span class="fc-tag">CREATE</span> <span class="fc-tag">TABLE</span> event_registrations (
+    id <span class="fc-attr">INT</span> AUTO_INCREMENT <span class="fc-attr">PRIMARY KEY</span>,
+    fullname <span class="fc-attr">VARCHAR</span>(<span class="fc-str">50</span>) <span class="fc-attr">NOT NULL</span>,
+    email <span class="fc-attr">VARCHAR</span>(<span class="fc-str">100</span>) <span class="fc-attr">NOT NULL</span>,
+    created_at <span class="fc-attr">TIMESTAMP</span> DEFAULT CURRENT_TIMESTAMP
+);</code></pre>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3>ชนิดข้อมูลที่ใช้บ่อย</h3>
+        <ul>
+          <li><code>VARCHAR(n)</code> ข้อความยาวไม่เกิน n ตัวอักษร</li>
+          <li><code>TEXT</code> ข้อความยาว ไม่จำกัดขนาดตายตัว</li>
+          <li><code>INT</code> จำนวนเต็ม</li>
+          <li><code>DECIMAL(M,D)</code> เลขทศนิยม</li>
+          <li><code>DATE</code> / <code>TIMESTAMP</code> วันที่ / วันที่+เวลา</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Constraints</h3>
+        <ul>
+          <li><code>NOT NULL</code> ห้ามว่าง · <code>UNIQUE</code> ห้ามซ้ำ</li>
+          <li><code>PRIMARY KEY</code> ระบุแถวไม่ให้ซ้ำ</li>
+          <li><code>FOREIGN KEY</code> เชื่อมโยงกับตารางอื่น</li>
+          <li><code>AUTO_INCREMENT</code> เพิ่มเลขอัตโนมัติ</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">02</span>
+      <h2>เชื่อมต่อ PHP กับ MySQL ด้วย mysqli</h2>
+    </div>
+    <p class="sec-sub">4 อย่างที่ต้องรู้ก่อนเชื่อมต่อ: Host, Username, Password, ชื่อ Database</p>
+
+    <div class="filecard">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">config.php</span>
+      </div>
+      <pre><code><span class="fc-tag">const</span> <span class="fc-attr">DB_HOST</span> = <span class="fc-str">'db'</span>;
+<span class="fc-tag">const</span> <span class="fc-attr">DB_USER</span> = <span class="fc-str">'root'</span>;
+<span class="fc-tag">const</span> <span class="fc-attr">DB_PASS</span> = <span class="fc-str">'root'</span>;
+<span class="fc-tag">const</span> <span class="fc-attr">DB_NAME</span> = <span class="fc-str">'db_event_registration'</span>;
+
+<span class="fc-attr">$conn</span> = <span class="fc-tag">new</span> <span class="fc-attr">mysqli</span>(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+<span class="fc-tag">if</span> (<span class="fc-attr">$conn</span>-&gt;connect_error) &#123;
+    <span class="fc-tag">exit</span>(<span class="fc-str">'Connection failed: '</span> . <span class="fc-attr">$conn</span>-&gt;connect_error);
+&#125;</code></pre>
+      <div class="notes">
+        <p style="margin:0;font-size:.86rem;color:var(--ink-2)">เก็บ <code>DB_PASS</code> จริงไว้ใน Environment Variables หรือไฟล์ <code>.env</code> เสมอ — ห้าม Upload ไฟล์ config ที่มีรหัสผ่านจริงขึ้น Public Repository เด็ดขาด</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">03</span>
+      <h2>bind_param() — ตัวอักษรกำหนดชนิดข้อมูล</h2>
+    </div>
+    <p class="sec-sub">จุดที่ออกสอบบ่อยที่สุดของบทนี้ — ตัวอักษรตัวแรกใน <code>bind_param()</code> ต้องตรงกับชนิดข้อมูลจริงของแต่ละค่า เรียงลำดับตามเครื่องหมาย <code>?</code> ในคำสั่ง SQL</p>
+
+    <div class="grid-3">
+      <div class="card" style="border-left:4px solid var(--slate)">
+        <h3 style="color:var(--slate)"><code>s</code> — string</h3>
+        <ul><li>ข้อความทั่วไป เช่น ชื่อ อีเมล</li></ul>
+      </div>
+      <div class="card" style="border-left:4px solid var(--gold)">
+        <h3 style="color:var(--gold)"><code>i</code> — integer</h3>
+        <ul><li>จำนวนเต็ม เช่น <code>id</code>, อายุ</li></ul>
+      </div>
+      <div class="card" style="border-left:4px solid var(--fwd)">
+        <h3 style="color:var(--fwd)"><code>d</code> — double</h3>
+        <ul><li>เลขทศนิยม เช่นราคา</li></ul>
+      </div>
+      <div class="card" style="border-left:4px solid var(--coral)">
+        <h3 style="color:var(--coral)"><code>b</code> — blob</h3>
+        <ul><li>ข้อมูลไบนารี เช่นไฟล์รูปภาพ</li></ul>
+      </div>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>กฎเหล็กของ bind_param() <span class="tag">ออกสอบ</span></h4>
+      <p><b>1. จำนวนตัวอักษรใน type string ต้องเท่ากับจำนวนตัวแปร</b> — ถ้ามี <code>?</code> 3 ตัวใน SQL ต้องมีตัวอักษร 3 ตัว เช่น <code>'sss'</code></p>
+      <p style="margin:0"><b>2. ลำดับตัวอักษรต้องตรงกับลำดับ <code>?</code> และตัวแปร</b> — สลับลำดับแล้วข้อมูลจะไปผิดคอลัมน์ทันที เช่น <code>bind_param('ssssssi', $fullname, ..., $id)</code> — <code>i</code> อยู่ท้ายสุดเพราะ <code>$id</code> เป็นตัวสุดท้ายที่ผูกกับ <code>WHERE id = ?</code></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">04</span>
+      <h2>INSERT และ SELECT ด้วย Prepared Statement</h2>
+    </div>
+    <p class="sec-sub">รูปแบบเดียวกันทุกครั้ง: เตรียมคำสั่งด้วย <code>?</code> แทนค่า → bind_param() → execute()</p>
+
+    <div class="grid-2">
+      <div class="filecard">
+        <div class="fc-head"><span class="fc-dots"><span></span><span></span><span></span></span><span class="fc-name">store.php — INSERT</span></div>
+        <pre><code><span class="fc-attr">$sql</span> = <span class="fc-str">"INSERT INTO event_registrations
+    (fullname, email) VALUES (?, ?)"</span>;
+
+<span class="fc-attr">$stmt</span> = <span class="fc-attr">$conn</span>-&gt;prepare(<span class="fc-attr">$sql</span>);
+<span class="fc-attr">$stmt</span>-&gt;bind_param(
+    <span class="fc-str">'ss'</span>,
+    <span class="fc-attr">$fullname</span>,
+    <span class="fc-attr">$email</span>
+);
+<span class="fc-attr">$stmt</span>-&gt;execute();</code></pre>
+      </div>
+      <div class="filecard">
+        <div class="fc-head"><span class="fc-dots"><span></span><span></span><span></span></span><span class="fc-name">index.php — SELECT</span></div>
+        <pre><code><span class="fc-attr">$sql</span> = <span class="fc-str">"SELECT id, fullname, email
+    FROM event_registrations"</span>;
+<span class="fc-attr">$result</span> = <span class="fc-attr">$conn</span>-&gt;query(<span class="fc-attr">$sql</span>);
+
+<span class="fc-tag">while</span> (<span class="fc-attr">$row</span> = <span class="fc-attr">$result</span>-&gt;fetch_assoc()) &#123;
+    <span class="fc-tag">echo</span> <span class="fc-attr">h</span>(<span class="fc-attr">$row</span>[<span class="fc-str">'fullname'</span>]);
+&#125;</code></pre>
+      </div>
+    </div>
+
+    <div class="fixnote" style="background:var(--gold-soft);margin-top:20px">
+      <b style="color:var(--gold)">อย่าลืม h() ตอนแสดงผลจากฐานข้อมูลด้วย:</b> Prepared Statement ป้องกัน SQL Injection ตอน<i>เขียน</i>ข้อมูลลง Database เท่านั้น — ตอน<i>อ่าน</i>ข้อมูลกลับมาแสดงบนหน้าเว็บ ยังต้องครอบด้วย <code>h()</code> (htmlspecialchars) เหมือนเดิมทุกครั้ง เพราะข้อมูลที่เก็บไว้ในฐานข้อมูลอาจมีโค้ด <code>&lt;script&gt;</code> ที่ผู้ใช้แอบใส่ไว้ตั้งแต่ตอน INSERT ก็ได้ — ป้องกัน SQL Injection กับป้องกัน XSS เป็นคนละด่านกัน
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">05</span>
+      <h2>SQL Injection — สิ่งที่บทที่ 1 เตือนไว้</h2>
+    </div>
+    <p class="sec-sub">จำโค้ดนี้จากบทที่ 1 ได้ไหม — <code>SELECT * FROM courses WHERE id = 5</code> ที่ต่อค่าจาก URL เข้าไปตรงๆ นี่คือสิ่งที่เกิดขึ้นจริงถ้าไม่ใช้ Prepared Statement</p>
+
+    <div class="filecard">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">login.php — อันตราย ห้ามเขียนแบบนี้</span>
+      </div>
+      <pre><code><span class="fc-cm">// ต่อค่าจากผู้ใช้เข้าคำสั่ง SQL โดยตรง</span>
+<span class="fc-attr">$sql</span> = <span class="fc-str">"SELECT * FROM users
+    WHERE username = '"</span> . <span class="fc-attr">$username</span> . <span class="fc-str">"'"</span>;</code></pre>
+    </div>
+
+    <div class="attack-flow" style="margin-top:20px">
+      <div class="af-step af-attack">
+        <span class="af-label">Attack</span>
+        <h4>พิมพ์ SQL แทน username</h4>
+        <p>กรอกช่อง username เป็น <code>' OR '1'='1</code> แทนชื่อผู้ใช้จริง</p>
+      </div>
+      <div class="af-step af-risk">
+        <span class="af-label">Risk</span>
+        <h4>คำสั่ง SQL เปลี่ยนความหมาย</h4>
+        <p>สตริงกลายเป็น <code>WHERE username = '' OR '1'='1'</code> — เงื่อนไข <code>'1'='1'</code> เป็นจริงเสมอ ระบบจึงคืนแถวแรกในตารางกลับมาให้ ไม่ว่า username จริงจะเป็นใคร</p>
+      </div>
+      <div class="af-step af-fix">
+        <span class="af-label">Fix</span>
+        <h4>ใช้ Prepared Statement เสมอ</h4>
+        <p><code>WHERE username = ?</code> แล้ว <code>bind_param('s', $username)</code> — ค่าที่ผู้ใช้กรอกจะถูกส่งเป็น "ข้อมูล" เท่านั้น ไม่มีทางกลายเป็นส่วนหนึ่งของคำสั่ง SQL ได้</p>
+      </div>
+    </div>
+
+    <div class="filecard" style="margin-top:20px">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">login.php — ปลอดภัย</span>
+      </div>
+      <pre><code><span class="fc-attr">$sql</span> = <span class="fc-str">"SELECT * FROM users WHERE username = ?"</span>;
+<span class="fc-attr">$stmt</span> = <span class="fc-attr">$conn</span>-&gt;prepare(<span class="fc-attr">$sql</span>);
+<span class="fc-attr">$stmt</span>-&gt;bind_param(<span class="fc-str">'s'</span>, <span class="fc-attr">$username</span>);
+<span class="fc-attr">$stmt</span>-&gt;execute();</code></pre>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">06</span>
+      <h2>ด่านความปลอดภัยที่เหลือ</h2>
+    </div>
+    <p class="sec-sub">Prepared Statement ป้องกัน SQL Injection ได้ แต่ยังไม่ครบทุกด้าน</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>ตรวจค่าจาก select/radio ที่ Server ด้วย</h3>
+        <ul><li>ผู้ใช้แก้ค่าที่ส่งมาได้เสมอ — เช็คด้วย <code>in_array($value, $allowed, true)</code> ก่อนใช้งานทุกครั้ง (ต่อยอดจากบทที่ 2)</li></ul>
+      </div>
+      <div class="card">
+        <h3>ไม่แสดง Error รายละเอียดให้ผู้ใช้เห็น</h3>
+        <ul><li>ห้าม <code>exit($conn->connect_error)</code> ตรงๆ — ใช้ <code>error_log()</code> เก็บไว้ แล้วโชว์ข้อความทั่วไปแทน</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="drill">
+      <span class="dr-label">แบบฝึกหัดท้ายบท · เติมคำในช่องว่าง</span>
+      <h4>เติม type string ของ bind_param() ให้ถูกต้อง</h4>
+      <div class="match-row"><span><code>bind_param('___', $email, $age)</code> — email เป็น string, age เป็น integer</span><span class="blank">?</span></div>
+      <div class="match-row"><span><code>bind_param('___', $price)</code> — price เป็นเลขทศนิยม</span><span class="blank">?</span></div>
+      <div class="match-row"><span><code>bind_param('___', $fullname, $studentId, $id)</code> — fullname/studentId เป็น string, id เป็น integer</span><span class="blank">?</span></div>
+      <details>
+        <summary>เฉลย</summary>
+        <div class="answer">1. <code>'si'</code> &nbsp; 2. <code>'d'</code> &nbsp; 3. <code>'ssi'</code></div>
+      </details>
+    </div>
+  </section>
+
+  <section>
+    <div class="tablewrap">
+      <table>
+        <caption>ศัพท์ที่ต้องรู้ — PHP กับ MySQL (I)</caption>
+        <thead><tr><th scope="col">คำศัพท์</th><th scope="col">ความหมาย</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Prepared Statement</th><td>วิธีสั่ง SQL ที่แยกโครงสร้างคำสั่งออกจากข้อมูลผู้ใช้ ด้วยเครื่องหมาย <code>?</code> — ป้องกัน SQL Injection</td></tr>
+          <tr><th scope="row">bind_param()</th><td>ผูกค่าตัวแปรเข้ากับ <code>?</code> ในคำสั่ง ระบุชนิดข้อมูลด้วยตัวอักษร s/i/d/b</td></tr>
+          <tr><th scope="row">SQL Injection</th><td>การโจมตีที่แทรกคำสั่ง SQL ผ่านค่าที่ผู้ใช้กรอก เพื่อเปลี่ยนความหมายของคำสั่งเดิม</td></tr>
+          <tr><th scope="row">mysqli</th><td>ส่วนขยายของ PHP สำหรับเชื่อมต่อ MySQL รองรับทั้งแบบ Object-oriented และ Procedural</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bridge" style="margin-top:20px">
+      <b>เชื่อมไปบทหน้า:</b> บทที่ 5 เอา Prepared Statement ตัวเดียวกันนี้ไปใช้กับ UPDATE และ DELETE — จะเห็นว่า <code>bind_param()</code> ยาวขึ้น เพราะต้องผูกทั้งค่าที่แก้ไขและ <code>id</code> ที่ระบุแถว ลำดับตัวอักษรต้องตรงกับลำดับ <code>?</code> เป๊ะเหมือนเดิม
+    </div>
+  </section>
+
+  <footer>
+    DB Security Chapter 4 · เรียบเรียงจากสไลด์ "PHP กับฐานข้อมูล MySQL" (Asst.Prof. Monlica Wattana, Ph.D — CP423324)
+  </footer>
+
 </Layout>

@@ -1,14 +1,227 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import ComingSoon from "../../components/ComingSoon.astro";
+import Term from "../../components/Term.astro";
 ---
-<Layout title="บทที่ 5" description="DB Security บทที่ 5 — ยังไม่มีเนื้อหา รอไฟล์ต้นฉบับ">
-  <ComingSoon
-    n={5}
-    title="บทที่ 5"
-    accent="var(--sage)"
-    blurb="รอไฟล์ต้นฉบับ (สไลด์/PDF) ก่อนเริ่มเขียนเนื้อหาบทนี้"
-    courseLabel="DB Security"
-    courseTotal={7}
-  />
+<Layout title="PHP กับฐานข้อมูล MySQL II" description="DB Security บทที่ 5 — UPDATE/DELETE ด้วย Prepared Statement, การตรวจสอบ ID ด้วย FILTER_VALIDATE_INT, และการบังคับ POST สำหรับคำสั่งลบข้อมูล">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--sage)">DB Security · Chapter 5 of 7</p>
+    <h1>PHP กับฐานข้อมูล MySQL (II)</h1>
+    <p class="deck">Insert กับ Select ใช้ค่าจากฟอร์ม แต่ Update กับ Delete ใช้ค่าที่มากับ URL หรือปุ่มกด — ID ที่ระบุว่า "แถวไหน" นี่แหละคือช่องโหว่ตัวใหม่ที่ต้องระวัง ถ้าไม่ตรวจให้ดี ผู้ใช้อาจแก้ไขหรือลบข้อมูลของคนอื่นได้</p>
+    <div class="credit-bar">
+      <span>UPDATE</span><span>DELETE</span><span>FILTER_VALIDATE_INT</span><span>CSRF-safe Delete</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">01</span>
+      <h2>UPDATE และ DELETE — คำสั่ง SQL</h2>
+    </div>
+    <p class="sec-sub">โครงสร้างคล้าย SELECT แต่มีผลข้างเคียงจริง — พลาด <code>WHERE</code> ครั้งเดียวคือหายนะทั้งตาราง</p>
+
+    <div class="grid-2">
+      <div class="filecard">
+        <div class="fc-head"><span class="fc-dots"><span></span><span></span><span></span></span><span class="fc-name">UPDATE</span></div>
+        <pre><code><span class="fc-tag">UPDATE</span> event_registrations
+<span class="fc-tag">SET</span> fullname = ?
+<span class="fc-tag">WHERE</span> id = ?;</code></pre>
+      </div>
+      <div class="filecard">
+        <div class="fc-head"><span class="fc-dots"><span></span><span></span><span></span></span><span class="fc-name">DELETE</span></div>
+        <pre><code><span class="fc-tag">DELETE</span> <span class="fc-tag">FROM</span> event_registrations
+<span class="fc-tag">WHERE</span> id = ?;</code></pre>
+      </div>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>ห้ามลืม WHERE เด็ดขาด <span class="tag">ออกสอบ</span></h4>
+      <p style="margin:0">คำสั่ง <code>UPDATE event_registrations SET fullname = ?</code> ที่ไม่มี <code>WHERE id = ?</code> ต่อท้าย จะแก้ไข <b>ทุกแถวในตาราง</b> ให้เป็นค่าเดียวกันหมด — DELETE ก็เช่นกัน ไม่มี WHERE คือลบข้อมูลทั้งตาราง</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">02</span>
+      <h2>ตรวจสอบ ID ก่อนใช้งานทุกครั้ง</h2>
+    </div>
+    <p class="sec-sub">ID มาจากผู้ใช้เสมอ (ผ่าน URL หรือ hidden input) — ต้องตรวจก่อนนำไปใช้กับ SQL ไม่ว่าจะแก้ไขหรือลบ</p>
+
+    <div class="filecard">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">edit.php / delete.php</span>
+      </div>
+      <pre><code><span class="fc-attr">$id</span> = <span class="fc-attr">filter_input</span>(INPUT_GET, <span class="fc-str">'id'</span>, FILTER_VALIDATE_INT);
+
+<span class="fc-tag">if</span> (<span class="fc-attr">$id</span> === <span class="fc-tag">false</span> || <span class="fc-attr">$id</span> === <span class="fc-tag">null</span> || <span class="fc-attr">$id</span> &lt;= <span class="fc-str">0</span>) &#123;
+    http_response_code(<span class="fc-str">400</span>);
+    <span class="fc-tag">exit</span>(<span class="fc-str">'Invalid request ID.'</span>);
+&#125;</code></pre>
+      <div class="notes">
+        <ol>
+          <li><code>FILTER_VALIDATE_INT</code> ช่วยเช็คว่าเป็นจำนวนเต็มจริง ไม่ใช่ตัวอักษรหรือ SQL แทรกมา</li>
+          <li>ปฏิเสธค่าว่าง ไม่ใช่ตัวเลข หรือ <code>&lt;= 0</code> ทั้งหมด</li>
+          <li>ใช้วิธีเดียวกันนี้ทั้งไฟล์แก้ไขและไฟล์ลบข้อมูล</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">03</span>
+      <h2>ดึงข้อมูลเดิมมาแสดงใน Edit Form</h2>
+    </div>
+    <p class="sec-sub">ใช้ <code>WHERE id = ?</code> พร้อม <code>bind_param('i', $id)</code> เพราะ ID เป็น integer — ดึงมาแค่แถวเดียว</p>
+
+    <div class="filecard">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">edit.php</span>
+      </div>
+      <pre><code><span class="fc-attr">$sql</span> = <span class="fc-str">'SELECT id, fullname, email
+    FROM event_registrations WHERE id = ?'</span>;
+<span class="fc-attr">$stmt</span> = <span class="fc-attr">$conn</span>-&gt;prepare(<span class="fc-attr">$sql</span>);
+<span class="fc-attr">$stmt</span>-&gt;bind_param(<span class="fc-str">'i'</span>, <span class="fc-attr">$id</span>);
+<span class="fc-attr">$stmt</span>-&gt;execute();
+
+<span class="fc-attr">$request</span> = <span class="fc-attr">$stmt</span>-&gt;get_result()-&gt;fetch_assoc();
+<span class="fc-tag">if</span> (!<span class="fc-attr">$request</span>) &#123;
+    http_response_code(<span class="fc-str">404</span>);
+    <span class="fc-tag">exit</span>(<span class="fc-str">'Event registration not found.'</span>);
+&#125;</code></pre>
+      <div class="notes">
+        <p style="margin:0;font-size:.86rem;color:var(--ink-2)">ในฟอร์ม: <code>value="&lt;?= h($request['fullname']) ?&gt;"</code> — ทุกค่าที่เอาข้อมูลเดิมมาแสดงต้องผ่าน <code>h()</code> เหมือนเดิม แม้จะมาจากฐานข้อมูลของเราเองก็ตาม</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">04</span>
+      <h2>UPDATE ด้วย bind_param ที่ยาวขึ้น</h2>
+    </div>
+    <p class="sec-sub">ยิ่งฟิลด์เยอะ type string ยิ่งยาว — <code>id</code> อยู่ตัวสุดท้ายเสมอเพราะ <code>WHERE id = ?</code> อยู่ท้ายคำสั่ง SQL</p>
+
+    <div class="filecard">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">update.php</span>
+      </div>
+      <pre><code><span class="fc-attr">$sql</span> = <span class="fc-str">'UPDATE event_registrations
+    SET fullname = ?, email = ?
+    WHERE id = ?'</span>;
+
+<span class="fc-attr">$stmt</span> = <span class="fc-attr">$conn</span>-&gt;prepare(<span class="fc-attr">$sql</span>);
+<span class="fc-attr">$stmt</span>-&gt;bind_param(
+    <span class="fc-str">'ssi'</span>,
+    <span class="fc-attr">$fullname</span>,
+    <span class="fc-attr">$email</span>,
+    <span class="fc-attr">$id</span>
+);
+<span class="fc-attr">$stmt</span>-&gt;execute();</code></pre>
+      </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>นับ <code>?</code> ให้ตรงกับตัวอักษรและตัวแปร <span class="tag">ออกสอบ</span></h4>
+      <p style="margin:0">SQL มี <code>?</code> 3 ตัว (fullname, email, id) → type string ต้องมี 3 ตัวอักษรพอดี (<code>'ssi'</code>) → ตัวแปรใน bind_param ต้องเรียงตามลำดับเดียวกัน สลับ <code>$email</code> กับ <code>$id</code> เมื่อไหร่ ข้อมูลจะเขียนผิดคอลัมน์ทันทีโดยไม่มี Error เตือน</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">05</span>
+      <h2>DELETE ต้องมาจาก POST เท่านั้น</h2>
+    </div>
+    <p class="sec-sub">ถ้า delete.php ทำงานผ่าน GET ได้ ลิงก์เดียวที่ผู้ไม่หวังดีส่งมาก็ลบข้อมูลได้ทันทีโดยไม่ต้องกดปุ่มอะไรเลย</p>
+
+    <div class="attack-flow">
+      <div class="af-step af-attack">
+        <span class="af-label">Attack</span>
+        <h4>ส่งลิงก์ delete ให้เหยื่อคลิก</h4>
+        <p>ถ้า <code>delete.php?id=5</code> ทำงานได้ผ่าน GET ผู้ไม่หวังดีแค่ฝังลิงก์นี้ไว้ที่ไหนก็ได้ให้เหยื่อคลิกโดยไม่รู้ตัว</p>
+      </div>
+      <div class="af-step af-risk">
+        <span class="af-label">Risk</span>
+        <h4>ข้อมูลถูกลบโดยไม่มีการยืนยัน</h4>
+        <p>GET ไม่มีขั้นตอนยืนยัน ไม่ต้องกดปุ่ม ไม่มี <code>confirm()</code> — คลิกลิงก์ครั้งเดียวข้อมูลหายทันที</p>
+      </div>
+      <div class="af-step af-fix">
+        <span class="af-label">Fix</span>
+        <h4>บังคับ POST + confirm()</h4>
+        <p>ปฏิเสธ Request ที่ไม่ใช่ POST ตั้งแต่บรรทัดแรก และใช้ <code>confirm()</code> ฝั่ง Browser เป็นด่านกันพลาดเพิ่มอีกชั้น</p>
+      </div>
+    </div>
+
+    <div class="filecard" style="margin-top:20px">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">delete.php</span>
+      </div>
+      <pre><code><span class="fc-tag">if</span> (<span class="fc-attr">$_SERVER</span>[<span class="fc-str">'REQUEST_METHOD'</span>] !== <span class="fc-str">'POST'</span>) &#123;
+    header(<span class="fc-str">'Location: index.php'</span>);
+    <span class="fc-tag">exit</span>;
+&#125;
+
+<span class="fc-attr">$id</span> = <span class="fc-attr">filter_input</span>(INPUT_POST, <span class="fc-str">'id'</span>, FILTER_VALIDATE_INT);
+<span class="fc-cm">// ... ตรวจสอบ $id เหมือนเดิม แล้วค่อย DELETE</span></code></pre>
+      <div class="notes">
+        <p style="margin:0;font-size:.86rem;color:var(--ink-2)">ฝั่ง HTML: <code>&lt;form onsubmit="return confirm('Are you sure?')"&gt;</code> ครอบปุ่ม Delete ไว้ — เป็นแค่ด่านกันพลาดของผู้ใช้ทั่วไป ไม่ใช่ระบบความปลอดภัย (ผู้ใช้ปิด JS ได้เสมอ) ด่านจริงคือการเช็ค POST + ตรวจ ID ที่ Server</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">06</span>
+      <h2>โครงสร้างไฟล์ทั้งระบบ CRUD</h2>
+    </div>
+    <p class="sec-sub">7 ไฟล์ที่ทำงานร่วมกัน แต่ละไฟล์รับผิดชอบหน้าที่เดียว</p>
+
+    <div class="grid-3">
+      <div class="card"><h3>config.php</h3><ul><li>เชื่อมต่อฐานข้อมูล + ฟังก์ชันที่ใช้ซ้ำ (<code>h()</code>, <code>validateRegistration()</code>)</li></ul></div>
+      <div class="card"><h3>index.php</h3><ul><li>SELECT ทั้งหมดมาแสดงตาราง พร้อมปุ่ม Add/Edit/Delete</li></ul></div>
+      <div class="card"><h3>create.php / store.php</h3><ul><li>แสดงฟอร์มเพิ่มข้อมูล / ตรวจสอบแล้ว INSERT</li></ul></div>
+      <div class="card"><h3>edit.php / update.php</h3><ul><li>ดึงข้อมูลเดิมมาแสดง / ตรวจสอบแล้ว UPDATE</li></ul></div>
+      <div class="card"><h3>delete.php</h3><ul><li>รับ ID แบบ POST ตรวจสอบแล้ว DELETE</li></ul></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="drill">
+      <span class="dr-label">แบบฝึกหัดท้ายบท · จับคู่คำกับความหมาย</span>
+      <h4>จับคู่ศัพท์ด้านซ้าย กับความหมายด้านขวา (สลับลำดับแล้ว)</h4>
+      <div class="match-row"><span>1. FILTER_VALIDATE_INT</span><span class="blank">ก. ต้องมีเสมอใน UPDATE/DELETE ไม่เช่นนั้นจะกระทบทุกแถว</span></div>
+      <div class="match-row"><span>2. WHERE id = ?</span><span class="blank">ข. ตัวกรองที่เช็คว่าค่าที่รับมาเป็นจำนวนเต็มจริง</span></div>
+      <div class="match-row"><span>3. REQUEST_METHOD !== 'POST'</span><span class="blank">ค. เงื่อนไขที่ delete.php ใช้ปฏิเสธคำขอที่ไม่ได้มาจากฟอร์ม POST</span></div>
+      <details>
+        <summary>เฉลย</summary>
+        <div class="answer">1-ข &nbsp; 2-ก &nbsp; 3-ค</div>
+      </details>
+    </div>
+  </section>
+
+  <section>
+    <div class="tablewrap">
+      <table>
+        <caption>ศัพท์ที่ต้องรู้ — PHP กับ MySQL (II)</caption>
+        <thead><tr><th scope="col">คำศัพท์</th><th scope="col">ความหมาย</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">FILTER_VALIDATE_INT</th><td>ตัวกรองของ PHP ที่ตรวจว่าค่าที่รับมาเป็นจำนวนเต็มจริง คืนค่า <code>false</code> ถ้าไม่ใช่</td></tr>
+          <tr><th scope="row">affected_rows</th><td>จำนวนแถวที่ถูกแก้ไข/ลบจริงหลัง execute() — ใช้เช็คว่าคำสั่งมีผลจริงหรือไม่พบแถวนั้น</td></tr>
+          <tr><th scope="row">CRUD</th><td>Create, Read, Update, Delete — 4 การกระทำพื้นฐานกับฐานข้อมูล</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bridge" style="margin-top:20px">
+      <b>เชื่อมไปบทหน้า:</b> รูปแบบ "ตรวจ ID → ดึงแถวเดียว → เทียบค่า → อนุญาตหรือปฏิเสธ" ที่เพิ่งเรียนไปทั้งบทนี้ คือรากฐานเดียวกับระบบ Login ที่จะเรียนในบทที่ 6 — เปลี่ยนจาก "ตรวจ ID ว่ามีแถวนี้ไหม" เป็น "ตรวจ username/password ว่าตรงกับแถวไหนไหม" เท่านั้นเอง
+    </div>
+  </section>
+
+  <footer>
+    DB Security Chapter 5 · เรียบเรียงจากสไลด์ "PHP กับฐานข้อมูล MySQL II" (Asst.Prof. Monlica Wattana, Ph.D — CP423324)
+  </footer>
+
 </Layout>

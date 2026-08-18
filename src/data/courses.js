@@ -73,9 +73,9 @@ export const courses = [
         chapters: [
           { n: 1, slug: "dbsec/ch1", title: "พื้นฐาน Web Application และ HTML", ready: true },
           { n: 2, slug: "dbsec/ch2", title: "HTML Form และ GET/POST", ready: true },
-          { n: 3, slug: "dbsec/ch3", title: "บทที่ 3", ready: false },
-          { n: 4, slug: "dbsec/ch4", title: "บทที่ 4", ready: false },
-          { n: 5, slug: "dbsec/ch5", title: "บทที่ 5", ready: false },
+          { n: 3, slug: "dbsec/ch3", title: "พื้นฐาน PHP", ready: true },
+          { n: 4, slug: "dbsec/ch4", title: "PHP กับ MySQL (I)", ready: true },
+          { n: 5, slug: "dbsec/ch5", title: "PHP กับ MySQL (II)", ready: true },
           { n: 6, slug: "dbsec/ch6", title: "บทที่ 6", ready: false },
           { n: 7, slug: "dbsec/ch7", title: "บทที่ 7", ready: false },
         ],

@@ -1,14 +1,251 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import ComingSoon from "../../components/ComingSoon.astro";
+import Term from "../../components/Term.astro";
 ---
-<Layout title="บทที่ 3" description="DB Security บทที่ 3 — ยังไม่มีเนื้อหา รอไฟล์ต้นฉบับ">
-  <ComingSoon
-    n={3}
-    title="บทที่ 3"
-    accent="var(--sage)"
-    blurb="รอไฟล์ต้นฉบับ (สไลด์/PDF) ก่อนเริ่มเขียนเนื้อหาบทนี้"
-    courseLabel="DB Security"
-    courseTotal={7}
-  />
+<Layout title="พื้นฐาน PHP สำหรับ Web Application" description="DB Security บทที่ 3 — การทำงานของ PHP บน Server, ชนิดตัวแปร, superglobals, และฟังก์ชันจัดการ Input ที่ป้องกัน XSS">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--sage)">DB Security · Chapter 3 of 7</p>
+    <h1>พื้นฐาน PHP สำหรับ Web Application</h1>
+    <p class="deck">PHP คือโค้ดที่ทำงานฝั่ง Server ไม่มีใครเห็นซอร์สโค้ดจริงจากฝั่ง Browser ได้ — แต่นั่นไม่ได้แปลว่าปลอดภัยอัตโนมัติ บทนี้ตามรอยตั้งแต่ PHP ทำงานยังไง จนถึงจุดที่โค้ดพลาดแล้วเปิดช่องให้ผู้ใช้ยิง JavaScript แทรกเข้ามาในหน้าเว็บของคนอื่น</p>
+    <div class="credit-bar">
+      <span>Server-Side Execution</span><span>$_GET / $_POST</span><span>htmlspecialchars()</span><span>XSS</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">01</span>
+      <h2>PHP ทำงานยังไงบน Server</h2>
+    </div>
+    <p class="sec-sub">Browser ไม่รัน PHP เอง — เห็นแค่ HTML/CSS/JS ที่ Server ส่งกลับมาเท่านั้น โค้ด PHP จริงไม่มีทางหลุดไปถึงฝั่งผู้ใช้</p>
+
+    <div class="flow">
+      <div class="flow-step" data-n="1">
+        <h4>Browser ส่ง Request</h4>
+        <p>ผู้ใช้เรียกหน้าเว็บที่ลงท้ายด้วย <code>.php</code></p>
+      </div>
+      <div class="flow-step" data-n="2">
+        <h4>Web Server ส่งต่อให้ PHP Interpreter</h4>
+        <p>Apache/Nginx รู้ว่าไฟล์นี้ต้องให้ PHP ประมวลผลก่อน ไม่ใช่ส่งไฟล์ดิบออกไป</p>
+      </div>
+      <div class="flow-step" data-n="3">
+        <h4>PHP Code ถูกประมวลผลบน Server</h4>
+        <p>รันทุกคำสั่งในแท็ก <code>&lt;?php ... ?&gt;</code></p>
+        <code class="fs-code"><span style="color:var(--slate)">&lt;?php</span>
+  <span style="color:var(--slate);font-weight:700">echo</span> <span style="color:var(--fwd)">"Hello from PHP!"</span>;
+<span style="color:var(--slate)">?&gt;</span></code>
+      </div>
+      <div class="flow-step" data-n="4">
+        <h4>Server สร้างผลลัพธ์</h4>
+        <p>ได้ออกมาเป็น HTML, CSS/JS ที่แทรกค่าไว้แล้ว หรือ JSON</p>
+      </div>
+      <div class="flow-step" data-n="5">
+        <h4>Server ส่ง Response กลับ</h4>
+        <p>สิ่งที่ Browser ได้รับคือผลลัพธ์สุดท้าย ไม่ใช่ซอร์สโค้ด PHP</p>
+      </div>
+      <div class="flow-step" data-n="6">
+        <h4>Browser แสดงผล</h4>
+        <p>ผู้ใช้เห็นหน้าเว็บตามปกติ ไม่มีทางกด "View Source" แล้วเห็นโค้ด PHP ได้เลย</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">02</span>
+      <h2>ไวยากรณ์พื้นฐานและชนิดตัวแปร</h2>
+    </div>
+    <p class="sec-sub">กฎการตั้งชื่อตัวแปรที่เข้มงวดกว่า HTML/CSS มาก และ 8 ชนิดข้อมูลที่ PHP รองรับ</p>
+
+    <div class="filecard">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">example.php</span>
+      </div>
+      <pre><code><span class="fc-tag">&lt;?php</span>
+<span class="fc-attr">$myVar</span> = <span class="fc-str">"Alice"</span>;
+<span class="fc-attr">$my_var</span> = <span class="fc-str">42</span>;
+<span class="fc-attr">$myVar</span> !== <span class="fc-attr">$MyVar</span>; <span class="fc-cm">// คนละตัวกัน — Case Sensitive</span>
+<span class="fc-tag">?&gt;</span></code></pre>
+      <div class="notes">
+        <ol>
+          <li>ขึ้นต้นด้วย <code>$</code> เสมอ ตามด้วยตัวอักษรหรือ <code>_</code></li>
+          <li>ตัวพิมพ์ใหญ่/เล็กถือเป็นคนละตัวแปร — <code>$myvar</code> ≠ <code>$myVar</code></li>
+          <li>ห้ามตั้งชื่อซ้ำคำสงวน เช่น <code>$_POST</code>, <code>$_GET</code>, <code>$_SESSION</code></li>
+          <li>ทุกคำสั่งต้องปิดท้ายด้วย <code>;</code></li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>8 ชนิดตัวแปรใน PHP</caption>
+        <thead><tr><th scope="col">ชนิด</th><th scope="col">ความหมาย</th><th scope="col">ตัวอย่าง</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Boolean</th><td>จริง/เท็จ</td><td><code>true</code>, <code>false</code></td></tr>
+          <tr><th scope="row">Integer</th><td>เลขจำนวนเต็ม</td><td><code>$count = 42;</code></td></tr>
+          <tr><th scope="row">Float / Double</th><td>เลขจำนวนจริง</td><td><code>$price = 199.95;</code></td></tr>
+          <tr><th scope="row">String</th><td>ตัวอักษร คำนวณทางคณิตศาสตร์ไม่ได้</td><td><code>$name = "Alice";</code></td></tr>
+          <tr><th scope="row">Array</th><td>ตัวแปรชุด — แบบ Indexed หรือ Associative</td><td><code>$student["name"]</code></td></tr>
+          <tr><th scope="row">Object</th><td>instance ของ class เชิง OOP</td><td><code>$myCar-&gt;make</code></td></tr>
+          <tr><th scope="row">Resource</th><td>อ้างอิงแหล่งภายนอก เช่นไฟล์ หรือ DB connection</td><td><code>fopen()</code></td></tr>
+          <tr><th scope="row">Null</th><td>ตัวแปรที่ไม่มีค่า</td><td><code>$x = null;</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">03</span>
+      <h2>Superglobals — ตัวแปรที่รับค่าจากผู้ใช้</h2>
+    </div>
+    <p class="sec-sub">สามตัวแปรพิเศษที่ PHP สร้างให้อัตโนมัติทุก Request — ต่อยอดโดยตรงจาก GET/POST ที่เรียนในบทที่ 2</p>
+
+    <div class="grid-3">
+      <div class="card">
+        <h3><code>$_GET</code></h3>
+        <ul><li>รับค่าจาก Query String ใน URL — มีข้อจำกัดเรื่องขนาดข้อมูล</li></ul>
+      </div>
+      <div class="card">
+        <h3><code>$_POST</code></h3>
+        <ul><li>รับค่าจาก Message Body ของฟอร์ม — ไม่ปรากฏใน URL</li></ul>
+      </div>
+      <div class="card">
+        <h3><code>$_REQUEST</code></h3>
+        <ul><li>รวมค่าจากทั้ง GET และ POST — ยืดหยุ่นแต่บอกที่มาของค่าไม่ได้ชัดเจน</li></ul>
+      </div>
+    </div>
+
+    <div class="fixnote" style="background:var(--slate-soft);margin-top:20px">
+      <b style="color:var(--slate)"><code>$_SERVER['REQUEST_METHOD']</code>:</b> ใช้ตรวจสอบว่า Request ที่เข้ามาส่งด้วยวิธีใด (GET หรือ POST) — สำคัญมากตอนเขียนไฟล์ที่ต้องรับทั้งสองแบบ หรือปฏิเสธ Request ที่ไม่ควรเกิดขึ้น เช่น เปิดหน้าลบข้อมูลตรงๆ ผ่าน GET
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">04</span>
+      <h2>ฟังก์ชันจัดการ Input อย่างปลอดภัย</h2>
+    </div>
+    <p class="sec-sub">คำศัพท์กลุ่มนี้ออกสอบบ่อยในรูปแบบจับคู่คำ — แต่ละตัวมีหน้าที่เฉพาะ ใช้แทนกันไม่ได้</p>
+
+    <div class="tablewrap">
+      <table>
+        <caption>ฟังก์ชันจัดการ Input ที่ต้องรู้</caption>
+        <thead><tr><th scope="col">ฟังก์ชัน</th><th scope="col">หน้าที่</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">trim()</th><td>ตัดช่องว่างหัว-ท้ายข้อความออก</td></tr>
+          <tr><th scope="row">empty()</th><td>ตรวจว่าค่าเป็นค่าว่างหรือไม่</td></tr>
+          <tr><th scope="row">htmlspecialchars()</th><td>แปลงอักขระพิเศษ (<code>&lt; &gt; " '</code>) เป็น HTML entities ป้องกัน Browser ตีความเป็นแท็ก/สคริปต์</td></tr>
+          <tr><th scope="row">htmlentities()</th><td>คล้าย htmlspecialchars() แต่แปลงอักขระได้ครอบคลุมกว่า</td></tr>
+          <tr><th scope="row">strip_tags()</th><td>ลบแท็ก HTML ทั้งหมดออกจากข้อความ</td></tr>
+          <tr><th scope="row">filter_var()</th><td>ตรวจสอบ/กรองค่าตามประเภท เช่น <code>FILTER_VALIDATE_EMAIL</code></td></tr>
+          <tr><th scope="row">filter_input()</th><td>กรองข้อมูลจาก <code>$_GET</code>/<code>$_POST</code>/<code>$_COOKIE</code> โดยตรง</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">05</span>
+      <h2>เมื่อลืม htmlspecialchars() — XSS เกิดขึ้นจริง</h2>
+    </div>
+    <p class="sec-sub">ตัวอย่างจริงจากฟอร์มลงทะเบียน — ช่อง Full Name ที่ echo ค่ากลับมาโดยไม่กรองก่อน</p>
+
+    <div class="filecard">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">process.php — ก่อนแก้ไข (มีช่องโหว่)</span>
+      </div>
+      <pre><code>&lt;<span class="fc-tag">td</span>&gt;&lt;<span class="fc-tag">?php</span> <span class="fc-tag">echo</span> <span class="fc-attr">$fullname</span>; <span class="fc-tag">?</span>&gt;&lt;/<span class="fc-tag">td</span>&gt;</code></pre>
+    </div>
+
+    <div class="attack-flow" style="margin-top:20px">
+      <div class="af-step af-attack">
+        <span class="af-label">Attack</span>
+        <h4>กรอกโค้ดแทน Full Name</h4>
+        <p>พิมพ์ <code>&lt;script&gt;alert("I am a script.")&lt;/script&gt;</code> ลงในช่อง Full Name แล้วกด Submit</p>
+      </div>
+      <div class="af-step af-risk">
+        <span class="af-label">Risk</span>
+        <h4>Browser รันเป็นโค้ดจริง</h4>
+        <p>เพราะ PHP echo ค่าดิบออกไปตรงๆ Browser จึงตีความ <code>&lt;script&gt;</code> เป็นแท็กจริง ไม่ใช่ข้อความ — นี่คือ <b>XSS (Cross-Site Scripting)</b></p>
+      </div>
+      <div class="af-step af-fix">
+        <span class="af-label">Fix</span>
+        <h4>ครอบด้วย h() ก่อน echo ทุกครั้ง</h4>
+        <p>เขียนฟังก์ชัน <code>h()</code> ที่เรียก <code>htmlspecialchars()</code> แล้วใช้แทน echo ตรงๆ ทุกจุดที่แสดงข้อมูลจากผู้ใช้</p>
+      </div>
+    </div>
+
+    <div class="filecard" style="margin-top:20px">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">config.php + process.php — หลังแก้ไข</span>
+      </div>
+      <pre><code><span class="fc-tag">function</span> <span class="fc-attr">h</span>(<span class="fc-attr">$value</span>) &#123;
+    <span class="fc-tag">return</span> <span class="fc-attr">htmlspecialchars</span>(<span class="fc-attr">$value</span>, ENT_QUOTES, <span class="fc-str">'UTF-8'</span>);
+&#125;
+
+<span class="fc-cm">// ใช้แทน echo ตรงๆ ทุกจุด</span>
+&lt;<span class="fc-tag">td</span>&gt;&lt;<span class="fc-tag">?=</span> <span class="fc-attr">h</span>(<span class="fc-attr">$fullname</span>) <span class="fc-tag">?</span>&gt;&lt;/<span class="fc-tag">td</span>&gt;</code></pre>
+      <div class="notes">
+        <p style="margin:0;font-size:.86rem;color:var(--ink-2)">ตอนนี้ Browser เห็นแค่ข้อความ <code>&amp;lt;script&amp;gt;alert(...)...</code> ธรรมดา ไม่รันเป็นโค้ดอีกต่อไป</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-tag">06</span>
+      <h2>ปิด required แล้วยังปลอดภัยอยู่ไหม</h2>
+    </div>
+    <p class="sec-sub">ต่อเนื่องจากบทที่ 2 — คราวนี้เห็นโค้ด PHP ฝั่ง Server ที่ทำหน้าที่ด่านสุดท้ายจริงๆ</p>
+
+    <div class="fixnote" style="background:var(--gold-soft)">
+      <b style="color:var(--gold)">ลบ <code>required</code> ออกจาก DevTools ได้ แต่ลบเงื่อนไขใน process.php ไม่ได้:</b> ต่อให้ผู้ใช้เปิด Elements tab แล้วลบ <code>required</code> ออกจาก <code>&lt;input&gt;</code> เพื่อส่งฟอร์มที่กรอกไม่ครบได้สำเร็จ โค้ดฝั่ง Server อย่าง <code>isEmptyValue($fullname)</code> ก็ยังตรวจจับค่าว่างและปฏิเสธคำขอนั้นอยู่ดี — เพราะ Server ไม่เคยเห็นแอตทริบิวต์ <code>required</code> เลย เห็นแค่ค่าที่ส่งมาจริงเท่านั้น
+    </div>
+  </section>
+
+  <section>
+    <div class="drill">
+      <span class="dr-label">แบบฝึกหัดท้ายบท · จับคู่คำกับความหมาย</span>
+      <h4>จับคู่ฟังก์ชันด้านซ้าย กับหน้าที่ด้านขวา (สลับลำดับแล้ว)</h4>
+      <div class="match-row"><span>1. trim()</span><span class="blank">ก. แปลงอักขระพิเศษเป็น HTML entities ป้องกัน XSS</span></div>
+      <div class="match-row"><span>2. empty()</span><span class="blank">ข. กรองข้อมูลจาก $_GET/$_POST/$_COOKIE โดยตรง</span></div>
+      <div class="match-row"><span>3. htmlspecialchars()</span><span class="blank">ค. ตัดช่องว่างหัว-ท้ายข้อความ</span></div>
+      <div class="match-row"><span>4. strip_tags()</span><span class="blank">ง. ลบแท็ก HTML ออกทั้งหมด</span></div>
+      <div class="match-row"><span>5. filter_input()</span><span class="blank">จ. ตรวจว่าค่าเป็นค่าว่างหรือไม่</span></div>
+      <details>
+        <summary>เฉลย</summary>
+        <div class="answer">1-ค &nbsp; 2-จ &nbsp; 3-ก &nbsp; 4-ง &nbsp; 5-ข</div>
+      </details>
+    </div>
+  </section>
+
+  <section>
+    <div class="tablewrap">
+      <table>
+        <caption>ศัพท์ที่ต้องรู้ — พื้นฐาน PHP</caption>
+        <thead><tr><th scope="col">คำศัพท์</th><th scope="col">ความหมาย</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Server-Side Execution</th><td>PHP รันบน Server เท่านั้น Browser เห็นแค่ผลลัพธ์ ไม่เห็นซอร์สโค้ดจริง</td></tr>
+          <tr><th scope="row">Superglobals</th><td>ตัวแปรพิเศษที่ PHP สร้างให้อัตโนมัติทุก Request เช่น <code>$_GET</code>, <code>$_POST</code></td></tr>
+          <tr><th scope="row">htmlspecialchars()</th><td>ฟังก์ชันแปลงอักขระพิเศษเป็น HTML entities เพื่อป้องกัน XSS ตอนแสดงผล</td></tr>
+          <tr><th scope="row">XSS (Cross-Site Scripting)</th><td>ช่องโหว่ที่ยอมให้โค้ด JavaScript ของผู้โจมตีรันในหน้าเว็บของผู้ใช้อื่น เกิดจากการ echo ข้อมูลผู้ใช้โดยไม่กรอง</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bridge" style="margin-top:20px">
+      <b>เชื่อมไปบทหน้า:</b> บทที่ 4-5 จะเอา PHP ตัวเดียวกันนี้ไปต่อกับฐานข้อมูล MySQL จริง — ตอนนั้นจะเห็นช่องโหว่ตัวใหญ่กว่า XSS อีกตัว คือ <b>SQL Injection</b> ซึ่งเกิดจากปัญหาเดียวกันเป๊ะ: เอาค่าจากผู้ใช้ไปต่อโดยตรงโดยไม่กรอง เพียงแต่คราวนี้ต่อเข้าคำสั่ง SQL แทน HTML
+    </div>
+  </section>
+
+  <footer>
+    DB Security Chapter 3 · เรียบเรียงจากสไลด์ "พื้นฐาน PHP สำหรับ Web Application" (Asst.Prof. Monlica Wattana, Ph.D — CP423324)
+  </footer>
+
 </Layout>
