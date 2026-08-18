@@ -64,12 +64,12 @@ export const courses = [
     id: "dbsec",
     name: "DB Security",
     brandSub: "Database & Web Security",
-    accent: "var(--blk)",
+    accent: "var(--sage)",
     home: "dbsec/ch1",
     units: [
       {
         title: "บทที่ 1-7",
-        accent: "var(--blk)",
+        accent: "var(--sage)",
         chapters: [
           { n: 1, slug: "dbsec/ch1", title: "พื้นฐาน Web Application และ HTML", ready: true },
           { n: 2, slug: "dbsec/ch2", title: "HTML Form และ GET/POST", ready: true },
