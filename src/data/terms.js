@@ -537,4 +537,69 @@ export const terms = {
     full: "",
     def: "การตรวจสอบสิทธิ์ของผู้ใช้ที่ฝั่ง Server เสมอ (เช่น role, user_id) โดยไม่เชื่อค่าที่ผู้ใช้ส่งมาโดยตรง เพราะค่าอย่าง role=admin ที่ส่งมาทาง Form ไม่ได้แปลว่าผู้ใช้เป็น Admin จริง",
   },
+  routingTable: {
+    term: "Routing Table",
+    full: "RIB — Routing Information Base",
+    def: "ตารางที่ Router ใช้ตัดสินใจจริงว่าจะส่งแพ็กเก็ตออกทางไหน เก็บเฉพาะเส้นทางที่ \"ชนะ\" แล้วเท่านั้น หนึ่งปลายทางปกติมีหนึ่งบรรทัด (ยกเว้นทำ load balancing)",
+  },
+  eigrpNeighborTable: {
+    term: "Neighbor Table",
+    full: "",
+    def: "ตารางรายชื่อ Router เพื่อนบ้านที่ EIGRP จับมือสำเร็จและยังมีชีวิตอยู่ ดูด้วย show ip eigrp neighbors — ถ้าเพื่อนบ้านหลุดจากตารางนี้ DUAL จะถูกปลุกให้คำนวณใหม่ทันที",
+  },
+  dual: {
+    term: "DUAL",
+    full: "Diffusing Update Algorithm",
+    def: "อัลกอริทึมหัวใจของ EIGRP ที่ตัดสินว่าเส้นทางไหนเป็น Successor / Feasible Successor และจัดการหาเส้นทางใหม่เมื่อเส้นหลักล่ม จุดเด่นคือรับประกันว่าเส้นทางที่เลือกไม่มีลูป",
+  },
+  passiveState: {
+    term: "Passive (P)",
+    full: "",
+    def: "สถานะปกติของเส้นทางใน Topology Table — นิ่ง เสถียร มี Successor ใช้งานอยู่ ไม่ได้กำลังคำนวณอะไร (จำสลับกับ Active บ่อยมาก: Passive คือ \"ดี\")",
+  },
+  activeState: {
+    term: "Active (A)",
+    full: "",
+    def: "สถานะที่เส้นทางล่มแล้วหา Feasible Successor สำรองไม่เจอ Router จึงต้องส่ง Query ออกไปถามเพื่อนบ้านทุกตัว — เป็นสถานะที่ \"มีปัญหา\" ไม่ใช่สถานะที่ดี",
+  },
+  sia: {
+    term: "SIA",
+    full: "Stuck In Active",
+    def: "อาการที่ Router ส่ง Query ออกไปแล้วมีเพื่อนบ้านบางตัวไม่ตอบ Reply กลับมาภายใน Active Timer (ปกติ 3 นาที) EIGRP จะยอมแพ้แล้วรีเซ็ตความสัมพันธ์กับเพื่อนบ้านตัวนั้นทิ้ง",
+  },
+  rtpEigrp: {
+    term: "RTP",
+    full: "Reliable Transport Protocol",
+    def: "กลไกส่งข้อมูลของ EIGRP เองที่ใช้ Sequence Number คู่กับ ACK เพื่อรับประกันว่า Update/Query/Reply ถึงปลายทางแน่นอน (EIGRP วิ่งบน IP protocol 88 ตรง ๆ ไม่ได้ใช้ TCP)",
+  },
+  splitHorizonEigrp: {
+    term: "Split Horizon",
+    full: "",
+    def: "กฎกันลูปของฝั่ง Distance Vector: ห้ามประกาศเส้นทางย้อนกลับออกไปทาง Interface เดียวกับที่เรียนรู้เส้นทางนั้นมา — เปิดใช้เป็นค่าเริ่มต้นใน EIGRP",
+  },
+  namedMode: {
+    term: "Named Mode",
+    full: "EIGRP Named Configuration",
+    def: "รูปแบบการตั้งค่า EIGRP แบบใหม่ที่รวม IPv4 และ IPv6 ไว้ใน process เดียวกันโดยแยกเป็น address-family และย้ายคำสั่งระดับ interface เข้ามาไว้ใต้ af-interface แทนที่จะกระจายอยู่ตาม interface",
+  },
+  afInterface: {
+    term: "af-interface",
+    full: "Address-Family Interface",
+    def: "บล็อกย่อยใน Named Mode ที่ใช้ตั้งค่าเฉพาะ interface เช่น hello-interval, authentication, passive-interface — แทนการเข้าไปพิมพ์ใต้ interface ทีละตัวแบบ Classic Mode",
+  },
+  keyChain: {
+    term: "Key Chain",
+    full: "",
+    def: "ที่เก็บรหัสผ่าน (key-string) พร้อมหมายเลข key ที่ใช้สำหรับ Authentication ของ Routing Protocol — ต้องตั้งชื่อและรหัสให้สอดคล้องกันทั้งสองฝั่งถึงจะจับคู่เพื่อนบ้านได้",
+  },
+  eigrpRouterId: {
+    term: "Router ID",
+    full: "",
+    def: "เลข 32 บิตหน้าตาเหมือน IPv4 ที่ใช้ระบุตัวตน Router ในโปรเซส EIGRP — เลือกจาก Loopback ที่สูงที่สุดก่อน ถ้าไม่มีจึงใช้ Interface ปกติที่สูงที่สุด และตั้งเองได้ด้วย eigrp router-id",
+  },
+  eigrpStub: {
+    term: "EIGRP Stub",
+    full: "",
+    def: "การประกาศว่า Router ตัวนี้เป็นปลายทาง ไม่ใช้เป็นทางผ่าน — เพื่อนบ้านจะไม่ส่ง Query มาหา ช่วยจำกัดวงการกระจาย Query และลดโอกาสเกิด SIA อย่างมากในเครือข่ายแบบ hub-and-spoke",
+  },
 };
