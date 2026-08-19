@@ -173,6 +173,21 @@ OI  2001:db8:0:34::/64 [110/2]</p>
         <p class="why" style="margin:0">บางครั้ง network type ที่เรียนรู้อัตโนมัติไม่ตรงกับ topology จริง (ตัวอย่างจากสไลด์: R2 G0/3 ขึ้นเป็น <code>BROADCAST</code> ทั้งที่ควรเป็น point-to-point) — แก้ตรง interface ได้เลย แต่<b>ต้องแก้ให้ตรงกันทั้งสองปลายของ link</b> ไม่งั้น adjacency พัง</p>
       </div>
     </div>
+
+    <div class="knob" style="margin-top:20px">
+      <span class="where c1">ต่อจากบทที่ 9</span>
+      <h3><Term id="routingAuthentication">Authentication</Term> ของ OSPFv3 — ทำคนละทางกับ v2</h3>
+      <p class="why">จากตาราง 5 ความต่างด้านบน: OSPFv3 <b>ถอด authentication ออกจากตัวโปรโตคอลไปเลย</b> — ไม่มีคำสั่ง <code>ip ospf authentication</code> แบบ v2 อีกต่อไป เหตุผลคือ IPv6 มี IPsec เป็นส่วนหนึ่งของมาตรฐานอยู่แล้ว จึงไม่ต้องให้แต่ละโปรโตคอลสร้างกลไกของตัวเองซ้ำซ้อน</p>
+      <pre>! ระดับ interface
+interface GigabitEthernet0/0
+ ospfv3 authentication ipsec spi 500 sha1 &lt;40-hex-digit-key&gt;
+
+! หรือระดับทั้ง area
+router ospfv3 1
+ address-family ipv6 unicast
+  area 0 authentication ipsec spi 500 sha1 &lt;40-hex-digit-key&gt;</pre>
+      <p class="why" style="margin:0"><b>SPI (Security Parameter Index)</b> คือเลขระบุชุดค่าความปลอดภัย ต้องตรงกันทั้งสองฝั่งพร้อมกับตัว key — ต่างจาก v2 ตรงที่ key เป็น<b>เลขฐานสิบหก</b>ความยาวตายตัว ไม่ใช่ข้อความอะไรก็ได้ · เทียบให้ชัด: <b>v2 ใช้ MD5 ผ่านคำสั่งของ OSPF เอง · v3 ใช้ IPsec ของ IPv6</b> — เป็นข้อต่างที่ออกสอบบ่อย</p>
+    </div>
   </section>
 
   <section>
@@ -232,6 +247,45 @@ OI  2001:db8:0:34::/64 [110/2]</p>
           <li><b>Instance ID</b> — คุมว่าใครบน segment เดียวกันฟอร์ม adjacency ได้</li>
         </ul>
       </div>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>ตารางสรุป OSPFv2 vs OSPFv3 — ตารางเดียวจบ ใช้ตอบข้อเทียบเวอร์ชันได้ทุกข้อ</caption>
+        <thead><tr><th scope="col">หัวข้อ</th><th scope="col">OSPFv2</th><th scope="col">OSPFv3</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">รองรับ</th><td>IPv4 เท่านั้น</td><td>IPv6 <b>และ</b> IPv4 (ผ่าน address-family)</td></tr>
+          <tr><th scope="row">IP Protocol</th><td>89</td><td>89 (เหมือนเดิม)</td></tr>
+          <tr><th scope="row">Multicast</th><td>224.0.0.5 / 224.0.0.6</td><td>FF02::5 / FF02::6</td></tr>
+          <tr><th scope="row">คุยกันด้วยที่อยู่</th><td>IP ของ interface (ต้อง subnet เดียวกัน)</td><td><b>Link-Local</b> (ไม่ต้อง subnet เดียวกัน)</td></tr>
+          <tr><th scope="row">Router ID</th><td>เดาจาก interface ให้อัตโนมัติได้</td><td><b>ต้องตั้งเองเสมอ</b> (แต่ยังเป็นเลข 32 บิตเหมือนเดิม)</td></tr>
+          <tr><th scope="row">Authentication</th><td>มีในตัว (Plain Text / MD5)</td><td><b>ไม่มีในตัว</b> — ใช้ IPsec ของ IPv6</td></tr>
+          <tr><th scope="row">จำนวน LSA</th><td>6 ชนิด</td><td>8 ชนิด (เพิ่ม Link และ Intra-area Prefix)</td></tr>
+          <tr><th scope="row">prefix อยู่ตรงไหน</th><td>ฝังใน Router LSA (Type 1)</td><td><b>แยกออกมาเป็น LSA ต่างหาก</b> → แก้ prefix ไม่ต้องรัน SPF ใหม่</td></tr>
+          <tr><th scope="row">หลาย process ต่อ link</th><td>ไม่มี</td><td>มี <b>Instance ID</b></td></tr>
+          <tr><th scope="row">Packet Types / Neighbor States / DR-BDR / Area 0</th><td colspan="2" style="text-align:center"><b>เหมือนกันทุกประการ</b> — เรียนจากบทที่ 8-9 ใช้ได้เลย</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="drill" style="margin-top:20px">
+      <span class="dr-label">ทบทวนเร็ว</span>
+      <h4>ตอบในใจก่อนกดดูเฉลย</h4>
+      <div class="match-row"><span>1. OSPFv3 ตั้ง Router ID เป็น IPv6 address ได้ไหม</span><span class="blank">?</span></div>
+      <div class="match-row"><span>2. สอง Router คนละ subnet ฟอร์ม adjacency กันได้ไหม ทั้ง v2 และ v3</span><span class="blank">?</span></div>
+      <div class="match-row"><span>3. อยากทำ authentication บน OSPFv3 ใช้คำสั่งอะไร</span><span class="blank">?</span></div>
+      <div class="match-row"><span>4. LSA ชนิดไหนที่มีใน v3 แต่ไม่มีใน v2</span><span class="blank">?</span></div>
+      <div class="match-row"><span>5. จะใช้ OSPFv3 route IPv4 ต้องมีอะไรบน interface ก่อน</span><span class="blank">?</span></div>
+      <details>
+        <summary>ดูเฉลย</summary>
+        <div class="answer">
+          <p style="margin:0 0 5px">1. <b>ไม่ได้</b> — Router ID ยังเป็นเลข 32 บิตหน้าตาแบบ IPv4 เสมอ (เช่น 1.1.1.1) แค่<b>ต้องตั้งเองด้วยมือ</b> เพราะไม่มี IPv4 address ให้เดา</p>
+          <p style="margin:0 0 5px">2. <b>v2 ไม่ได้ · v3 ได้</b> — เพราะ v3 คุยกันผ่าน link-local address ซึ่งมีอยู่บนทุก link อยู่แล้ว ไม่เกี่ยวกับ global address</p>
+          <p style="margin:0 0 5px">3. <code>ospfv3 authentication ipsec spi &lt;spi&gt; sha1 &lt;key&gt;</code> — ใช้ IPsec ไม่ใช่คำสั่ง MD5 แบบ v2</p>
+          <p style="margin:0 0 5px">4. <b>Link LSA (0x0008)</b> และ <b>Intra-area Prefix LSA (0x2009)</b> — ทั้งคู่เกิดจากการย้าย prefix ออกมาจาก Router LSA</p>
+          <p style="margin:0">5. ต้องมี <b>IPv6 address</b> บน interface นั้นก่อนเสมอ (global หรือ link-local ก็ได้) เพราะตัวโปรโตคอลยังต้องคุยกันผ่าน IPv6 อยู่ดี IPv4 เป็นแค่ payload</p>
+        </div>
+      </details>
     </div>
   </section>
 

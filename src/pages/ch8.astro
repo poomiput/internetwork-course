@@ -37,6 +37,90 @@ import Term from "../components/Term.astro";
   <section>
     <div class="sec-head">
       <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="13" cy="13" r="10" fill="none" stroke="var(--sage)" stroke-width="1.8"/>
+        <path d="M13 8 L13 14" stroke="var(--sage)" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="13" cy="17.5" r="1.2" fill="var(--sage)"/>
+      </svg>
+      <h2>หัวข้อ 0 — ปูพื้นฐานก่อน (ยังไม่เคยเรียน OSPF มาก่อนอ่านตรงนี้)</h2>
+    </div>
+    <p class="sec-sub">ถ้ามาจากบทที่ 7 (EIGRP) แล้ว หัวข้อนี้จะช่วยให้เห็นว่า OSPF คิดคนละแบบกันยังไง — ถ้ายังไม่เคยอ่านบทไหนเลยก็เริ่มที่นี่ได้</p>
+
+    <div class="cascade">
+      <div class="rung" style="border-top-color:var(--slate)">
+        <span class="step-n" style="color:var(--slate)">1</span>
+        <h4>ปัญหาเดิม: Router รู้จักแค่สิ่งที่ต่ออยู่กับตัวเอง</h4>
+        <p class="what">Router ต้องบอกกันและกันว่ารู้จักเครือข่ายอะไรบ้าง ไม่งั้นส่งข้อมูลข้ามกันไม่ได้ — คำถามคือ "จะบอกกันด้วยวิธีไหน"</p>
+        <div class="lab">มีสองสำนักคิด และ OSPF เลือกสำนักที่สอง</div>
+      </div>
+      <div class="rung" style="border-top-color:var(--slate)">
+        <span class="step-n" style="color:var(--slate)">2</span>
+        <h4>สำนักที่ 1 — ถามทาง (Distance Vector)</h4>
+        <p class="what">เชื่อสิ่งที่เพื่อนบ้านบอกมาตรง ๆ ว่า "ไปทางฉันสิ ระยะเท่านี้" โดยไม่เคยเห็นภาพรวมทั้งเครือข่าย เหมือนถามทางคนข้างถนนแล้วเดินตามคำบอก</p>
+        <div class="lab">RIP และ EIGRP อยู่สำนักนี้</div>
+      </div>
+      <div class="rung" style="border-top-color:var(--gold)">
+        <span class="step-n" style="color:var(--gold)">3</span>
+        <h4>สำนักที่ 2 — ถือแผนที่ (Link State)</h4>
+        <p class="what">ทุก Router ส่ง "สภาพลิงก์ของตัวเอง" ให้ทุกคนในเครือข่าย จนสุดท้ายทุกตัวถือ<b>แผนที่ผืนเดียวกันเป๊ะ</b> แล้วต่างคนต่างกางแผนที่คำนวณเส้นทางที่สั้นที่สุดของตัวเอง</p>
+        <div class="lab"><b>OSPF อยู่สำนักนี้</b> — นี่คือหัวใจทั้งหมดของบท</div>
+      </div>
+      <div class="rung" style="border-top-color:var(--gold)">
+        <span class="step-n" style="color:var(--gold)">4</span>
+        <h4>ผลที่ตามมา</h4>
+        <p class="what">เพราะทุกตัวเห็นแผนที่เต็ม จึงไม่มีทางถูกเพื่อนบ้านหลอกให้วนลูป และ converge ได้เร็วกว่า — แลกกับการกิน memory และ CPU มากกว่า</p>
+        <div class="lab">ปัญหา SIA ที่เจอใน EIGRP บทที่ 7 จึง<b>ไม่มีใน OSPF</b></div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="knob">
+        <span class="where c2">3 ขั้นตอนที่ OSPF ทำ</span>
+        <h3>จากไม่รู้จักใครเลย จนได้เส้นทางครบ</h3>
+        <ol style="margin:0;padding-left:20px;color:var(--ink-2);font-size:.93rem">
+          <li><b>หาเพื่อนบ้าน</b> — ส่ง Hello ออกทุก interface ที่เปิด OSPF ถ้าเจอกันและเงื่อนไขตรงกันก็จับคู่เป็นเพื่อนบ้าน</li>
+          <li><b>แลกแผนที่จนเหมือนกัน</b> — ส่ง LSA (ชิ้นส่วนแผนที่ของตัวเอง) กระจายให้ทั่ว แล้วทุกตัวเก็บสะสมไว้ใน <b>LSDB</b> จนได้แผนที่ชุดเดียวกันหมด</li>
+          <li><b>ต่างคนต่างคำนวณ</b> — รันอัลกอริทึม <b>Dijkstra SPF</b> บนแผนที่นั้น ได้ต้นไม้เส้นทางที่สั้นที่สุดโดยมี<b>ตัวเองเป็นราก</b> แล้วเอาผลลัพธ์ใส่ Routing Table</li>
+        </ol>
+        <p class="why" style="margin:12px 0 0"><b>จุดที่คนสับสนบ่อย:</b> LSDB ของทุกตัวใน Area เดียวกัน<b>เหมือนกันเป๊ะ</b> แต่ผลลัพธ์ SPT (ต้นไม้เส้นทาง) ของแต่ละตัว<b>ไม่เหมือนกัน</b> — เพราะกางแผนที่ผืนเดียวกันแต่ยืนคนละจุด</p>
+      </div>
+      <div class="card">
+        <h3>บัตรประจำตัว OSPF — ตัวเลขที่ออกสอบ</h3>
+        <ul style="margin:0">
+          <li><b>IP Protocol</b> — 89 (วิ่งบน IP ตรง ๆ ไม่ใช้ TCP/UDP เหมือน EIGRP)</li>
+          <li><b>Multicast</b> — 224.0.0.5 (ทุก Router) · 224.0.0.6 (เฉพาะ DR/BDR)</li>
+          <li><b>Administrative Distance</b> — 110 (สูงกว่า EIGRP 90 แปลว่า<b>แพ้</b> EIGRP ถ้าชนกัน)</li>
+          <li><b>Metric</b> — เรียกว่า <b>Cost</b> คิดจาก Bandwidth อย่างเดียว (ยิ่งเร็วยิ่ง cost ต่ำ)</li>
+          <li><b>มาตรฐานเปิด</b> — ไม่ใช่ของ Cisco ใช้ข้ามยี่ห้อได้ (ต่างจาก EIGRP)</li>
+          <li><b>Hello / Dead</b> — 10 / 40 วินาที บน Ethernet</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>เทียบ EIGRP (บทที่ 7) กับ OSPF (บทนี้) — ตารางนี้ตอบข้อสอบได้หลายข้อ</caption>
+        <thead><tr><th scope="col">หัวข้อ</th><th scope="col">EIGRP</th><th scope="col">OSPF</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">ประเภท</th><td>Advanced Distance Vector</td><td>Link State</td></tr>
+          <tr><th scope="row">เจ้าของ</th><td>Cisco เท่านั้น</td><td>มาตรฐานเปิด ใช้ข้ามยี่ห้อได้</td></tr>
+          <tr><th scope="row">AD</th><td>90 (internal) / 170 (external)</td><td>110</td></tr>
+          <tr><th scope="row">Metric คิดจาก</th><td>Bandwidth + Delay</td><td>Bandwidth อย่างเดียว (Cost)</td></tr>
+          <tr><th scope="row">มองเห็น topology</th><td>ไม่เห็น รู้แค่ที่เพื่อนบ้านบอก</td><td>เห็นทั้ง Area ผ่าน LSDB</td></tr>
+          <tr><th scope="row">อัลกอริทึม</th><td>DUAL</td><td>Dijkstra SPF</td></tr>
+          <tr><th scope="row">Multicast</th><td>224.0.0.10</td><td>224.0.0.5 / 224.0.0.6</td></tr>
+          <tr><th scope="row">IP Protocol</th><td>88</td><td>89</td></tr>
+          <tr><th scope="row">Hello / Hold-Dead</th><td>5 / 15 วินาที</td><td>10 / 40 วินาที</td></tr>
+          <tr><th scope="row">Timer ต้องตรงกันไหม</th><td><b>ไม่ต้อง</b></td><td><b>ต้องตรง</b> ไม่งั้นจับคู่ไม่ติด</td></tr>
+          <tr><th scope="row">แบ่งพื้นที่</th><td>ไม่มีแนวคิด Area</td><td>มี Area และบังคับมี Area 0</td></tr>
+          <tr><th scope="row">เส้นสำรอง</th><td>Feasible Successor พร้อมใช้ทันที</td><td>คำนวณ SPF ใหม่เมื่อ topology เปลี่ยน</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
         <circle cx="13" cy="7" r="3" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
         <circle cx="6" cy="19" r="3" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
         <circle cx="20" cy="19" r="3" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
@@ -45,7 +129,20 @@ import Term from "../components/Term.astro";
       </svg>
       <h2>OSPF Fundamentals</h2>
     </div>
-    <p class="sec-sub">OSPF เป็น IGP แบบเปิด (nonproprietary) ไม่ใช่ของ Cisco เพียงเจ้าเดียว — รองรับ VLSM/classless routing/summarization/authentication มีสองเวอร์ชันหลัก: <b>OSPFv2</b> (IPv4) และ <b>OSPFv3</b> (IPv6)</p>
+    <p class="sec-sub">OSPF เป็น <Term id="igp">IGP</Term> แบบเปิด (nonproprietary) ไม่ใช่ของ Cisco เพียงเจ้าเดียว — รองรับ <Term id="vlsm">VLSM</Term> / <Term id="classlessRouting">classless routing</Term> / <Term id="routeSummarization">summarization</Term> / <Term id="routingAuthentication">authentication</Term> มีสองเวอร์ชันหลัก: <b>OSPFv2</b> (IPv4) และ <b>OSPFv3</b> (IPv6)</p>
+
+    <div class="tablewrap" style="margin-bottom:20px">
+      <table>
+        <caption>4 คำที่อยู่ในประโยคด้านบน — แปลเป็นภาษาคนก่อนอ่านต่อ</caption>
+        <thead><tr><th scope="col">คำ</th><th scope="col">แปลว่า</th><th scope="col">ทำไมถึงสำคัญ</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">VLSM</th><td>ใช้ subnet mask <b>ยาวไม่เท่ากัน</b>ในเครือข่ายเดียวกันได้</td><td>ลิงก์ที่มีแค่ 2 ฝั่งใช้ /30 (4 IP) ส่วนวง LAN ที่มีเครื่อง 200 ตัวใช้ /24 — ถ้าไม่มี VLSM ต้องใช้ /24 ทั้งหมดเท่ากันหมด เปลือง IP มหาศาล</td></tr>
+          <tr><th scope="row">Classless</th><td>ส่ง <b>subnet mask ไปพร้อมกับเส้นทาง</b>ทุกครั้ง</td><td>เป็นเงื่อนไขที่ทำให้ VLSM เป็นไปได้ — ถ้าไม่ส่ง mask มาด้วย (Classful แบบ RIPv1 ยุคเก่า) Router ปลายทางต้องเดาเอาจากคลาส A/B/C ซึ่งเดาผิดบ่อย</td></tr>
+          <tr><th scope="row">Summarization</th><td><b>ยุบหลายเส้นทางย่อยให้เหลือประกาศก้อนเดียว</b></td><td>10.1.0.0/24, 10.1.1.0/24, 10.1.2.0/24, 10.1.3.0/24 → ประกาศแค่ 10.1.0.0/22 ตัวเดียว ตารางเส้นทางเล็กลง และเวลาลิงก์ข้างในกระพริบ ข้างนอกไม่รู้สึกอะไรเลย</td></tr>
+          <tr><th scope="row">Authentication</th><td><b>ต้องมีรหัสผ่านถูกต้องถึงจะเป็นเพื่อนบ้านได้</b></td><td>กันคนแปลกหน้าเสียบสายเข้ามาแล้วประกาศเส้นทางปลอมเพื่อดูดทราฟฟิกไปอ่าน (รายละเอียดอยู่ในบทที่ 9)</td></tr>
+        </tbody>
+      </table>
+    </div>
 
     <div class="grid-2">
       <div class="card">
@@ -94,6 +191,80 @@ import Term from "../components/Term.astro";
       <h4>ทำไมต้องมี DR/BDR <span class="tag">ออกสอบ</span></h4>
       <p>บน Multi-access segment (เช่น Ethernet) ถ้ามี 4 Router เชื่อมกันโดยไม่มี DR — แต่ละคู่ต้องสร้าง adjacency กันเองหมด รวม 6 adjacency และเกิดการ flood LSDB ซ้ำซ้อน 6 รอบต่อการเปลี่ยนแปลงหนึ่งครั้ง</p>
       <p style="margin:0"><b>ทางแก้:</b> เลือก Router หนึ่งตัวเป็น <b>Designated Router (DR)</b> ให้ทุกตัวที่เหลือสร้าง adjacency กับ DR (และ BDR สำรอง) เท่านั้น จาก 6 adjacency เหลือแค่ 3 — DR เป็นคนกลางกระจาย LSA ต่อให้ทุกตัวแทนที่จะให้ทุกคู่คุยกันเองตรง ๆ</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="2" y="10" width="7" height="7" rx="1.5" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+        <rect x="9.5" y="10" width="7" height="7" rx="1.5" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="1.8"/>
+        <rect x="17" y="10" width="7" height="7" rx="1.5" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+      </svg>
+      <h2>OSPF Router Types — 4 บทบาท</h2>
+    </div>
+    <p class="sec-sub">MidEx ระบุหัวข้อ "OSPF Areas และ Router Types" ไว้ชัด — บทบาทถูกกำหนดจาก<b>ตำแหน่งที่ interface ของ Router ไปวางอยู่</b> ไม่ได้ตั้งค่าเอง และ Router หนึ่งตัวเป็นหลายบทบาทพร้อมกันได้</p>
+
+    <div class="figwrap">
+      <figure>
+        <svg viewBox="0 0 800 300" role="img" aria-label="แผนภาพบทบาทของ Router สี่ชนิด: R1 อยู่ใน Area 1 ทั้งหมดจึงเป็น Internal Router, R2 มีขาอยู่ทั้ง Area 1 และ Area 0 จึงเป็น ABR และเป็น Backbone Router ด้วย, R3 อยู่ใน Area 0 ทั้งหมดจึงเป็น Backbone Router, R4 อยู่ Area 0 และมีขาต่อออกไปยังโปรโตคอลภายนอกเช่น BGP จึงเป็น ASBR">
+          <rect x="20" y="70" width="180" height="130" rx="10" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <text x="110" y="60" text-anchor="middle" font-size="13" font-weight="700" fill="var(--slate)">Area 1</text>
+
+          <rect x="250" y="70" width="300" height="130" rx="10" fill="var(--gold-soft)" stroke="var(--gold)" stroke-width="2"/>
+          <text x="400" y="60" text-anchor="middle" font-size="13" font-weight="700" fill="var(--gold)">Area 0 — Backbone</text>
+
+          <rect x="45" y="110" width="90" height="46" rx="8" fill="var(--card)" stroke="var(--ink-2)" stroke-width="1.8"/>
+          <text x="90" y="130" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">R1</text>
+          <text x="90" y="147" text-anchor="middle" font-size="9" fill="var(--ink-2)">Internal</text>
+
+          <rect x="180" y="110" width="100" height="46" rx="8" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="2.2"/>
+          <text x="230" y="130" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">R2</text>
+          <text x="230" y="147" text-anchor="middle" font-size="9" fill="var(--ink-2)">ABR + Backbone</text>
+
+          <rect x="330" y="110" width="90" height="46" rx="8" fill="var(--card)" stroke="var(--gold)" stroke-width="1.8"/>
+          <text x="375" y="130" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">R3</text>
+          <text x="375" y="147" text-anchor="middle" font-size="9" fill="var(--ink-2)">Backbone</text>
+
+          <rect x="460" y="110" width="90" height="46" rx="8" fill="var(--violet-soft)" stroke="var(--violet)" stroke-width="2.2"/>
+          <text x="505" y="130" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">R4</text>
+          <text x="505" y="147" text-anchor="middle" font-size="9" fill="var(--ink-2)">ASBR</text>
+
+          <line x1="135" y1="133" x2="180" y2="133" stroke="var(--ink-2)" stroke-width="2"/>
+          <line x1="280" y1="133" x2="330" y2="133" stroke="var(--ink-2)" stroke-width="2"/>
+          <line x1="420" y1="133" x2="460" y2="133" stroke="var(--ink-2)" stroke-width="2"/>
+
+          <line x1="550" y1="133" x2="640" y2="133" stroke="var(--violet)" stroke-width="2.4" stroke-dasharray="6 4"/>
+          <rect x="640" y="105" width="130" height="56" rx="8" fill="var(--card)" stroke="var(--violet)" stroke-width="1.8"/>
+          <text x="705" y="128" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--ink)">โลกภายนอก</text>
+          <text x="705" y="145" text-anchor="middle" font-size="9.5" fill="var(--ink-2)">BGP / EIGRP / Static</text>
+
+          <text x="400" y="235" text-anchor="middle" font-size="11.5" fill="var(--ink-2)">R2 เป็นทั้ง ABR (คร่อมสอง Area) และ Backbone Router (มีขาใน Area 0) พร้อมกัน</text>
+          <text x="400" y="256" text-anchor="middle" font-size="11.5" fill="var(--ink-2)">R4 เป็นทั้ง Backbone Router และ ASBR — บทบาทซ้อนกันได้ ไม่ได้เลือกอย่างใดอย่างหนึ่ง</text>
+          <text x="400" y="280" text-anchor="middle" font-size="11" font-weight="700" fill="var(--coral)">บทบาทเกิดจากตำแหน่งของ interface ไม่ใช่จากคำสั่งที่พิมพ์</text>
+        </svg>
+        <figcaption>ตำแหน่งของขาแต่ละข้างเป็นตัวกำหนดบทบาททั้งหมด — ไม่มีคำสั่งไหนให้พิมพ์ว่า "ฉันขอเป็น ABR"</figcaption>
+      </figure>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>4 บทบาท — เงื่อนไขและหน้าที่</caption>
+        <thead><tr><th scope="col">บทบาท</th><th scope="col">เป็นเมื่อไหร่</th><th scope="col">หน้าที่พิเศษ</th></tr></thead>
+        <tbody>
+          <tr><th scope="row"><Term id="internalRouter">Internal</Term></th><td>ทุก interface อยู่ใน Area เดียวกันหมด</td><td>ไม่มีอะไรพิเศษ ถือ LSDB ชุดเดียว รัน SPF ธรรมดา</td></tr>
+          <tr><th scope="row">Backbone</th><td>มี interface อย่างน้อย 1 ขาอยู่ใน <b>Area 0</b></td><td>เป็นส่วนหนึ่งของกระดูกสันหลัง ต้องเชื่อมต่อกันเป็นผืนเดียวไม่ขาดตอน</td></tr>
+          <tr><th scope="row"><Term id="abr">ABR</Term></th><td>มีขาอยู่ใน Area 0 <b>และ</b> อีกอย่างน้อยหนึ่ง Area</td><td>สร้าง <b>LSA Type 3</b> เพื่อพาเส้นทางข้าม Area · เป็นจุดเดียวที่ทำ Summarization ระหว่าง Area ได้ · เก็บ LSDB แยกชุดของแต่ละ Area</td></tr>
+          <tr><th scope="row"><Term id="asbr">ASBR</Term></th><td>ดึงเส้นทางจาก<b>นอกโดเมน OSPF</b> เข้ามาผ่าน redistribution (หรือประกาศ default route)</td><td>สร้าง <b>LSA Type 5</b> (หรือ Type 7 ถ้าอยู่ใน NSSA) · อยู่ Area ไหนก็ได้ ไม่จำเป็นต้องอยู่ Area 0</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>จุดที่ข้อสอบชอบหลอก <span class="tag">ออกสอบ</span></h4>
+      <p><b>1. ABR ต้องมีขาใน Area 0 เสมอ</b> — Router ที่คร่อม Area 1 กับ Area 2 โดยไม่แตะ Area 0 เลย <b>ไม่ใช่ ABR ที่ถูกต้อง</b> และเส้นทางจะไม่ไหลข้ามให้ (เชื่อมโยงกับเรื่อง Discontiguous Network ในบทที่ 9)</p>
+      <p><b>2. ASBR ไม่จำเป็นต้องอยู่ Area 0</b> — ต่างจาก ABR ตรงนี้ชัดเจน ASBR อยู่ Area ไหนก็ได้ แม้แต่ใน NSSA</p>
+      <p style="margin:0"><b>3. บทบาทซ้อนกันได้</b> — Router ตัวเดียวเป็นทั้ง Backbone + ABR + ASBR พร้อมกันได้ ถ้าเข้าเงื่อนไขทั้งสามข้อ</p>
     </div>
   </section>
 
@@ -265,21 +436,67 @@ R4(config-if)# ip ospf priority 0</pre>
   </section>
 
   <section>
-    <div class="grid-2">
-      <div class="exam">
-        <h4>ช่องว่างที่ต้องรู้ <span class="tag">แจ้งเตือน</span></h4>
-        <p>MidEx ระบุหัวข้อ <b>"OSPF Areas และ Router Types" (ABR/ASBR), "LSAs ประเภทต่างๆ" (Type 1-5, 7), "OSPFv3 (IPv6)"</b> และ <b>"OSPF Route Summarization"</b> อยู่ในขอบเขตของบทนี้ แต่เนื้อหาเหล่านี้<b>ไม่ปรากฏ</b>ในสไลด์ต้นฉบับ Chapter 8 เลย — สไลด์ชุดนี้พูดถึง Area/Backbone แค่ระดับภาพรวม (ไม่ตั้งชื่อ Router Type) พูดถึง LSA แค่ระดับแนวคิด (ไม่แจกแจงเลข Type) และไม่มีเนื้อหา OSPFv3 หรือ Summarization เลยแม้แต่บรรทัดเดียว จึงไม่ได้เขียนเนื้อหาเหล่านี้ขึ้นมาเองเพื่อความถูกต้อง แนะนำให้หาสไลด์/เอกสารเพิ่มเติมแยกต่างหาก (Route Summarization และ Special Area Types มักปรากฏใน Chapter 10: Advanced OSPF)</p>
-      </div>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M5 13 L11 19 L21 6" fill="none" stroke="var(--fwd)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h2>สรุปและทบทวน</h2>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <caption>แผนที่ OSPF ทั้ง 3 บท — หัวข้อ MidEx อยู่ตรงไหนบ้าง</caption>
+        <thead><tr><th scope="col">หัวข้อที่ MidEx ระบุ</th><th scope="col">อ่านได้ที่</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">แนวคิดพื้นฐานของ OSPF</th><td><b>บทนี้</b> — หัวข้อ 0 และ OSPF Fundamentals</td></tr>
+          <tr><th scope="row">OSPF Neighbors และ Adjacencies</th><td><b>บทนี้</b> — 8 ขั้น Neighbor State และตารางเงื่อนไขจับคู่</td></tr>
+          <tr><th scope="row">OSPF Packet Types</th><td><b>บทนี้</b> — ตาราง 5 ชนิด (Hello, DBD, LSR, LSU, LSAck)</td></tr>
+          <tr><th scope="row">OSPF Areas และ Router Types</th><td><b>บทนี้</b> (Router Types 4 บทบาท) + <b>บทที่ 9</b> (เหตุผลที่ต้องแบ่ง Area)</td></tr>
+          <tr><th scope="row">LSAs ประเภทต่างๆ</th><td><b>บทที่ 9</b> — ตาราง LSA 6 ชนิด เจาะลึก Type 1/2/3 และ 4/5/7</td></tr>
+          <tr><th scope="row">OSPF Route Summarization</th><td><b>บทที่ 9</b> — หัวข้อ Summarization of Routes</td></tr>
+          <tr><th scope="row">การกำหนดค่า OSPFv2 (IPv4)</th><td><b>บทนี้</b> — OSPF Configuration สองวิธี</td></tr>
+          <tr><th scope="row">การกำหนดค่า OSPFv3 (IPv6)</th><td><b>บทที่ 10</b> — ทั้งบท</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
       <div class="card">
-        <h3>สรุปคำศัพท์บทนี้</h3>
+        <h3>เช็กลิสต์ก่อนสอบ — บทนี้</h3>
         <ul>
-          <li><b>DR / BDR</b> — Router กลางที่คุมการ flood LSA บน multi-access segment</li>
-          <li><b>RID</b> — เลขประจำตัว Router ไม่ซ้ำกันในโดเมน</li>
-          <li><b>SPT</b> — ต้นไม้เส้นทางที่แต่ละ Router คำนวณเอง รากคือตัวเอง</li>
-          <li><b>Interface Priority</b> — ตัวเลือก DR/BDR ยิ่งสูงยิ่งชนะ</li>
-          <li><b>Passive Interface</b> — เข้า LSDB แต่ไม่ส่ง hello/สร้าง adjacency</li>
+          <li><b>Protocol 89 · 224.0.0.5 / 224.0.0.6 · AD 110</b></li>
+          <li><b>5 Packet Types</b> — Hello, DBD, LSR, LSU, LSAck</li>
+          <li><b>8 Neighbor States</b> — Down → Attempt → Init → 2-Way → ExStart → Exchange → Loading → Full</li>
+          <li><b>2-Way</b> = เลือก DR/BDR · <b>ExStart</b> = ตกลง Master/Slave · <b>Full</b> = สมบูรณ์</li>
+          <li><b>Cost = Reference BW ÷ Interface BW</b> (default reference = 100 Mbps)</li>
+          <li><b>Priority สูงชนะ</b> (ตรงข้ามกับ cost/AD ที่ต่ำชนะ) · priority 0 = ไม่ลงแข่ง</li>
+          <li><b>DR/BDR ไม่ preempt</b> — เลือกแล้วเลือกเลยจนกว่าจะล่ม</li>
+          <li><b>Timer ต้องตรงกัน</b> ไม่งั้นจับคู่ไม่ติด (ต่างจาก EIGRP)</li>
         </ul>
       </div>
+      <div class="drill">
+        <span class="dr-label">ทบทวนเร็ว</span>
+        <h4>ตอบในใจก่อนกดดูเฉลย</h4>
+        <div class="match-row"><span>1. Router มีขาใน Area 1 และ Area 2 แต่ไม่แตะ Area 0 เป็น ABR ไหม</span><span class="blank">?</span></div>
+        <div class="match-row"><span>2. FastEthernet กับ 10-GigE ได้ cost เท่าไหร่ ต่างกันไหม</span><span class="blank">?</span></div>
+        <div class="match-row"><span>3. ตั้ง priority 0 แปลว่าอะไร</span><span class="blank">?</span></div>
+        <div class="match-row"><span>4. state ไหนคือจุดที่เลือก DR/BDR</span><span class="blank">?</span></div>
+        <div class="match-row"><span>5. เครือข่ายรู้จัก 10.1.1.0/24 ทั้งจาก OSPF และ EIGRP ตัวไหนชนะ</span><span class="blank">?</span></div>
+        <details>
+          <summary>ดูเฉลย</summary>
+          <div class="answer">
+            <p style="margin:0 0 5px">1. <b>ไม่ใช่</b> — ABR ต้องมีขาอยู่ใน Area 0 ด้วยเสมอ กรณีนี้เส้นทางจะไม่ไหลข้าม Area ให้ (ดูเรื่อง Discontiguous Network บทที่ 9)</p>
+            <p style="margin:0 0 5px">2. ได้ <b>cost = 1 เท่ากันทั้งคู่</b> เพราะ reference bandwidth default 100 Mbps เตี้ยเกินไป — ต้องแก้ด้วย <code>auto-cost reference-bandwidth</code> และต้องตั้งเท่ากันทุก Router</p>
+            <p style="margin:0 0 5px">3. <b>ถอนตัวจากการเลือก DR/BDR ถาวร</b> — จะเป็น DROTHER ตลอด ไม่มีทางได้เป็น DR แม้ DR ปัจจุบันจะล่ม</p>
+            <p style="margin:0 0 5px">4. <b>2-Way</b> — เป็นจุดที่รู้จักกันสองทางแล้วและเลือก DR/BDR ถ้า segment นั้นต้องมี</p>
+            <p style="margin:0">5. <b>EIGRP ชนะ</b> เพราะ AD 90 ต่ำกว่า 110 — ตัดสินที่ AD ก่อนเสมอ ไม่ต้องดู metric เลย</p>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="bridge" style="margin-top:20px">
+      <b>บทถัดไป:</b> บทนี้ทำให้ OSPF ทำงานได้ใน Area เดียว — <b>บทที่ 9</b> จะขยับไปหลาย Area พร้อมกัน: ทำไมต้องแบ่ง, LSA แต่ละชนิดพกอะไรข้าม Area, Special Area (Stub/NSSA) ที่ตัดข้อมูลส่วนเกินทิ้ง, Virtual Link ตอน Area 0 ขาดตอน และการทำ Authentication
     </div>
   </section>
 

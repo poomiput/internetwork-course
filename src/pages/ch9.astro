@@ -142,7 +142,43 @@ O IA  10.56.1.0/24 [110/67] via ... (interarea, ผ่าน Area 0)</p>
         </tbody>
       </table>
     </div>
-    <p style="color:var(--ink-2);font-size:.9rem;margin-top:10px">หัวข้อนี้เจาะลึกเฉพาะ Type 1, 2, 3 เพราะเป็นชุดที่ใช้สร้าง SPT สำหรับ intra-area และ interarea route โดยตรง — Type 4/5/7 เกี่ยวข้องกับ external route/redistribution ซึ่งมีรายละเอียดเพิ่มเติมนอกเหนือขอบเขตบทนี้</p>
+    <p style="color:var(--ink-2);font-size:.9rem;margin-top:10px">Type 1, 2, 3 เป็นชุดที่ใช้สร้าง SPT สำหรับ intra-area และ interarea route โดยตรง — ส่วน Type 4, 5, 7 เป็นเรื่องของเส้นทางที่มาจาก<b>นอกโดเมน OSPF</b> ซึ่งต้องรู้จัก ASBR ก่อน</p>
+
+    <div class="card" style="margin-top:20px">
+      <h3><Term id="asbr">ASBR</Term> — ประตูสู่โลกภายนอก</h3>
+      <p style="color:var(--ink-2);margin:0 0 10px">ถ้า ABR คือ Router ที่ยืนคร่อมระหว่าง Area — <b>ASBR คือ Router ที่ยืนคร่อมระหว่างโดเมน OSPF กับสิ่งที่อยู่นอกโดเมนทั้งหมด</b> เช่น เชื่อมไปยัง BGP ของ ISP, รับเส้นทางจาก EIGRP ผ่าน redistribution, หรือประกาศ default route ออกมาให้ทั้งโดเมนใช้</p>
+      <ul style="margin:0">
+        <li><b>อยู่ Area ไหนก็ได้</b> — ไม่จำเป็นต้องอยู่ Area 0 (ต่างจาก ABR ที่บังคับ)</li>
+        <li>Router ตัวเดียวเป็นทั้ง ABR และ ASBR พร้อมกันได้</li>
+        <li>เส้นทางที่ ASBR ดึงเข้ามาแสดงใน routing table เป็น <code>O E1</code> หรือ <code>O E2</code> (ไม่ใช่ <code>O</code> หรือ <code>O IA</code>)</li>
+      </ul>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3>Type 5 (AS External) — ตัวเส้นทางจริง</h3>
+        <p style="color:var(--ink-2);margin:0 0 8px"><b>ASBR เป็นคนสร้าง</b> — พก prefix ที่ดึงมาจากภายนอกเข้ามาในโดเมน OSPF</p>
+        <p style="color:var(--ink-2);margin:0"><b>คุณสมบัติพิเศษ:</b> Type 5 ถูก flood <b>ข้าม Area ทั้งโดเมน</b>โดยไม่ถูก ABR แปลงหรือสรุปเลย (ต่างจาก Type 1 ที่ติดอยู่ใน Area ตัวเอง) — ยกเว้น Area พิเศษอย่าง Stub/NSSA ที่บล็อกมันไว้</p>
+      </div>
+      <div class="card">
+        <h3>Type 4 (ASBR Summary) — ป้ายบอกทางไปหา ASBR</h3>
+        <p style="color:var(--ink-2);margin:0 0 8px"><b>ABR เป็นคนสร้าง</b> — ไม่ได้พกเส้นทางภายนอกใด ๆ เลย แต่บอกว่า "ASBR ตัวนั้นอยู่ทางนี้ ห่างเท่านี้"</p>
+        <p style="color:var(--ink-2);margin:0"><b>ทำไมต้องมี:</b> Router ใน Area อื่นได้รับ Type 5 มาแล้วรู้ว่ามีเส้นทางภายนอก แต่<b>ไม่รู้ว่าจะเดินไปหา ASBR ยังไง</b> เพราะ topology ของ Area ที่ ASBR อยู่ถูกซ่อนไว้ — Type 4 คือชิ้นส่วนที่เติมช่องว่างตรงนี้</p>
+      </div>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>External Type 1 (E1) vs Type 2 (E2) — ต่างกันตรงคิด metric <span class="tag">ออกสอบ</span></h4>
+      <p>เวลา ASBR ประกาศเส้นทางภายนอกเข้ามา จะติดป้ายว่าเป็นชนิดไหน — และสองชนิดนี้คิด metric คนละแบบ:</p>
+      <p><b>E2 (ค่า default)</b> — metric <b>คงที่ทั้งโดเมน</b> ไม่ว่าจะอยู่ไกลจาก ASBR แค่ไหน นับเฉพาะ "ต้นทุนภายนอก" อย่างเดียว ไม่บวกต้นทุนการเดินทางภายใน OSPF เลย</p>
+      <p><b>E1</b> — metric = ต้นทุนภายนอก <b>บวก</b> ต้นทุนภายในที่ใช้เดินไปถึง ASBR จึงเพิ่มขึ้นเรื่อย ๆ ตามระยะทาง</p>
+      <p style="margin:0"><b>ลำดับความสำคัญ: E1 ชนะ E2 เสมอ</b> แม้ตัวเลข metric ของ E2 จะต่ำกว่า — เพราะ E1 สะท้อนต้นทุนจริงมากกว่า · <b>เมื่อไหร่ใช้อะไร:</b> ถ้ามี ASBR หลายตัวและอยากให้แต่ละ Router เลือกตัวที่ใกล้ที่สุดเอง ให้ใช้ <b>E1</b> — ถ้ามี ASBR ตัวเดียวหรืออยากให้ทุกคนเห็น metric เท่ากันหมด ใช้ <b>E2</b></p>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h3>Type 7 (NSSA External) — ทำไมต้องมีอีกชนิด</h3>
+      <p style="color:var(--ink-2);margin:0">Area พิเศษบางชนิด (NSSA — ดูหัวข้อ Special Area Types ด้านล่าง) <b>ห้าม Type 5 เข้ามาโดยเด็ดขาด</b> แต่บางครั้ง Area นั้นดันมี ASBR ของตัวเองที่จำเป็นต้อง redistribute เส้นทางเข้ามาจริง ๆ — ทางออกคือให้ ASBR ตัวนั้นสร้าง <b>Type 7</b> แทน ซึ่งเดินได้เฉพาะภายใน NSSA เท่านั้น แล้ว <b>ABR จะแปลง Type 7 เป็น Type 5</b> ตอนส่งออกไป Area 0 (เรียกว่า Type 7-to-5 translation) โลกภายนอกจึงเห็นเป็น Type 5 ปกติ ไม่รู้เลยว่าต้นทางเป็น NSSA</p>
+    </div>
 
     <div class="card" style="margin-top:20px">
       <h3>ส่วนประกอบของทุก LSA</h3>
@@ -197,7 +233,109 @@ R3 มองเห็น: metric ถึง R4 = 65, บวก Type 3 metric 2 �
       </table>
     </div>
 
-    <p style="color:var(--ink-2);font-size:.9rem;margin-top:10px">กฎข้อที่ 3 นี่เองคือตัวห้าม R2 ส่ง Type 3 ที่ได้จาก Area 23 ต่อเข้า Area 0/Area 12 — <b>ทางแก้ที่ง่ายที่สุด</b>: ทำให้ Area 0 เชื่อมต่อกันเป็นผืนเดียวจริง ๆ เสมอ ไม่ขาดตอน (สไลด์กล่าวถึง virtual link และ GRE tunnel ว่าเป็นทางแก้เชิงเทคนิคอีกแบบ แต่ไม่ได้อธิบายรายละเอียดในบทนี้ — ในสถานการณ์จริง Area 0 ขาดตอนมักเกิดจาก hardware ล่ม)</p>
+    <p style="color:var(--ink-2);font-size:.9rem;margin-top:10px">กฎข้อที่ 3 นี่เองคือตัวห้าม R2 ส่ง Type 3 ที่ได้จาก Area 23 ต่อเข้า Area 0/Area 12 — <b>ทางแก้ที่ดีที่สุด</b>: ทำให้ Area 0 เชื่อมต่อกันเป็นผืนเดียวจริง ๆ เสมอ ไม่ขาดตอน ในสถานการณ์จริง Area 0 ขาดตอนมักเกิดจาก hardware ล่มกะทันหัน ไม่ใช่การออกแบบ — และเมื่อเกิดขึ้นแล้วต้องแก้เฉพาะหน้า เครื่องมือที่ใช้คือ <b>Virtual Link</b> ในหัวข้อถัดไป</p>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="5" cy="13" r="3" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+        <circle cx="21" cy="13" r="3" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+        <path d="M8 13 L18 13" stroke="var(--coral)" stroke-width="2" stroke-dasharray="3 3"/>
+      </svg>
+      <h2><Term id="virtualLink">Virtual Links</Term> — อุโมงค์ฉุกเฉินข้าม Area</h2>
+    </div>
+    <p class="sec-sub">กฎเหล็กของ OSPF คือทุก Area ต้องแตะ Area 0 — Virtual Link คือการสร้างการเชื่อมต่อ<b>เชิงตรรกะ</b>ขึ้นมาโกงกฎนั้นชั่วคราว โดยลากผ่าน Area ปกติที่มีอยู่แล้ว</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>ใช้แก้ 2 สถานการณ์</h3>
+        <ul style="margin:0">
+          <li><b>Area หลุดจาก Area 0</b> — เช่น Area 2 ต่อกับ Area 1 เท่านั้น ไม่ได้แตะ Area 0 เลย (มักเกิดตอนบริษัทควบรวมกันแล้วเอาเครือข่ายมาต่อกันดื้อ ๆ)</li>
+          <li><b>Area 0 ถูกตัดขาดเป็นสองเสี่ยง</b> — ลิงก์กลางหลังบ้านล่ม ทำให้ Backbone แยกเป็นสองก้อนที่คุยกันไม่ได้</li>
+        </ul>
+      </div>
+      <div class="card" style="border-left:4px solid var(--blk)">
+        <h3>เงื่อนไขของ <Term id="transitArea">Transit Area</Term> (Area ที่อุโมงค์พาดผ่าน)</h3>
+        <ul style="margin:0">
+          <li>ปลายทั้งสองข้างของ Virtual Link ต้องเป็น <b>ABR</b> และต้องอยู่ใน Transit Area นั้นร่วมกันทั้งคู่</li>
+          <li>Transit Area <b>ห้ามเป็น Stub Area ทุกชนิด</b> (รวม Totally Stubby และ NSSA)</li>
+          <li>Transit Area ต้องมีข้อมูล routing ครบถ้วน (full routing information)</li>
+          <li><b>Transit Area จะเป็น Area 0 ไม่ได้</b></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="figwrap" style="margin-top:20px">
+      <figure>
+        <svg viewBox="0 0 760 250" role="img" aria-label="แผนภาพ Virtual Link: Area 2 ทางขวาไม่ได้ต่อกับ Area 0 โดยตรง แต่ต่อผ่าน Area 1 ตรงกลาง จึงสร้าง Virtual Link เชิงตรรกะจาก R2 ซึ่งเป็น ABR ของ Area 0 และ Area 1 ไปยัง R3 ซึ่งเป็น ABR ของ Area 1 และ Area 2 โดยอุโมงค์พาดผ่าน Area 1 ที่ทำหน้าที่เป็น Transit Area">
+          <rect x="20" y="70" width="180" height="100" rx="10" fill="var(--gold-soft)" stroke="var(--gold)" stroke-width="2"/>
+          <text x="110" y="60" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--gold)">Area 0</text>
+
+          <rect x="270" y="70" width="200" height="100" rx="10" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <text x="370" y="60" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--slate)">Area 1 — Transit Area</text>
+
+          <rect x="545" y="70" width="190" height="100" rx="10" fill="var(--violet-soft)" stroke="var(--violet)" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <text x="640" y="60" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--violet)">Area 2</text>
+          <text x="640" y="192" text-anchor="middle" font-size="10" fill="var(--blk)">ไม่ได้แตะ Area 0 เลย</text>
+
+          <rect x="55" y="98" width="80" height="42" rx="7" fill="var(--card)" stroke="var(--ink-2)" stroke-width="1.8"/>
+          <text x="95" y="124" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">R1</text>
+
+          <rect x="185" y="98" width="90" height="42" rx="7" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="2.2"/>
+          <text x="230" y="117" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">R2 (ABR)</text>
+          <text x="230" y="132" text-anchor="middle" font-size="8.5" fill="var(--ink-2)">RID 2.2.2.2</text>
+
+          <rect x="465" y="98" width="90" height="42" rx="7" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="2.2"/>
+          <text x="510" y="117" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">R3 (ABR)</text>
+          <text x="510" y="132" text-anchor="middle" font-size="8.5" fill="var(--ink-2)">RID 3.3.3.3</text>
+
+          <rect x="620" y="98" width="80" height="42" rx="7" fill="var(--card)" stroke="var(--ink-2)" stroke-width="1.8"/>
+          <text x="660" y="124" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">R4</text>
+
+          <line x1="135" y1="119" x2="185" y2="119" stroke="var(--ink-2)" stroke-width="2"/>
+          <line x1="275" y1="119" x2="465" y2="119" stroke="var(--ink-2)" stroke-width="2"/>
+          <line x1="555" y1="119" x2="620" y2="119" stroke="var(--ink-2)" stroke-width="2"/>
+
+          <path d="M230 96 Q370 30 510 96" fill="none" stroke="var(--fwd)" stroke-width="2.6" stroke-dasharray="7 5"/>
+          <text x="370" y="35" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--fwd)">Virtual Link — ทำให้ Area 2 "เหมือน" ต่อกับ Area 0 แล้ว</text>
+
+          <text x="370" y="225" text-anchor="middle" font-size="11" fill="var(--ink-2)">ปลายทั้งสองข้างอ้างถึงกันด้วย <tspan font-weight="700" fill="var(--coral)">Router ID</tspan> ไม่ใช่ IP address ของ interface</text>
+        </svg>
+        <figcaption>อุโมงค์นี้ถูกนับเป็นส่วนหนึ่งของ Area 0 — พอสร้างเสร็จ R3 ก็มีสถานะเป็น ABR ที่ "แตะ Area 0" อย่างถูกกติกา จึงสร้าง Type 3 LSA เข้า Area 2 ได้</figcaption>
+      </figure>
+    </div>
+
+    <div class="knob" style="margin-top:20px">
+      <span class="where c1">คำสั่ง — ต้องตั้งทั้งสองฝั่ง</span>
+      <h3>สร้าง Virtual Link ผ่าน Area 1</h3>
+      <pre>! บน R2 (ABR ระหว่าง Area 0 กับ Area 1) — ชี้ไปหา RID ของ R3
+router ospf 1
+ area 1 virtual-link 3.3.3.3
+
+! บน R3 (ABR ระหว่าง Area 1 กับ Area 2) — ชี้กลับมาหา RID ของ R2
+router ospf 1
+ area 1 virtual-link 2.2.2.2</pre>
+      <p class="why" style="margin:0">รูปแบบคือ <code>area <b>transit-area-id</b> virtual-link <b>router-id ของปลายอีกฝั่ง</b></code> — เลข area ที่ใส่คือ <b>Transit Area</b> (Area 1) ไม่ใช่ Area ที่หลุด (Area 2) และเลขท้ายคือ <b>Router ID</b> ของอีกฝั่ง ไม่ใช่ IP address ของ interface</p>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="knob">
+        <span class="where c2">ตรวจสอบ</span>
+        <h3>show ip ospf virtual-links</h3>
+        <p class="out">Virtual Link OSPF_VL0 to router 3.3.3.3 is up
+  Run as demand circuit
+  Transit area 1, via interface Gi0/0
+  Cost of using 65</p>
+        <p class="why" style="margin:0">ต้องขึ้น <b>is up</b> เท่านั้นถึงใช้ได้ — ถ้าขึ้น down ให้ไล่เช็คว่า RID ที่ใส่ถูกต้องไหม และ Transit Area เป็น stub อยู่หรือเปล่า · ชื่อ interface ที่โผล่มาคือ <code>OSPF_VL0</code> ซึ่งเป็น interface เสมือนที่ระบบสร้างให้เอง</p>
+      </div>
+      <div class="exam">
+        <h4>ข้อควรระวัง <span class="tag">ออกสอบ</span></h4>
+        <p><b>ใส่ IP address แทน RID</b> — ผิดที่พบบ่อยที่สุด คำสั่งจะรับค่าไปแต่ link ไม่มีวันขึ้น</p>
+        <p><b>Transit Area เป็น Stub</b> — Virtual Link จะไม่ทำงานเด็ดขาด เพราะ Stub Area ไม่มีข้อมูล routing ครบ</p>
+        <p style="margin:0"><b>Virtual Link คือพลาสเตอร์ปิดแผล ไม่ใช่การออกแบบ</b> — ใช้แก้ขัดตอนฉุกเฉินได้ แต่ถ้าเห็นในเครือข่ายที่ออกแบบใหม่ แปลว่าออกแบบผิดตั้งแต่ต้น ควรลากลิงก์จริงเข้า Area 0 แทน</p>
+      </div>
+    </div>
   </section>
 
   <section>
@@ -270,9 +408,99 @@ R3 มองเห็น: metric ถึง R4 = 65, บวก Type 3 metric 2 �
       <p class="why" style="margin:0">ถ้าไม่ระบุ <code>cost</code> เอง ค่า default ของ Summary LSA คือ metric ที่<b>ต่ำที่สุด</b>ในบรรดา prefix ย่อยทั้งหมดในช่วงนั้น และ ABR จะตรวจสอบซ้ำทุกครั้งที่ prefix ย่อยเพิ่ม/หาย — ถ้าเจอ metric ต่ำกว่าเดิม อัปเดต summary ทันที เหมือนพฤติกรรมของ EIGRP summarization ที่เคยเห็นในบทที่ 7</p>
     </div>
 
-    <div class="card" style="margin-top:20px">
+    <div class="card" style="margin-top:20px" id="discard-route">
       <h3>Discard Route — ตัวกันลูปที่แถมมาอัตโนมัติ</h3>
       <p style="color:var(--ink-2);margin:0">ABR ที่ทำ Interarea Summarization จะติดตั้ง <b>Discard Route</b> ชี้ไป Null0 ที่ครอบคลุมช่วง aggregate ทั้งหมดโดยอัตโนมัติ — ป้องกัน routing loop ในกรณีที่บางส่วนของช่วง summary ไม่มี prefix จริงอยู่ใน RIB เลย (แพ็กเก็ตที่หลงมาจะถูกทิ้งแทนที่จะวนกลับไปกลับมา) AD ของ Discard Route คือ <b>110</b> สำหรับ internal route และ <b>254</b> สำหรับ external route</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="13" cy="13" r="10" fill="none" stroke="var(--sage)" stroke-width="1.8"/>
+        <path d="M6 13 L20 13" stroke="var(--sage)" stroke-width="2"/>
+        <path d="M9 9 L17 9" stroke="var(--sage)" stroke-width="1.5" stroke-dasharray="2 2"/>
+      </svg>
+      <h2>Special Area Types — Stub และ NSSA</h2>
+    </div>
+    <p class="sec-sub">Summarization ลดขนาด LSDB ได้ระดับหนึ่ง แต่ถ้า Area นั้นมี Router ตัวเล็ก ๆ ที่ memory จำกัด ยังมีวิธีที่แรงกว่า — <b>ปิดประตูไม่ให้ LSA บางชนิดเข้ามาเลย</b> แล้วยัด default route เข้าไปแทน</p>
+
+    <div class="knob">
+      <span class="where c3">แนวคิดหลัก</span>
+      <h3>ตรรกะเดียวที่อยู่เบื้องหลังทุกชนิด</h3>
+      <p class="why" style="margin:0">Router ที่อยู่ปลายทางซึ่ง<b>มีทางออกทางเดียว</b> ไม่จำเป็นต้องรู้รายละเอียดของโลกทั้งใบ — รู้แค่ว่า "ถ้าไม่ใช่ของฉัน ส่งไปทาง ABR" ก็พอ เหมือนบ้านที่อยู่สุดซอย จะรู้แผนที่ทั้งกรุงเทพฯ ไปทำไม ในเมื่อยังไงก็ต้องออกทางปากซอยทางเดียว · ดังนั้นทุกชนิดของ Special Area จึงทำสองอย่างเสมอ: <b>บล็อก LSA บางชนิดไม่ให้เข้า</b> แล้ว <b>ให้ ABR ยัด default route เข้ามาแทน</b></p>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>ตารางเปรียบเทียบ — จำตารางนี้ตารางเดียวตอบได้เกือบทุกข้อ</caption>
+        <thead><tr><th scope="col">ชนิด Area</th><th scope="col">Type 3<br/>(ข้าม Area)</th><th scope="col">Type 5<br/>(External)</th><th scope="col">Type 7<br/>(NSSA Ext)</th><th scope="col">มี ASBR<br/>ของตัวเองได้</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Normal (ปกติ)</th><td class="center">✅ เข้าได้</td><td class="center">✅ เข้าได้</td><td class="center">—</td><td class="center">✅</td></tr>
+          <tr><th scope="row">Stub</th><td class="center">✅ เข้าได้</td><td class="center">❌ บล็อก</td><td class="center">—</td><td class="center">❌</td></tr>
+          <tr><th scope="row">Totally Stubby</th><td class="center">❌ บล็อก</td><td class="center">❌ บล็อก</td><td class="center">—</td><td class="center">❌</td></tr>
+          <tr><th scope="row">NSSA</th><td class="center">✅ เข้าได้</td><td class="center">❌ บล็อก</td><td class="center">✅ ใช้แทน</td><td class="center">✅</td></tr>
+          <tr><th scope="row">Totally NSSA</th><td class="center">❌ บล็อก</td><td class="center">❌ บล็อก</td><td class="center">✅ ใช้แทน</td><td class="center">✅</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--ink-2);font-size:.9rem;margin-top:10px">อ่านตารางจากบนลงล่าง = <b>ยิ่งลงยิ่งปิดแน่นขึ้น</b> · แถวที่มีคำว่า "Totally" คือรุ่นที่บล็อก Type 3 เพิ่มเข้าไปด้วย · แถวที่มีคำว่า "NSSA" คือรุ่นที่ยอมให้มี ASBR ของตัวเองได้ · <b>Totally Stubby และ Totally NSSA เป็นของ Cisco เอง ไม่ใช่มาตรฐาน RFC</b></p>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="knob">
+        <span class="where c1">คำสั่ง — ฝั่ง Stub</span>
+        <h3><Term id="stubArea">Stub</Term> และ <Term id="totallyStubby">Totally Stubby</Term></h3>
+        <pre>! === Stub ธรรมดา — ต้องพิมพ์ที่ Router ทุกตัวใน Area 1 ===
+router ospf 1
+ area 1 stub
+
+! === Totally Stubby — ที่ ABR เท่านั้นเติม no-summary ===
+! ABR:
+router ospf 1
+ area 1 stub no-summary
+! Router ตัวอื่นใน Area 1 ยังพิมพ์แค่ area 1 stub เหมือนเดิม</pre>
+        <p class="why" style="margin:0">คำว่า <code>no-summary</code> คือตัวที่บล็อก Type 3 เพิ่ม — <b>ใส่แค่ที่ ABR ตัวเดียว</b> เพราะ ABR เป็นคนสร้าง Type 3 อยู่แล้ว การสั่งให้มันหยุดสร้างจึงพอ</p>
+      </div>
+      <div class="knob">
+        <span class="where c1">คำสั่ง — ฝั่ง NSSA</span>
+        <h3><Term id="nssaArea">NSSA</Term> และ Totally NSSA</h3>
+        <pre>! === NSSA — ต้องพิมพ์ที่ Router ทุกตัวใน Area 1 ===
+router ospf 1
+ area 1 nssa
+
+! === ถ้าอยากได้ default route ด้วย ต้องสั่งเพิ่มที่ ABR ===
+router ospf 1
+ area 1 nssa default-information-originate
+
+! === Totally NSSA — ที่ ABR เท่านั้น ===
+router ospf 1
+ area 1 nssa no-summary</pre>
+        <p class="why" style="margin:0"><b>กับดักที่ออกสอบ:</b> NSSA ธรรมดา <b>ไม่ได้แจก default route ให้อัตโนมัติ</b> ต่างจาก Stub ที่แจกให้เลย — ต้องสั่ง <code>default-information-originate</code> เพิ่มเอง (ยกเว้น Totally NSSA ที่แจกให้อัตโนมัติ)</p>
+      </div>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>กฎเหล็ก 4 ข้อของ Stub Area <span class="tag">ออกสอบ</span></h4>
+      <p><b>1. Area 0 เป็น Stub ไม่ได้</b> — Backbone ต้องรู้ทุกอย่างเสมอ เป็นทางผ่านของทั้งโดเมน</p>
+      <p><b>2. Area ที่มี ASBR เป็น Stub ไม่ได้</b> — เพราะ Stub บล็อก Type 5 แต่ ASBR มีหน้าที่สร้าง Type 5 ขัดกันเอง <b>นี่คือเหตุผลทั้งหมดที่ NSSA ถูกคิดขึ้นมา</b> (ใช้ Type 7 แทน Type 5)</p>
+      <p><b>3. Transit Area ของ Virtual Link เป็น Stub ไม่ได้</b> — ต้องมีข้อมูล routing ครบถ้วน</p>
+      <p style="margin:0"><b>4. Router ทุกตัวใน Area ต้องตั้ง flag ตรงกัน</b> — ค่านี้ถูกส่งไปกับ Hello Packet ถ้าตัวหนึ่งตั้ง <code>stub</code> แต่อีกตัวไม่ตั้ง <b>จะจับคู่เพื่อนบ้านไม่ติดเลย</b> (สอดคล้องกับตารางเงื่อนไข adjacency ในบทที่ 8 บรรทัดสุดท้าย)</p>
+    </div>
+
+    <div class="drill" style="margin-top:20px">
+      <span class="dr-label">ลองเลือกดู</span>
+      <h4>สถานการณ์ไหน ควรใช้ Area ชนิดไหน</h4>
+      <div class="match-row"><span>1. สาขาเล็ก ๆ ต่อเข้า HQ ทางเดียว Router รุ่นเก่า memory น้อยมาก ไม่มีอะไรต่อออกนอกเลย</span><span class="blank">?</span></div>
+      <div class="match-row"><span>2. สาขาที่ต่อเข้า HQ ทางเดียว แต่มี link ไปหา ISP ของตัวเองด้วย ต้อง redistribute เข้ามา</span><span class="blank">?</span></div>
+      <div class="match-row"><span>3. Area ที่ต้องใช้เป็นทางผ่านของ Virtual Link</span><span class="blank">?</span></div>
+      <details>
+        <summary>ดูเฉลย</summary>
+        <div class="answer">
+          <p style="margin:0 0 6px">1. <b>Totally Stubby</b> — ปิดแน่นที่สุด เหลือ default route ตัวเดียว ประหยัด memory สูงสุด และเหมาะเพราะยังไงก็ออกได้ทางเดียวอยู่แล้ว</p>
+          <p style="margin:0 0 6px">2. <b>NSSA</b> (หรือ Totally NSSA ถ้าอยากปิดแน่นกว่า) — เพราะมี ASBR ของตัวเอง จะใช้ Stub ธรรมดาไม่ได้เด็ดขาด ต้องใช้ Type 7 แทน Type 5</p>
+          <p style="margin:0">3. <b>Normal เท่านั้น</b> — Transit Area ของ Virtual Link ห้ามเป็น Stub ทุกชนิด</p>
+        </div>
+      </details>
     </div>
   </section>
 
@@ -308,20 +536,222 @@ R3 มองเห็น: metric ถึง R4 = 65, บวก Type 3 metric 2 �
   </section>
 
   <section>
-    <div class="grid-2">
-      <div class="exam">
-        <h4>ช่องว่างที่ต้องรู้ <span class="tag">แจ้งเตือน</span></h4>
-        <p>MidEx ระบุหัวข้อ <b>"OSPF Special Area Types (Stub, NSSA)", "Virtual Links", "OSPF Authentication", "OSPF Fast Convergence"</b> และ <b>"OSPF Graceful Restart"</b> ไว้ในขอบเขต Advanced OSPF แต่เนื้อหาเหล่านี้<b>ไม่ปรากฏ</b>ในสไลด์ต้นฉบับ Chapter 9 เลย (สไลด์ชุดนี้เน้น Area/LSA/Summarization/Filtering เท่านั้น) สไลด์เพียงกล่าวถึง "virtual link" ผ่าน ๆ หนึ่งประโยคตอนพูดเรื่อง Discontiguous Network โดยไม่มีรายละเอียดการตั้งค่าเลย — ไม่ได้เขียนหัวข้อเหล่านี้ขึ้นมาเองเพื่อความถูกต้อง แนะนำให้หาสไลด์/เอกสารเพิ่มเติมแยกต่างหาก นอกจากนี้ ASBR ในฐานะ "Router Type" ก็ยังไม่ถูกอธิบายเป็นคำนิยามตรง ๆ (มีแค่ชื่อโผล่ในคำอธิบาย Type 4 LSA) และ OSPFv3 (IPv6) ยังไม่ได้ครอบคลุมในบทนี้เช่นกัน</p>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="6" y="11" width="14" height="11" rx="2" fill="none" stroke="var(--blk)" stroke-width="1.8"/>
+        <path d="M9.5 11 L9.5 7.5 A3.5 3.5 0 0 1 16.5 7.5 L16.5 11" fill="none" stroke="var(--blk)" stroke-width="1.8"/>
+        <circle cx="13" cy="16.5" r="1.6" fill="var(--blk)"/>
+      </svg>
+      <h2>OSPF Authentication</h2>
+    </div>
+    <p class="sec-sub">ถ้าไม่เปิด authentication ใครก็ตามที่เสียบสายเข้ามาในเครือข่ายแล้วรัน OSPF ก็กลายเป็นเพื่อนบ้านได้ทันที แล้วยัดเส้นทางปลอมเข้ามาดูดทราฟฟิกได้</p>
+
+    <div class="tablewrap">
+      <table>
+        <caption>3 ระดับของ OSPFv2 Authentication</caption>
+        <thead><tr><th scope="col">Type</th><th scope="col">ชื่อ</th><th scope="col">ความปลอดภัย</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">0</th><td>Null (ไม่มีเลย)</td><td>ค่า default — ไม่มีการตรวจสอบใด ๆ</td></tr>
+          <tr><th scope="row">1</th><td>Plain Text</td><td>ส่งรหัสผ่านเปล่า ๆ ไปกับแพ็กเก็ต — ใครดักจับก็อ่านได้ กันได้แค่การตั้งค่าผิดพลาด ไม่ได้กันคนร้าย</td></tr>
+          <tr><th scope="row">2</th><td>MD5</td><td>ส่ง hash ไม่ได้ส่งรหัสจริง — ระดับที่ควรใช้จริงเป็นอย่างน้อย</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="knob">
+        <span class="where c1">วิธีที่ 1 — ทีละ Interface</span>
+        <h3>ตั้งเฉพาะขาที่ต้องการ</h3>
+        <pre>interface GigabitEthernet0/0
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 MySecretKey</pre>
+        <p class="why" style="margin:0">คุมได้ละเอียดที่สุด แต่ต้องไล่ใส่ทุกขาที่มีเพื่อนบ้าน — ขาไหนลืมคือขานั้นไม่มีการป้องกัน</p>
       </div>
+      <div class="knob">
+        <span class="where c1">วิธีที่ 2 — ทั้ง Area</span>
+        <h3>เปิดโหมดทีเดียวทั้ง Area</h3>
+        <pre>router ospf 1
+ area 0 authentication message-digest
+!
+interface GigabitEthernet0/0
+ ip ospf message-digest-key 1 md5 MySecretKey</pre>
+        <p class="why" style="margin:0"><b>จุดที่คนพลาด:</b> คำสั่งระดับ area ตั้งได้แค่ <b>โหมด</b> ว่าจะใช้ MD5 — ส่วน<b>ตัวรหัสผ่านยังต้องใส่ที่ interface อยู่ดี</b> ไม่ได้ตั้งรวมศูนย์ได้ทั้งหมด</p>
+      </div>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>ประเด็นที่ต้องจำ <span class="tag">ออกสอบ</span></h4>
+      <p><b>ต้องตรงกันทั้งสองฝั่ง</b> — ทั้งโหมดและรหัส ถ้าไม่ตรง adjacency จะไม่ขึ้นเลย (ดูตารางเงื่อนไขในบทที่ 8) ตรวจด้วย <code>show ip ospf interface</code> ดูบรรทัด Message digest authentication enabled</p>
+      <p><b>Virtual Link ก็ต้องตั้งด้วย</b> — เพราะมันถูกนับเป็นส่วนหนึ่งของ Area 0 ถ้า Area 0 เปิด authentication ไว้ Virtual Link ต้องตั้งตามด้วย ไม่งั้นล่ม (ใช้ <code>area 1 virtual-link 3.3.3.3 message-digest-key 1 md5 KEY</code>)</p>
+      <p style="margin:0"><b>OSPFv3 ไม่มี authentication ในตัวเอง</b> — ถูกถอดออกจากโปรโตคอลไปเลย แล้วไปพึ่ง <b>IPsec</b> ของ IPv6 แทน (ดูบทที่ 10) ตั้งด้วย <code>ospfv3 authentication ipsec spi 500 sha1 &lt;key&gt;</code> — เป็นความต่างข้อสำคัญระหว่าง v2 กับ v3</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M14 2 L6 14 L12 14 L10 24 L20 11 L13 11 Z" fill="var(--gold-soft)" stroke="var(--gold)" stroke-width="1.8" stroke-linejoin="round"/>
+      </svg>
+      <h2>OSPF Fast Convergence และ Graceful Restart</h2>
+    </div>
+    <p class="sec-sub">Convergence คือเวลาตั้งแต่ "สายขาด" จนถึง "ทุก Router รู้และใช้เส้นทางใหม่ได้" — OSPF แบ่งช่วงเวลานี้เป็น 3 ท่อน และปรับได้ทีละท่อน</p>
+
+    <div class="pathway">
+      <div class="pw-step" style="border-top:3px solid var(--coral)">
+        <span class="n" style="color:var(--coral)">ท่อนที่ 1</span>
+        <h4>ตรวจจับว่าสายขาด</h4>
+        <p>รอ Dead Interval หมด (default 40 วินาที) — <b>ท่อนที่ช้าที่สุด</b> และเป็นจุดที่คุ้มที่สุดที่จะปรับ</p>
+      </div>
+      <div class="pw-step" style="border-top:3px solid var(--gold)">
+        <span class="n" style="color:var(--gold)">ท่อนที่ 2</span>
+        <h4>กระจายข่าว (Flood LSA)</h4>
+        <p>สร้าง LSA ใหม่แล้ว flood ออกไปให้ทั่ว Area — คุมด้วย LSA throttle timer</p>
+      </div>
+      <div class="pw-step" style="border-top:3px solid var(--fwd)">
+        <span class="n" style="color:var(--fwd)">ท่อนที่ 3</span>
+        <h4>คำนวณใหม่ (รัน SPF)</h4>
+        <p>ทุก Router รัน Dijkstra ใหม่แล้วติดตั้งเส้นทาง — คุมด้วย SPF throttle timer</p>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="knob">
+        <span class="where c1">แก้ท่อนที่ 1 — วิธีที่ดีที่สุด</span>
+        <h3><Term id="bfd">BFD</Term> — ตรวจจับระดับมิลลิวินาที</h3>
+        <pre>interface GigabitEthernet0/0
+ bfd interval 50 min_rx 50 multiplier 3
+!
+router ospf 1
+ bfd all-interfaces</pre>
+        <p class="why" style="margin:0">แทนที่จะเร่ง Hello ของ OSPF ให้ถี่จน CPU อ่วม ให้ BFD ซึ่งเป็นกลไกเบา ๆ แยกต่างหากคอยจับสายขาดแทน แล้วค่อยกระตุกบอก OSPF — ข้อดีคือ <b>EIGRP, OSPF, BGP มาใช้ BFD ตัวเดียวกันร่วมกันได้</b> ไม่ต้องต่างคนต่างเร่ง timer ของตัวเอง · ตัวอย่างนี้ตรวจจับได้ใน 150 มิลลิวินาที เทียบกับ 40 วินาทีของ default</p>
+      </div>
+      <div class="knob">
+        <span class="where c2">แก้ท่อนที่ 1 — วิธีที่ง่ายกว่า</span>
+        <h3>Sub-second Hello</h3>
+        <pre>interface GigabitEthernet0/0
+ ip ospf dead-interval minimal hello-multiplier 4</pre>
+        <p class="why" style="margin:0">ตั้ง Dead Interval เป็น <b>1 วินาที</b> แล้วส่ง Hello 4 ครั้งภายในวินาทีนั้น (ทุก 250 ms) — ตรวจจับได้ใน 1 วินาที ไม่ต้องพึ่งฮาร์ดแวร์พิเศษเหมือน BFD แต่<b>กิน CPU มากกว่า</b>และไม่แชร์กับโปรโตคอลอื่น</p>
+      </div>
+    </div>
+
+    <div class="knob" style="margin-top:20px">
+      <span class="where c3">แก้ท่อนที่ 2 และ 3</span>
+      <h3><Term id="spfThrottle">SPF / LSA Throttling</Term> — ปรับจังหวะการคำนวณ</h3>
+      <pre>router ospf 1
+ timers throttle spf 10 100 5000     ! เริ่มรอ 10ms, รอบถัดไป 100ms, สูงสุด 5000ms
+ timers throttle lsa 10 100 5000     ! จังหวะการสร้าง LSA ใหม่
+ timers lsa arrival 80               ! ยอมรับ LSA ตัวเดิมซ้ำได้เร็วสุดทุก 80ms</pre>
+      <p class="why">ตัวเลขสามตัวคือ <b>เริ่มต้น / เว้นระยะรอบถัดไป / เพดานสูงสุด</b> (หน่วยมิลลิวินาที) — ค่า default ของ IOS เดิมคือ 5000/10000/10000 ซึ่งช้ามากเมื่อเทียบกับความสามารถของฮาร์ดแวร์ปัจจุบัน</p>
+      <p class="why" style="margin:0"><b>ทำไมต้องมีตัวหน่วงตั้งแต่แรก:</b> ถ้ารัน SPF ทันทีทุกครั้งที่ได้ LSA ใหม่ เครือข่ายที่ลิงก์กระพริบถี่ ๆ จะทำให้ CPU รัน SPF รัวจนเครื่องค้าง — ตัวหน่วงคือการยอมช้าลงนิดหน่อยเพื่อแลกกับความเสถียร <b>ยิ่งตั้งสั้นยิ่งเร็ว แต่ยิ่งเสี่ยงตอนเครือข่ายไม่นิ่ง</b></p>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
       <div class="card">
-        <h3>สรุปคำศัพท์บทนี้</h3>
+        <h3><Term id="gracefulRestart">Graceful Restart / NSF</Term> — ปัญหาที่มันแก้</h3>
+        <p style="color:var(--ink-2);margin:0 0 10px">Router ระดับองค์กรมักมี <b>ตัวควบคุมเส้นทาง (Route Processor) สองตัว</b> สำรองกัน — ตอนตัวหลักล่มแล้วตัวสำรองเข้ามาทำงานแทน ปัญหาคือ OSPF ของเพื่อนบ้านจะเห็นว่า "หายไปแล้ว" แล้วสั่งคำนวณใหม่ทั้ง Area ทั้ง ๆ ที่<b>ฮาร์ดแวร์ยังส่งแพ็กเก็ตต่อได้ตามปกติไม่สะดุดเลย</b></p>
+        <p style="color:var(--ink-2);margin:0"><b>ทางแก้:</b> ก่อนรีสตาร์ท Router ส่งสัญญาณขอร้องเพื่อนบ้านว่า "เดี๋ยวฉันหายไปแป๊บนึง อย่าเพิ่งตัดฉันทิ้งนะ" เพื่อนบ้านที่เข้าใจสัญญาณนี้จะทำหน้าที่ <b>Helper</b> คือคงความสัมพันธ์ไว้เฉย ๆ ไม่แจ้งใครว่ามีอะไรเปลี่ยน</p>
+      </div>
+      <div class="knob">
+        <span class="where c3">คำสั่ง</span>
+        <h3>เปิด Graceful Restart</h3>
+        <pre>router ospf 1
+ nsf ietf           ! มาตรฐานเปิด RFC 3623 (ใช้ Grace LSA)
+!
+router ospf 1
+ nsf cisco          ! แบบของ Cisco เอง</pre>
+        <p class="why" style="margin:0"><b>เงื่อนไขที่ต้องมี:</b> ตัวที่รีสตาร์ทต้องมีฮาร์ดแวร์ RP สำรอง และ<b>เพื่อนบ้านต้องรองรับโหมด Helper ด้วย</b> ไม่งั้นก็ไม่มีประโยชน์ — ฝั่ง IETF ใช้ <b>Grace LSA</b> (Type 9 opaque LSA) เป็นตัวส่งสัญญาณ</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" fill="none" stroke="var(--sage)" stroke-width="1.8"/>
+        <line x1="16" y1="16" x2="22" y2="22" stroke="var(--sage)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <h2>การแก้ไขปัญหา OSPF</h2>
+    </div>
+    <p class="sec-sub">ลำดับที่ใช้ได้จริง: ดูเพื่อนบ้านก่อน → ดู LSDB → ดู routing table เป็นอันสุดท้าย</p>
+
+    <div class="tablewrap">
+      <table>
+        <caption>อาการ → ไล่เช็คตามลำดับนี้</caption>
+        <thead><tr><th scope="col">อาการ</th><th scope="col">สาเหตุที่พบบ่อยเรียงตามลำดับ</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">เพื่อนบ้านไม่ขึ้นเลย</th><td>ไม่ได้อยู่ subnet เดียวกัน → Area ID ไม่ตรง → <b>Hello/Dead timer ไม่ตรง</b> → authentication ไม่ตรง → flag ชนิด area (stub/nssa) ไม่ตรง → ตั้ง passive-interface ไว้ → RID ซ้ำกัน</td></tr>
+          <tr><th scope="row">ค้างที่ ExStart / Exchange</th><td><b>MTU ไม่ตรงกันสองฝั่ง</b> — เป็นสาเหตุอันดับหนึ่งของอาการนี้ แก้ด้วยการปรับ MTU ให้ตรง หรือสั่ง <code>ip ospf mtu-ignore</code> (วิธีหลังเป็นการกลบปัญหา ไม่ใช่แก้)</td></tr>
+          <tr><th scope="row">ค้างที่ 2-Way ตลอด</th><td>ปกติ<b>ไม่ใช่ปัญหา</b> — บน segment ที่มี DR การที่ DROTHER สองตัวอยู่ 2-Way ต่อกันเป็นเรื่องปกติ จะ Full เฉพาะกับ DR/BDR เท่านั้น · จะผิดปกติก็ต่อเมื่อทุกตัวตั้ง priority 0 หมดจนไม่มีใครเป็น DR ได้</td></tr>
+          <tr><th scope="row">เพื่อนบ้านขึ้นแต่ไม่มีเส้นทาง</th><td>มี distribute-list กรองอยู่ → ABR ทำ <code>not-advertise</code> ไว้ → Area เป็น Totally Stubby จึงเห็นแค่ default → ปลายทางเป็น external แต่ Area เป็น Stub</td></tr>
+          <tr><th scope="row">เส้นทางเลือกทางที่ช้ากว่า</th><td>Intra-area ชนะ Interarea เสมอโดยไม่สนใจ metric → reference bandwidth ตั้งไม่เท่ากันระหว่าง Router → มีการตั้ง <code>ip ospf cost</code> ตายตัวค้างไว้</td></tr>
+          <tr><th scope="row">Virtual Link ไม่ขึ้น</th><td>ใส่ IP แทน Router ID → Transit Area เป็น Stub → ปลายทั้งสองไม่ได้เป็น ABR → Area 0 เปิด authentication แต่ Virtual Link ไม่ได้ตั้ง</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>คำสั่งตรวจสอบที่ต้องจำ</caption>
+        <thead><tr><th scope="col">คำสั่ง</th><th scope="col">ใช้ดูอะไร</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">show ip ospf neighbor</th><td>เพื่อนบ้านขึ้นไหม ค้างที่ state ไหน — <b>เริ่มที่นี่เสมอ</b></td></tr>
+          <tr><th scope="row">show ip ospf interface</th><td>Area, cost, timer, authentication, network type, DR/BDR ของขานั้น</td></tr>
+          <tr><th scope="row">show ip ospf database</th><td>สรุป LSDB ว่ามี LSA ชนิดไหนบ้าง</td></tr>
+          <tr><th scope="row">show ip ospf database router</th><td>Type 1 LSA — topology ภายใน Area</td></tr>
+          <tr><th scope="row">show ip ospf database external</th><td>Type 5 LSA — เส้นทางจากภายนอกโดเมน</td></tr>
+          <tr><th scope="row">show ip ospf virtual-links</th><td>Virtual Link ขึ้นหรือยัง ผ่าน Transit Area ไหน</td></tr>
+          <tr><th scope="row">show ip ospf border-routers</th><td>รู้จัก ABR/ASBR ตัวไหนบ้างและไปถึงยังไง</td></tr>
+          <tr><th scope="row">show ip ospf</th><td>RID, จำนวน Area, ชนิดของแต่ละ Area (stub/nssa), SPF timer</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M5 13 L11 19 L21 6" fill="none" stroke="var(--fwd)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h2>สรุปและทบทวน</h2>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>เช็กลิสต์ก่อนสอบ — บทนี้</h3>
         <ul>
-          <li><b>ABR</b> — Router ที่เชื่อม Area 0 กับ Area อื่นอย่างน้อยหนึ่งตัว</li>
-          <li><b>Intra-area / Interarea</b> — เส้นทางในเชื่อม Area เดียวกัน / ผ่าน ABR ข้าม Area</li>
-          <li><b>Router LSA (Type 1) / Summary LSA (Type 3)</b> — พก topology ภายใน Area / พก metric สรุปข้าม Area</li>
-          <li><b>Discontiguous Network</b> — Area 0 ขาดตอน ทำให้ route ข้าม Area พังตามกฎ ABR</li>
+          <li><b>ABR</b> ต้องแตะ Area 0 · <b>ASBR</b> อยู่ Area ไหนก็ได้</li>
+          <li><b>LSA:</b> 1 = Router · 2 = Network (DR สร้าง) · 3 = Summary (ABR สร้าง) · 4 = ทางไปหา ASBR (ABR สร้าง) · 5 = External (ASBR สร้าง) · 7 = NSSA External</li>
+          <li><b>E1 ชนะ E2 เสมอ</b> — E1 บวก cost ภายใน, E2 คงที่ทั้งโดเมน</li>
+          <li><b>Intra-area &gt; Interarea &gt; External</b> เสมอ ไม่สนใจ metric</li>
+          <li><b>Stub</b> บล็อก Type 5 · <b>Totally Stubby</b> บล็อก Type 3 ด้วย · <b>NSSA</b> ยอมให้มี ASBR โดยใช้ Type 7</li>
+          <li><b>Area 0 เป็น Stub ไม่ได้</b> · Transit Area ของ Virtual Link ก็เป็น Stub ไม่ได้</li>
+          <li><b>Virtual Link อ้างด้วย Router ID</b> และเลข area ที่ใส่คือ Transit Area</li>
+          <li><b>ค้าง ExStart/Exchange = MTU ไม่ตรง</b></li>
         </ul>
       </div>
+      <div class="drill">
+        <span class="dr-label">ทบทวนเร็ว</span>
+        <h4>ตอบในใจก่อนกดดูเฉลย</h4>
+        <div class="match-row"><span>1. LSA ชนิดไหนที่ ABR เป็นคนสร้าง</span><span class="blank">?</span></div>
+        <div class="match-row"><span>2. Area มี ASBR อยู่ ตั้งเป็น Stub ได้ไหม ทำไม</span><span class="blank">?</span></div>
+        <div class="match-row"><span>3. NSSA แจก default route ให้อัตโนมัติไหม</span><span class="blank">?</span></div>
+        <div class="match-row"><span>4. เพื่อนบ้านค้างที่ ExStart สาเหตุอันดับหนึ่งคืออะไร</span><span class="blank">?</span></div>
+        <div class="match-row"><span>5. <code>area 1 virtual-link 3.3.3.3</code> — เลข 1 กับ 3.3.3.3 คืออะไร</span><span class="blank">?</span></div>
+        <details>
+          <summary>ดูเฉลย</summary>
+          <div class="answer">
+            <p style="margin:0 0 5px">1. <b>Type 3</b> (Summary — เส้นทางข้าม Area) และ <b>Type 4</b> (ทางไปหา ASBR) — ส่วน Type 1 ทุก Router สร้าง, Type 2 DR สร้าง, Type 5/7 ASBR สร้าง</p>
+            <p style="margin:0 0 5px">2. <b>ไม่ได้</b> — Stub บล็อก Type 5 แต่ ASBR มีหน้าที่สร้าง Type 5 ขัดกันเอง ต้องใช้ <b>NSSA</b> แทน ซึ่งให้ใช้ Type 7 แล้ว ABR แปลงเป็น Type 5 ตอนออกไป</p>
+            <p style="margin:0 0 5px">3. <b>ไม่</b> — ต่างจาก Stub ที่แจกให้เลย NSSA ต้องสั่ง <code>area 1 nssa default-information-originate</code> เพิ่มเอง (ยกเว้น Totally NSSA ที่แจกอัตโนมัติ)</p>
+            <p style="margin:0 0 5px">4. <b>MTU ไม่ตรงกันสองฝั่ง</b> — เพราะ ExStart/Exchange คือช่วงแลก DBD ซึ่งอ่อนไหวกับขนาดแพ็กเก็ต</p>
+            <p style="margin:0">5. <b>1 = Transit Area</b> (Area ปกติที่อุโมงค์พาดผ่าน ไม่ใช่ Area ที่หลุด) · <b>3.3.3.3 = Router ID ของ ABR ปลายอีกฝั่ง</b> (ไม่ใช่ IP ของ interface)</p>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="bridge" style="margin-top:20px">
+      <b>บทถัดไป:</b> ทุกอย่างในบทที่ 8-9 คือ <b>OSPFv2</b> ซึ่งรองรับแค่ IPv4 — <b>บทที่ 10</b> จะดูว่า OSPFv3 เปลี่ยนอะไรไปบ้างสำหรับ IPv6 (คำตอบสั้น ๆ: ตรรกะเหมือนเดิมเกือบหมด) และเรื่องที่หลายคนไม่รู้: OSPFv3 เอามา route IPv4 ได้ด้วย
     </div>
   </section>
 

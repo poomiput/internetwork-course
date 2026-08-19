@@ -597,6 +597,121 @@ export const terms = {
     full: "",
     def: "เลข 32 บิตหน้าตาเหมือน IPv4 ที่ใช้ระบุตัวตน Router ในโปรเซส EIGRP — เลือกจาก Loopback ที่สูงที่สุดก่อน ถ้าไม่มีจึงใช้ Interface ปกติที่สูงที่สุด และตั้งเองได้ด้วย eigrp router-id",
   },
+  igp: {
+    term: "IGP",
+    full: "Interior Gateway Protocol",
+    def: "โปรโตคอลที่ใช้หาเส้นทาง \"ภายในองค์กรเดียวกัน\" เช่น OSPF, EIGRP, RIP — ตรงข้ามกับ EGP อย่าง BGP ที่ใช้คุยข้ามองค์กร/ข้าม ISP",
+  },
+  vlsm: {
+    term: "VLSM",
+    full: "Variable Length Subnet Mask",
+    def: "การใช้ subnet mask ยาวไม่เท่ากันในเครือข่ายเดียวกัน — แบ่งวงใหญ่ให้ที่ที่มีเครื่องเยอะ และวงเล็กให้ลิงก์ที่มีแค่ 2 ฝั่ง แทนที่จะบังคับให้ทุกวงขนาดเท่ากันจนเปลือง IP",
+  },
+  classlessRouting: {
+    term: "Classless Routing",
+    full: "",
+    def: "การส่ง subnet mask ไปพร้อมกับเส้นทางทุกครั้ง ทำให้ Router รู้ขนาดวงที่แท้จริงและรองรับ VLSM ได้ — ตรงข้ามกับ Classful ยุคเก่าที่ไม่ส่ง mask มาด้วย เลยต้องเดาจากคลาส A/B/C",
+  },
+  routeSummarization: {
+    term: "Summarization",
+    full: "Route Aggregation",
+    def: "การยุบเส้นทางย่อยหลายเส้นที่อยู่ติดกันให้เหลือประกาศเป็นก้อนเดียว เช่น 10.1.0.0/24 ถึง 10.1.3.0/24 รวมเป็น 10.1.0.0/22 — ทำให้ตารางเส้นทางเล็กลงและซ่อนความวุ่นวายภายในไม่ให้กระเพื่อมออกไปข้างนอก",
+  },
+  routingAuthentication: {
+    term: "Authentication",
+    full: "",
+    def: "การให้ Router พิสูจน์ตัวตนกันด้วยรหัสลับก่อนยอมรับเป็นเพื่อนบ้าน — กันคนแปลกหน้าเสียบสายเข้ามาแล้วยัดเส้นทางปลอมเพื่อดักทราฟฟิก",
+  },
+  asbr: {
+    term: "ASBR",
+    full: "Autonomous System Boundary Router",
+    def: "Router ที่ยืนอยู่ขอบนอกสุดของโดเมน OSPF — เป็นประตูที่ดึงเส้นทางจากโลกภายนอก (โปรโตคอลอื่น, static route, default route) เข้ามาผ่าน redistribution แล้วประกาศเป็น LSA Type 5",
+  },
+  internalRouter: {
+    term: "Internal Router",
+    full: "",
+    def: "Router ที่ทุก interface อยู่ใน Area เดียวกันทั้งหมด จึงถือ LSDB ชุดเดียว ไม่ต้องรับผิดชอบเส้นทางข้าม Area",
+  },
+  stubArea: {
+    term: "Stub Area",
+    full: "",
+    def: "Area ที่ปิดกั้นไม่ให้ LSA Type 5 (external route) ไหลเข้ามา แล้วให้ ABR ยัด default route เข้ามาแทน — ลดขนาด LSDB ของ Router ตัวเล็ก ๆ ที่ไม่จำเป็นต้องรู้รายละเอียดโลกภายนอก",
+  },
+  totallyStubby: {
+    term: "Totally Stubby Area",
+    full: "",
+    def: "Stub Area ที่เข้มกว่าเดิม — บล็อกทั้ง Type 5 และ Type 3 (เส้นทางข้าม Area) เหลือแค่ default route ตัวเดียวจาก ABR เป็นของ Cisco เอง ไม่ใช่มาตรฐาน RFC",
+  },
+  nssaArea: {
+    term: "NSSA",
+    full: "Not-So-Stubby Area",
+    def: "Stub Area ที่ยังยอมให้มี ASBR ของตัวเองได้ — เส้นทางที่ redistribute เข้ามาภายในถูกประกาศเป็น Type 7 แล้ว ABR จะแปลงเป็น Type 5 ตอนออกไป Area 0 (เรียกว่า Type 7-to-5 translation)",
+  },
+  virtualLink: {
+    term: "Virtual Link",
+    full: "",
+    def: "อุโมงค์ตรรกะที่ลากผ่าน Area ปกติเพื่อต่อ Area ที่หลุดจาก Area 0 หรือเย็บ Area 0 ที่ขาดตอนให้กลับมาต่อเนื่อง — เป็นทางแก้ชั่วคราว ไม่ใช่ทางออกที่ควรออกแบบไว้ตั้งแต่แรก",
+  },
+  transitArea: {
+    term: "Transit Area",
+    full: "",
+    def: "Area ปกติที่ Virtual Link พาดผ่าน — ต้องไม่ใช่ Stub Area ทุกชนิด และต้องมี Router ปลายทั้งสองฝั่งเป็น ABR ที่อยู่ใน Area นี้ร่วมกัน",
+  },
+  spfThrottle: {
+    term: "SPF Throttle",
+    full: "",
+    def: "ตัวหน่วงที่กำหนดว่าเมื่อ topology ขยับแล้วจะรอนานแค่ไหนก่อนรัน SPF และเว้นระยะระหว่างรอบถัดไปเท่าไหร่ — ตั้งสั้นลงได้เพื่อ converge เร็วขึ้น แต่แลกกับภาระ CPU ที่สูงขึ้นเมื่อเครือข่ายไม่นิ่ง",
+  },
+  bfd: {
+    term: "BFD",
+    full: "Bidirectional Forwarding Detection",
+    def: "โปรโตคอลตรวจจับสายขาดที่ทำงานเร็วระดับมิลลิวินาที แยกออกมาจาก Routing Protocol — ให้ OSPF/EIGRP/BGP มาสมัครใช้ร่วมกันได้ แทนที่จะต้องเร่ง Hello Timer ของแต่ละตัวจนกิน CPU",
+  },
+  gracefulRestart: {
+    term: "Graceful Restart",
+    full: "NSF — Nonstop Forwarding",
+    def: "กลไกที่ให้ Router ซึ่งกำลังรีสตาร์ทตัวควบคุมเส้นทาง ขอให้เพื่อนบ้านช่วย \"แกล้งทำเป็นไม่เห็น\" ชั่วคราว เพื่อไม่ให้ทั้งเครือข่ายต้องคำนวณใหม่ ระหว่างนั้นฮาร์ดแวร์ยังส่งแพ็กเก็ตต่อได้ไม่สะดุด",
+  },
+  camTable: {
+    term: "CAM",
+    full: "Content-Addressable Memory",
+    def: "หน่วยความจำที่ค้นด้วย \"เนื้อหา\" แทนที่อยู่ — ยื่น MAC เข้าไปแล้วได้พอร์ตกลับมาในรอบสัญญาณนาฬิกาเดียว เก็บได้แค่ 0 กับ 1 จึงจับคู่ได้แบบตรงเป๊ะอย่างเดียว ใช้ทำ MAC Address Table",
+  },
+  tcamTable: {
+    term: "TCAM",
+    full: "Ternary Content-Addressable Memory",
+    def: "CAM รุ่นที่เก็บค่าที่สามได้คือ X (ไม่สนใจ) ทำให้จับคู่แบบมี mask ได้ จึงใช้ทำ ACL, QoS และการค้นเส้นทางแบบ longest prefix match ได้ เก็บเป็นชุด Value-Mask-Result",
+  },
+  processSwitching: {
+    term: "Process Switching",
+    full: "",
+    def: "วิธีส่งต่อแพ็กเก็ตแบบดั้งเดิมที่ CPU ต้องเปิด Routing Table คำนวณใหม่ทุกแพ็กเก็ต ช้าที่สุดแต่ยืดหยุ่นที่สุด ปัจจุบันเหลือใช้เฉพาะแพ็กเก็ตพิเศษที่ฮาร์ดแวร์จัดการเองไม่ได้",
+  },
+  fastSwitching: {
+    term: "Fast Switching",
+    full: "Route Caching",
+    def: "ทางสายกลางระหว่าง Process Switching กับ CEF — แพ็กเก็ตแรกของแต่ละปลายทางยังต้องผ่าน CPU แล้วจำผลไว้ใน cache ให้แพ็กเก็ตถัดไปใช้ซ้ำ หลักการคือ \"route ครั้งเดียว switch อีกหลายครั้ง\" ปัจจุบันเลิกใช้แล้ว",
+  },
+  punt: {
+    term: "Punt",
+    full: "",
+    def: "การที่ฮาร์ดแวร์ยอมแพ้แล้วโยนแพ็กเก็ตขึ้นไปให้ CPU จัดการแทน เกิดกับแพ็กเก็ตที่ CEF จัดการเองไม่ได้ เช่น TTL หมดอายุ หรือต้องแตกเป็นชิ้นย่อย — ถ้า punt เยอะผิดปกติ CPU จะพุ่งทันที",
+  },
+  portSecurity: {
+    term: "Port Security",
+    full: "",
+    def: "ฟีเจอร์ที่จำกัดว่าพอร์ตหนึ่งยอมให้ MAC กี่ตัวและตัวไหนบ้างเข้ามาใช้ได้ ถ้าเจอ MAC แปลกปลอมเกินโควตาจะลงโทษตามที่ตั้งไว้ ใช้กันคนแอบเสียบอุปกรณ์ของตัวเองเข้าเครือข่าย",
+  },
+  stickyMac: {
+    term: "Sticky MAC",
+    full: "",
+    def: "โหมดที่ให้สวิตช์เรียน MAC ตัวแรกที่เสียบเข้ามาแล้วเขียนลง running-config ให้เองอัตโนมัติ — ได้ความสะดวกแบบเรียนเอง แต่ผูกติดถาวรแบบตั้งมือ (ต้อง write memory ไม่งั้นหายตอนรีบูต)",
+  },
+  errDisable: {
+    term: "Err-disabled",
+    full: "Error Disabled",
+    def: "สถานะที่สวิตช์สั่งปิดพอร์ตเองเพราะตรวจพบความผิดปกติ เช่น port-security violation หรือ BPDU Guard ทำงาน — พอร์ตจะไม่กลับมาเองจนกว่าจะ shutdown/no shutdown หรือตั้ง errdisable recovery ไว้",
+  },
   eigrpStub: {
     term: "EIGRP Stub",
     full: "",
