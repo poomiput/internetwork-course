@@ -7,7 +7,7 @@ import Term from "../components/Term.astro";
   <header class="masthead">
     <p class="eyebrow" style="color:var(--slate)">Internetwork · Chapter 9 of 14</p>
     <h1>Advanced OSPF</h1>
-    <p class="deck">บทที่ 8 ตั้งค่า OSPF ให้เพื่อนบ้านคุยกันได้แล้ว บทนี้ขยับไปดู "หลาย Area" พร้อมกัน — ทำไมต้องแบ่ง Area, LSA แต่ละชนิดพกอะไรข้ามระหว่าง Area, และ Router เลือกเส้นทางยังไงเมื่อรู้จักปลายทางเดียวกันจากหลาย Area</p>
+    <p class="deck">บทที่ 8 ตั้งค่า OSPF ให้เพื่อนบ้านคุยกันได้แล้ว บทนี้ขยับไปดู "หลาย Area" พร้อมกัน — ทำไมต้องแบ่ง Area, <Term id="lsa">LSA</Term> แต่ละชนิดพกอะไรข้ามระหว่าง Area, และ Router เลือกเส้นทางยังไงเมื่อรู้จักปลายทางเดียวกันจากหลาย Area</p>
     <div class="credit-bar">
       <span>Area 0 Backbone</span><span>ABR</span><span>LSA Type 1/2/3</span><span>Interarea Summarization</span><span>Route Filtering</span>
     </div>
@@ -18,7 +18,7 @@ import Term from "../components/Term.astro";
       <div class="card">
         <h3>เชื่อมจากที่รู้แล้ว</h3>
         <ul>
-          <li>จากบทที่ 8 เรารู้แล้วว่า OSPF เก็บ LSA ทุกตัวไว้ใน LSDB แล้วรัน SPF สร้าง SPT ของตัวเอง และ Area 0 เป็น Backbone ที่ Area อื่นต้องเชื่อมเข้ามาหา</li>
+          <li>จากบทที่ 8 เรารู้แล้วว่า OSPF เก็บ LSA ทุกตัวไว้ใน <Term id="lsdb">LSDB</Term> แล้วรัน SPF สร้าง SPT ของตัวเอง และ Area 0 เป็น Backbone ที่ Area อื่นต้องเชื่อมเข้ามาหา</li>
           <li>สิ่งที่ยังไม่เคยพูดถึง: ทำไมต้องแบ่ง Area เลย ในเมื่อ Link-State ควรรู้ topology ทั้งหมดอยู่แล้ว — และถ้า Router ตัวหนึ่งอยู่หลาย Area พร้อมกัน มันส่งเส้นทางข้าม Area ยังไง</li>
         </ul>
       </div>
@@ -32,7 +32,12 @@ import Term from "../components/Term.astro";
           <li><b>Summarization of Routes</b> — สรุปเส้นทางที่ ABR</li>
           <li><b>Route Filtering</b> — 3 วิธี กรองเส้นทางบน Link-State Protocol</li>
         </ul>
+        <p style="color:var(--ink-3);font-size:.85rem;margin:10px 0 0">+ หัวข้อเสริมที่มีในสรุป MidEx แต่ไม่มีในสไลด์: Virtual Links, Stub/NSSA, Authentication, Fast <Term id="convergence">Convergence</Term>, Graceful Restart, Troubleshooting</p>
       </div>
+    </div>
+
+    <div class="legend-note" style="margin-top:20px">
+      <b>วิธีอ่านหน้านี้:</b> หัวข้อที่มีป้าย <span class="badge-extra">เสริม · ไม่มีในสไลด์</span> คือหัวข้อที่ปรากฏใน<b>สรุปหัวข้อ MidEx</b> แต่<b>ไม่มีอยู่ในสไลด์ที่อาจารย์สอน</b> — ตรวจสอบแล้วจากไฟล์สไลด์ต้นฉบับโดยตรง (หน้า Command Reference ของ Chapter 9 ลิสต์คำสั่งทั้งบทไว้แค่ 5 คำสั่ง ไม่มี stub, virtual-link, authentication, nsf เลย) · ข้อสอบมีแนวโน้มออกไม่เกินสไลด์ ดังนั้น<b>ให้น้ำหนักกับหัวข้อที่ไม่มีป้ายก่อน</b> — Area, LSA Type 1/2/3, Path Selection, Summarization และ Route Filtering คือแกนจริงของบทนี้
     </div>
   </section>
 
@@ -58,7 +63,7 @@ import Term from "../components/Term.astro";
       </div>
       <div class="card">
         <h3>สิ่งที่การแบ่ง Area แก้ให้</h3>
-        <p style="color:var(--ink-2);margin:0">Area หนึ่ง<b>ซ่อน topology</b> ของตัวเองจาก Area อื่น แต่ยังทำให้เครือข่ายภายในมองเห็นได้จาก Area อื่น — ลด LSDB ต่อ Area ให้เล็กลง คำนวณ SPF เร็วขึ้น และลดการ flood LSA เมื่อลิงก์ขยับ ข้อควรระวัง: การออกแบบต้องคิดถึง Router ที่<b>เล็กและช้าที่สุด</b>ใน Area นั้นเป็นตัวตั้ง</p>
+        <p style="color:var(--ink-2);margin:0">Area หนึ่ง<b>ซ่อน topology</b> ของตัวเองจาก Area อื่น แต่ยังทำให้เครือข่ายภายในมองเห็นได้จาก Area อื่น — ลด LSDB ต่อ Area ให้เล็กลง คำนวณ SPF เร็วขึ้น และลดการ <Term id="flooding">flood</Term> LSA เมื่อลิงก์ขยับ ข้อควรระวัง: การออกแบบต้องคิดถึง Router ที่<b>เล็กและช้าที่สุด</b>ใน Area นั้นเป็นตัวตั้ง</p>
       </div>
     </div>
 
@@ -137,12 +142,16 @@ O IA  10.56.1.0/24 [110/67] via ... (interarea, ผ่าน Area 0)</p>
           <tr><th scope="row">2</th><td>Network LSA</td><td>ประกาศ multi-access segment ที่มี DR</td></tr>
           <tr><th scope="row">3</th><td><Term id="summaryLsa">Summary LSA</Term></td><td>ประกาศ network prefix ที่มาจาก Area อื่น</td></tr>
           <tr><th scope="row">4</th><td>ASBR Summary LSA</td><td>ประกาศ summary LSA เฉพาะสำหรับ ASBR ตัวหนึ่ง</td></tr>
-          <tr><th scope="row">5</th><td>AS External LSA</td><td>ประกาศเส้นทางที่ผ่าน redistribution เข้ามา</td></tr>
+          <tr><th scope="row">5</th><td>AS External LSA</td><td>ประกาศเส้นทางที่ผ่าน <Term id="redistribution">redistribution</Term> เข้ามา</td></tr>
           <tr><th scope="row">7</th><td>NSSA External LSA</td><td>ประกาศเส้นทาง redistribution ภายใน NSSA</td></tr>
         </tbody>
       </table>
     </div>
-    <p style="color:var(--ink-2);font-size:.9rem;margin-top:10px">Type 1, 2, 3 เป็นชุดที่ใช้สร้าง SPT สำหรับ intra-area และ interarea route โดยตรง — ส่วน Type 4, 5, 7 เป็นเรื่องของเส้นทางที่มาจาก<b>นอกโดเมน OSPF</b> ซึ่งต้องรู้จัก ASBR ก่อน</p>
+    <p style="color:var(--ink-2);font-size:.9rem;margin-top:10px"><b>Type 1, 2, 3 คือแกนหลักของบทนี้ตามสไลด์</b> — เป็นชุดที่ใช้สร้าง SPT สำหรับ intra-area และ interarea route โดยตรง เนื้อหาที่ตามมาข้างล่างนี้จนจบหัวข้อเป็นส่วนขยายเรื่อง Type 4, 5, 7 ซึ่งสไลด์ไม่ได้ลงรายละเอียด</p>
+
+    <div class="legend-note" style="margin-top:16px">
+      <span class="badge-extra" style="margin-left:0">เสริม · ไม่มีในสไลด์</span> &nbsp; ส่วนที่เหลือของหัวข้อนี้ (ASBR, Type 4/5/7 และ E1 vs E2) อ่านพอเข้าใจภาพว่า "เส้นทางจากนอกโดเมนเข้ามายังไง" ก็พอ ไม่ต้องท่องรายละเอียด
+    </div>
 
     <div class="card" style="margin-top:20px">
       <h3><Term id="asbr">ASBR</Term> — ประตูสู่โลกภายนอก</h3>
@@ -244,6 +253,7 @@ R3 มองเห็น: metric ถึง R4 = 65, บวก Type 3 metric 2 �
         <path d="M8 13 L18 13" stroke="var(--coral)" stroke-width="2" stroke-dasharray="3 3"/>
       </svg>
       <h2><Term id="virtualLink">Virtual Links</Term> — อุโมงค์ฉุกเฉินข้าม Area</h2>
+      <span class="badge-extra">เสริม · ไม่มีในสไลด์</span>
     </div>
     <p class="sec-sub">กฎเหล็กของ OSPF คือทุก Area ต้องแตะ Area 0 — Virtual Link คือการสร้างการเชื่อมต่อ<b>เชิงตรรกะ</b>ขึ้นมาโกงกฎนั้นชั่วคราว โดยลากผ่าน Area ปกติที่มีอยู่แล้ว</p>
 
@@ -422,6 +432,7 @@ router ospf 1
         <path d="M9 9 L17 9" stroke="var(--sage)" stroke-width="1.5" stroke-dasharray="2 2"/>
       </svg>
       <h2>Special Area Types — Stub และ NSSA</h2>
+      <span class="badge-extra">เสริม · ไม่มีในสไลด์</span>
     </div>
     <p class="sec-sub">Summarization ลดขนาด LSDB ได้ระดับหนึ่ง แต่ถ้า Area นั้นมี Router ตัวเล็ก ๆ ที่ memory จำกัด ยังมีวิธีที่แรงกว่า — <b>ปิดประตูไม่ให้ LSA บางชนิดเข้ามาเลย</b> แล้วยัด default route เข้าไปแทน</p>
 
@@ -543,6 +554,7 @@ router ospf 1
         <circle cx="13" cy="16.5" r="1.6" fill="var(--blk)"/>
       </svg>
       <h2>OSPF Authentication</h2>
+      <span class="badge-extra">เสริม · ไม่มีในสไลด์</span>
     </div>
     <p class="sec-sub">ถ้าไม่เปิด authentication ใครก็ตามที่เสียบสายเข้ามาในเครือข่ายแล้วรัน OSPF ก็กลายเป็นเพื่อนบ้านได้ทันที แล้วยัดเส้นทางปลอมเข้ามาดูดทราฟฟิกได้</p>
 
@@ -593,6 +605,7 @@ interface GigabitEthernet0/0
         <path d="M14 2 L6 14 L12 14 L10 24 L20 11 L13 11 Z" fill="var(--gold-soft)" stroke="var(--gold)" stroke-width="1.8" stroke-linejoin="round"/>
       </svg>
       <h2>OSPF Fast Convergence และ Graceful Restart</h2>
+      <span class="badge-extra">เสริม · ไม่มีในสไลด์</span>
     </div>
     <p class="sec-sub">Convergence คือเวลาตั้งแต่ "สายขาด" จนถึง "ทุก Router รู้และใช้เส้นทางใหม่ได้" — OSPF แบ่งช่วงเวลานี้เป็น 3 ท่อน และปรับได้ทีละท่อน</p>
 
@@ -671,6 +684,7 @@ router ospf 1
         <line x1="16" y1="16" x2="22" y2="22" stroke="var(--sage)" stroke-width="2" stroke-linecap="round"/>
       </svg>
       <h2>การแก้ไขปัญหา OSPF</h2>
+      <span class="badge-extra">เสริม · ไม่มีในสไลด์</span>
     </div>
     <p class="sec-sub">ลำดับที่ใช้ได้จริง: ดูเพื่อนบ้านก่อน → ดู LSDB → ดู routing table เป็นอันสุดท้าย</p>
 

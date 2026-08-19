@@ -7,7 +7,7 @@ import Term from "../components/Term.astro";
   <header class="masthead">
     <p class="eyebrow" style="color:var(--slate)">Internetwork · Chapter 8 of 14</p>
     <h1>OSPF — Open Shortest Path First</h1>
-    <p class="deck">บทที่ 6 บอกไว้ว่า Link-State Protocol ทุกตัวแจกสถานะลิงก์ให้ทุก Router เห็นเหมือนกันหมดแล้วรัน Dijkstra SPF เอง — บทนี้ลงรายละเอียดว่า OSPF ทำแบบนั้นจริง ๆ ยังไง ตั้งแต่การหาเพื่อนบ้านจนถึงคำสั่งตั้งค่าที่ใช้จริง</p>
+    <p class="deck">บทที่ 6 บอกไว้ว่า Link-State Protocol ทุกตัวแจกสถานะลิงก์ให้ทุก Router เห็นเหมือนกันหมดแล้วรัน <Term id="dijkstraSpf">Dijkstra SPF</Term> เอง — บทนี้ลงรายละเอียดว่า OSPF ทำแบบนั้นจริง ๆ ยังไง ตั้งแต่การหาเพื่อนบ้านจนถึงคำสั่งตั้งค่าที่ใช้จริง</p>
     <div class="credit-bar">
       <span>OSPFv2 (IPv4)</span><span>LSDB / SPT</span><span>Area 0 Backbone</span><span>DR / BDR</span><span>5 Neighbor Packet Types</span>
     </div>
@@ -18,8 +18,8 @@ import Term from "../components/Term.astro";
       <div class="card">
         <h3>เชื่อมจากที่รู้แล้ว</h3>
         <ul>
-          <li>จากบทที่ 6 เรารู้แล้วว่า Link-State Protocol ให้ทุก Router แจกสถานะลิงก์ตัวเองไปทุกตัวในเครือข่าย เก็บไว้ใน LSDB แล้วแต่ละตัวรัน SPF เองเพื่อคำนวณเส้นทาง — AD ของ OSPF คือ 110</li>
-          <li>สิ่งที่ยังไม่เคยพูดถึง: OSPF แจก LSA ยังไง ใครเป็นคนคุมการ flood ไม่ให้ล้นเครือข่าย และทำไมต้องมี "Area" ด้วยทั้งที่ Link-State ควรรู้ topology ทั้งหมดอยู่แล้ว</li>
+          <li>จากบทที่ 6 เรารู้แล้วว่า Link-State Protocol ให้ทุก Router แจกสถานะลิงก์ตัวเองไปทุกตัวในเครือข่าย เก็บไว้ใน <Term id="lsdb">LSDB</Term> แล้วแต่ละตัวรัน SPF เองเพื่อคำนวณเส้นทาง — AD ของ OSPF คือ 110</li>
+          <li>สิ่งที่ยังไม่เคยพูดถึง: OSPF แจก <Term id="lsa">LSA</Term> ยังไง ใครเป็นคนคุมการ <Term id="flooding">flood</Term> ไม่ให้ล้นเครือข่าย และทำไมต้องมี "Area" ด้วยทั้งที่ Link-State ควรรู้ topology ทั้งหมดอยู่แล้ว</li>
         </ul>
       </div>
       <div class="card">
@@ -31,6 +31,10 @@ import Term from "../components/Term.astro";
           <li><b>Common OSPF Optimizations</b> — Link Cost, Timer, DR/BDR Election, Network Types</li>
         </ul>
       </div>
+    </div>
+
+    <div class="legend-note" style="margin-top:20px">
+      <b>วิธีอ่านหน้านี้:</b> หัวข้อที่มีป้าย <span class="badge-extra">เสริม · ไม่มีในสไลด์</span> คือหัวข้อที่ปรากฏใน<b>สรุปหัวข้อ MidEx</b> แต่<b>ไม่มีอยู่ในสไลด์ที่อาจารย์สอน</b> — ตรวจสอบแล้วจากไฟล์สไลด์ต้นฉบับโดยตรง · ข้อสอบมีแนวโน้มออกไม่เกินสไลด์ ดังนั้น<b>ให้น้ำหนักกับหัวข้อที่ไม่มีป้ายก่อน</b> ส่วนที่มีป้ายอ่านผ่าน ๆ พอให้ตอบได้ถ้าโผล่มา
     </div>
   </section>
 
@@ -183,7 +187,7 @@ import Term from "../components/Term.astro";
       <div class="card">
         <h3>8 ขั้น Neighbor State</h3>
         <p style="color:var(--ink-2);font-size:.85rem;margin:0">Down → Attempt → Init → 2-Way → ExStart → Exchange → Loading → Full</p>
-        <p style="color:var(--ink-2);font-size:.85rem;margin-top:8px">จุดสำคัญ: <b>2-Way</b> คือจุดที่เลือก DR/BDR ถ้า segment ต้องมี — <b>ExStart</b> คือจุดที่สอง Router ตกลงกันว่าใครเป็น Master/Slave ควบคุมการ sync LSDB — <b>Full</b> คือ adjacency สมบูรณ์แล้วเท่านั้น</p>
+        <p style="color:var(--ink-2);font-size:.85rem;margin-top:8px">จุดสำคัญ: <b>2-Way</b> คือจุดที่เลือก DR/BDR ถ้า segment ต้องมี — <b>ExStart</b> คือจุดที่สอง Router ตกลงกันว่าใครเป็น Master/Slave ควบคุมการ sync LSDB — <b>Full</b> คือ <Term id="adjacency">adjacency</Term> สมบูรณ์แล้วเท่านั้น</p>
       </div>
     </div>
 
@@ -202,8 +206,9 @@ import Term from "../components/Term.astro";
         <rect x="17" y="10" width="7" height="7" rx="1.5" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
       </svg>
       <h2>OSPF Router Types — 4 บทบาท</h2>
+      <span class="badge-extra">เสริม · ไม่มีในสไลด์</span>
     </div>
-    <p class="sec-sub">MidEx ระบุหัวข้อ "OSPF Areas และ Router Types" ไว้ชัด — บทบาทถูกกำหนดจาก<b>ตำแหน่งที่ interface ของ Router ไปวางอยู่</b> ไม่ได้ตั้งค่าเอง และ Router หนึ่งตัวเป็นหลายบทบาทพร้อมกันได้</p>
+    <p class="sec-sub">สรุป MidEx ระบุหัวข้อ "OSPF Areas และ <b>Router Types</b>" ไว้ แต่สไลด์ Chapter 8 ไม่มีคำว่า ABR/ASBR เลยแม้แต่ครั้งเดียว — หัวข้อนี้จึงเป็นส่วนเสริม อ่านพอเข้าใจภาพ ไม่ต้องท่องละเอียด · หลักการง่าย ๆ คือบทบาทถูกกำหนดจาก<b>ตำแหน่งที่ interface ของ Router ไปวางอยู่</b> ไม่ได้ตั้งค่าเอง</p>
 
     <div class="figwrap">
       <figure>

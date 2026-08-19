@@ -251,6 +251,22 @@ const course = Astro.url.pathname.includes("/dbsec") ? "dbsec" : "internetwork";
   .fixnote{margin-top:20px;border-radius:12px;padding:14px 18px;font-size:.9rem;color:var(--ink)}
   .fixnote b{color:inherit}
 
+  /* ---- ป้ายกำกับเนื้อหาเสริมที่ไม่ได้อยู่ในสไลด์ที่อาจารย์สอน ---- */
+  .badge-extra{
+    display:inline-block;font-size:.6rem;letter-spacing:.08em;font-weight:700;
+    color:var(--ink-3);background:var(--paper-2);
+    border:1px solid var(--rule);border-radius:999px;
+    padding:2px 9px;white-space:nowrap;vertical-align:middle;
+    margin-left:8px;text-transform:none;
+  }
+  .sec-head .badge-extra{align-self:center}
+  section:has(> .sec-head .badge-extra) > .sec-head h2{color:var(--ink-2)}
+  .legend-note{
+    background:var(--paper-2);border:1px dashed var(--rule);
+    border-radius:12px;padding:14px 18px;font-size:.89rem;color:var(--ink-2);
+  }
+  .legend-note b{color:var(--ink)}
+
   .bridge{background:var(--violet-soft);border-radius:14px;padding:18px 22px;font-size:.92rem;color:var(--ink)}
   .bridge b{color:var(--violet)}
 

@@ -7,7 +7,7 @@ import Term from "../components/Term.astro";
   <header class="masthead">
     <p class="eyebrow" style="color:var(--slate)">Internetwork · Chapter 10 of 14</p>
     <h1>OSPFv3</h1>
-    <p class="deck">บทที่ 8-9 คือ OSPFv2 ทั้งหมด บทนี้ดูว่า OSPFv3 เปลี่ยนอะไรไปบ้าง — คำตอบคือ<b>ตรรกะหลักเหมือนเดิมเกือบทั้งหมด</b> แต่ย้ายฐานไปวิ่งบน IPv6 โดยตรง แยกข้อมูล prefix ออกจาก LSA โครงสร้าง และที่หลายคนไม่รู้: OSPFv3 ใช้ route ทั้ง IPv6 <b>และ</b> IPv4 ได้ในตัวเดียว</p>
+    <p class="deck">บทที่ 8-9 คือ OSPFv2 ทั้งหมด บทนี้ดูว่า OSPFv3 เปลี่ยนอะไรไปบ้าง — คำตอบคือ<b>ตรรกะหลักเหมือนเดิมเกือบทั้งหมด</b> แต่ย้ายฐานไปวิ่งบน IPv6 โดยตรง แยกข้อมูล prefix ออกจาก <Term id="lsa">LSA</Term> โครงสร้าง และที่หลายคนไม่รู้: OSPFv3 ใช้ route ทั้ง IPv6 <b>และ</b> IPv4 ได้ในตัวเดียว</p>
     <div class="credit-bar">
       <span>Protocol 89 over IPv6</span><span>FF02::5 / FF02::6</span><span>8 LSA Types</span><span>Address Family</span><span>ospfv3 command</span>
     </div>
@@ -96,7 +96,7 @@ FF02::6  → AllDRouters (เฉพาะ DR/BDR)</p>
     <div class="exam" style="margin-top:20px">
       <h4>ทำไมต้องแยก prefix ออกมาเป็น LSA ใหม่ <span class="tag">ออกสอบ</span></h4>
       <p>ใน OSPFv2 ข้อมูล IP address ฝังอยู่ใน Router LSA (Type 1) โดยตรง — พอเพิ่มหรือแก้ prefix บน interface ทีนึง Type 1 LSA เปลี่ยน ทุก Router ใน Area ต้องรัน SPF ใหม่ทั้ง ๆ ที่ <b>โครงสร้าง topology ไม่ได้เปลี่ยนเลย</b></p>
-      <p style="margin:0"><b>ทางแก้ของ v3:</b> ย้ายข้อมูล prefix ไปอยู่ใน LSA แยกสองชนิดใหม่ (Link LSA และ Intra-area Prefix LSA) แล้วให้ LSDB สร้าง shortest path tree จาก <b>link</b> แทนที่จะสร้างจาก <b>network</b> — ผลคือเพิ่ม/แก้ prefix บน interface ได้โดย<b>ไม่ต้องรัน SPF ใหม่</b> เพราะโครงสร้าง link ไม่ได้ขยับ</p>
+      <p style="margin:0"><b>ทางแก้ของ v3:</b> ย้ายข้อมูล prefix ไปอยู่ใน LSA แยกสองชนิดใหม่ (Link LSA และ Intra-area Prefix LSA) แล้วให้ <Term id="lsdb">LSDB</Term> สร้าง shortest path tree จาก <b>link</b> แทนที่จะสร้างจาก <b>network</b> — ผลคือเพิ่ม/แก้ prefix บน interface ได้โดย<b>ไม่ต้องรัน SPF ใหม่</b> เพราะโครงสร้าง link ไม่ได้ขยับ</p>
     </div>
   </section>
 
@@ -176,7 +176,8 @@ OI  2001:db8:0:34::/64 [110/2]</p>
 
     <div class="knob" style="margin-top:20px">
       <span class="where c1">ต่อจากบทที่ 9</span>
-      <h3><Term id="routingAuthentication">Authentication</Term> ของ OSPFv3 — ทำคนละทางกับ v2</h3>
+      <h3><Term id="routingAuthentication">Authentication</Term> ของ OSPFv3 — ทำคนละทางกับ v2 <span class="badge-extra">คำสั่งเป็นส่วนเสริม</span></h3>
+      <p class="why" style="margin:0 0 12px;font-size:.84rem;color:var(--ink-3)">สไลด์ Chapter 10 เอ่ยถึง IPsec ไว้เพียงครั้งเดียวโดยไม่มีคำสั่ง — <b>สิ่งที่ต้องจำจริงคือแค่ประโยคเดียว: "v2 มี authentication ในตัว ส่วน v3 ถอดออกไปใช้ IPsec ของ IPv6 แทน"</b> ส่วนคำสั่งด้านล่างเป็นของเสริมไว้ดูประกอบ</p>
       <p class="why">จากตาราง 5 ความต่างด้านบน: OSPFv3 <b>ถอด authentication ออกจากตัวโปรโตคอลไปเลย</b> — ไม่มีคำสั่ง <code>ip ospf authentication</code> แบบ v2 อีกต่อไป เหตุผลคือ IPv6 มี IPsec เป็นส่วนหนึ่งของมาตรฐานอยู่แล้ว จึงไม่ต้องให้แต่ละโปรโตคอลสร้างกลไกของตัวเองซ้ำซ้อน</p>
       <pre>! ระดับ interface
 interface GigabitEthernet0/0
