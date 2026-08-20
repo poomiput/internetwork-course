@@ -29,6 +29,7 @@ export const courses = [
         chapters: [
           { n: 6, slug: "ch6", title: "IP Routing Essentials", ready: true },
           { n: 7, slug: "ch7", title: "EIGRP", ready: true },
+          { n: "8−", slug: "pre8", title: "ปูพื้น OSPF", ready: true },
           { n: 8, slug: "ch8", title: "OSPF", ready: true },
           { n: 9, slug: "ch9", title: "Advanced OSPF", ready: true },
           { n: 10, slug: "ch10", title: "OSPFv3", ready: true },

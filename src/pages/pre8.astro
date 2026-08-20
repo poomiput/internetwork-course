@@ -1,0 +1,673 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Term from "../components/Term.astro";
+import { pre8Glossary } from "../data/pre8Glossary.js";
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+---
+
+<Layout title="ปูพื้น OSPF ก่อนบทที่ 8" description="บทเตรียมก่อนบทที่ 8 — เข้าใจ OSPF ผ่านภาพเดียว ตั้งแต่ Neighbor, Adjacency, Area, Router Type, LSA, Packet, OSPFv2/v3 และ Route Summarization">
+  <div class="pre8-page">
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--coral)">Internetwork · Pre-Chapter 8</p>
+    <h1>OSPF: เข้าใจแผนที่ก่อนจำคำสั่ง</h1>
+    <p class="deck">บทนี้ไม่เริ่มจากศัพท์หรือคำสั่ง แต่เริ่มจากคำถามง่าย ๆ ว่า “Router จะหาเส้นทางเองได้อย่างไร” แล้วค่อยต่อทุกชิ้นของ OSPF ให้เป็นเรื่องเดียว ตั้งแต่ Hello จนกลายเป็น Route ในตาราง</p>
+    <div class="credit-bar">
+      <span>Neighbor → Adjacency</span><span>LSA → LSDB → SPF</span><span>Area &amp; Router Types</span><span>OSPFv2 / OSPFv3</span><span>Summarization</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="grid-2">
+      <div class="card">
+        <h3>คำถามใหญ่เพียงข้อเดียว</h3>
+        <p style="color:var(--ink-2);margin:0">ถ้า R1 ไม่ได้ต่อกับปลายทางโดยตรง มันต้องรู้ว่าในเครือข่ายมี Router และสายอะไรบ้าง แล้วคำนวณทางที่ cost ต่ำที่สุดเอง OSPF จึงเป็นโปรโตคอลแบบ <Term id="linkStateProtocol">Link-State</Term> — ทุกตัวช่วยกันสร้าง “แผนที่” ก่อนเลือกเส้นทาง</p>
+      </div>
+      <div class="card">
+        <h3>วิธีอ่านบทนี้</h3>
+        <ul>
+          <li>มอง <b>เหตุและผล</b> ก่อนจำเลข: ทำไมต้องมี Neighbor, DR, Area และ LSA</li>
+          <li>แยกคำที่มักปนกัน: <b>LSA ไม่ใช่ LSU</b>, Neighbor ไม่เท่ากับ Adjacency</li>
+          <li>คำอังกฤษในเนื้อหา ตาราง และหัวข้อทุกคำที่มีเส้นใต้แบบจุดสามารถชี้หรือกดเพื่อดูคำอธิบายภาษาไทยได้ทันที</li>
+          <li>ดูคำสั่งหลังเข้าใจ flow แล้ว จะรู้ว่าทุกบรรทัดกำลังเปิดกลไกส่วนไหน</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="5" cy="13" r="3" fill="var(--slate)"/><circle cx="13" cy="5" r="3" fill="var(--slate)"/><circle cx="21" cy="13" r="3" fill="var(--slate)"/><circle cx="13" cy="21" r="3" fill="var(--slate)"/>
+        <path d="M7 11 L11 7 M15 7 L19 11 M19 15 L15 19 M11 19 L7 15" fill="none" stroke="var(--slate)" stroke-width="1.6"/>
+      </svg>
+      <h2>ภาพใหญ่ — OSPF สร้าง Route อย่างไร</h2>
+    </div>
+    <p class="sec-sub">จำเป็นประโยคเดียว: <b>หาเพื่อน → แลกชิ้นส่วนแผนที่ → ต่อเป็นแผนที่เดียวกัน → คำนวณทางสั้นที่สุด → ใส่เส้นทางลงตาราง</b></p>
+
+    <div class="pathway">
+      <div class="pw-step"><span class="n" style="color:var(--coral)">01 · HELLO</span><h4>ค้นหาเพื่อนบ้าน</h4><p>Router ส่ง Hello บน interface ที่เปิด OSPF</p></div>
+      <div class="pw-step"><span class="n" style="color:var(--coral)">02 · ADJACENCY</span><h4>ตกลงแลกฐานข้อมูล</h4><p>Neighbor ที่เหมาะสมเริ่ม synchronize ข้อมูล</p></div>
+      <div class="pw-step"><span class="n" style="color:var(--slate)">03 · LSA / LSDB</span><h4>ต่อแผนที่</h4><p>LSA ทุกชิ้นรวมกันเป็น Link-State Database</p></div>
+      <div class="pw-step"><span class="n" style="color:var(--gold)">04 · SPF</span><h4>คำนวณต้นไม้</h4><p>แต่ละ Router ใช้ตัวเองเป็นรากของ SPT</p></div>
+      <div class="pw-step"><span class="n" style="color:var(--fwd)">05 · ROUTE</span><h4>ติดตั้งทางที่ดีที่สุด</h4><p>เส้นทางที่ชนะถูกนำไปใส่ Routing Table</p></div>
+    </div>
+
+    <div class="figwrap" style="margin-top:20px">
+      <figure>
+        <svg viewBox="0 0 760 270" role="img" aria-label="R1 มีสองทางไปเครือข่ายปลายทาง ผ่าน R2 cost รวม 20 และผ่าน R3 cost รวม 60 จึงเลือกทางผ่าน R2">
+          <defs>
+            <marker id="pre8-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--fwd)"/></marker>
+          </defs>
+          <rect x="35" y="105" width="110" height="52" rx="9" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/>
+          <text x="90" y="137" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">R1</text>
+          <rect x="310" y="30" width="110" height="52" rx="9" fill="var(--fwd-soft)" stroke="var(--fwd)" stroke-width="2"/>
+          <text x="365" y="62" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">R2</text>
+          <rect x="310" y="190" width="110" height="52" rx="9" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="2"/>
+          <text x="365" y="222" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">R3</text>
+          <rect x="610" y="105" width="115" height="52" rx="9" fill="var(--gold-soft)" stroke="var(--gold)" stroke-width="2"/>
+          <text x="667" y="128" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">ปลายทาง</text>
+          <text x="667" y="145" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">10.10.10.0/24</text>
+
+          <path d="M145 115 L310 67" fill="none" stroke="var(--fwd)" stroke-width="4" marker-end="url(#pre8-arrow)"/>
+          <path d="M420 58 L610 115" fill="none" stroke="var(--fwd)" stroke-width="4" marker-end="url(#pre8-arrow)"/>
+          <text x="220" y="75" text-anchor="middle" font-size="12" font-weight="700" fill="var(--fwd)">Cost 10</text>
+          <text x="520" y="75" text-anchor="middle" font-size="12" font-weight="700" fill="var(--fwd)">Cost 10</text>
+          <text x="380" y="15" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--fwd)">ทางที่เลือก: Cost รวม 20</text>
+
+          <path d="M145 148 L310 207 M420 217 L610 148" fill="none" stroke="var(--rule)" stroke-width="3" stroke-dasharray="7 5"/>
+          <text x="220" y="205" text-anchor="middle" font-size="12" fill="var(--ink-3)">Cost 30</text>
+          <text x="520" y="205" text-anchor="middle" font-size="12" fill="var(--ink-3)">Cost 30</text>
+          <text x="380" y="265" text-anchor="middle" font-size="12" fill="var(--ink-3)">ทางสำรอง: Cost รวม 60</text>
+        </svg>
+        <figcaption>Router ทุกตัวเห็น LSDB ของ Area เดียวกัน แต่สร้าง <Term id="spt">SPT</Term> คนละต้น เพราะแต่ละตัวใช้ตัวเองเป็นราก — R1 จึงเลือกทางที่ cost รวมต่ำที่สุดจากมุมของ R1</figcaption>
+      </figure>
+    </div>
+
+    <div class="grid-3" style="margin-top:20px">
+      <div class="card"><h3>Neighbor Table</h3><p style="color:var(--ink-2);margin:0">ฉันเห็น Router ตัวไหนบนลิงก์บ้าง<br/><code>show ip ospf neighbor</code></p></div>
+      <div class="card"><h3>Link-State Database</h3><p style="color:var(--ink-2);margin:0">แผนที่ topology ที่ต่อจาก LSA<br/><code>show ip ospf database</code></p></div>
+      <div class="card"><h3>Routing Table</h3><p style="color:var(--ink-2);margin:0">ผลลัพธ์หลัง SPF เลือกเส้นทาง<br/><code>show ip route ospf</code></p></div>
+    </div>
+
+    <div class="knob" style="margin-top:20px">
+      <span class="where c2">Metric</span>
+      <h3>OSPF Cost — ยิ่งต่ำยิ่งดี</h3>
+      <p class="why">ค่าอัตโนมัติมาจาก Reference Bandwidth ÷ Interface Bandwidth แล้วนำ cost ของทุกขาออกตามเส้นทางมารวมกัน ค่า reference ดั้งเดิม 100 Mbps แยก FastEthernet, 1G และ 10G ไม่ออก จึงควรตั้งค่าให้เหมาะสมและเหมือนกันทุก Router</p>
+      <pre style="margin:0">router ospf 10
+ auto-cost reference-bandwidth 100000   ! 100 Gbps, หน่วย Mbps
+
+interface GigabitEthernet0/0
+ ip ospf cost 10                        ! หรือกำหนด cost เองเฉพาะจุด</pre>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="7" cy="13" r="5" fill="none" stroke="var(--coral)" stroke-width="2"/><circle cx="19" cy="13" r="5" fill="none" stroke="var(--coral)" stroke-width="2"/><path d="M12 13 H14" stroke="var(--coral)" stroke-width="2"/></svg>
+      <h2>Neighbor กับ Adjacency — เห็นกันยังไม่เท่ากับ sync กัน</h2>
+    </div>
+    <p class="sec-sub"><b>Neighbor</b> คือ Router ที่ค้นพบผ่าน Hello ส่วน <b>Adjacency</b> คือ Neighbor ที่แลก LSDB กันจนพร้อมใช้งาน ทุก Adjacency เป็น Neighbor แต่ Neighbor ไม่จำเป็นต้อง Full ทุกคู่</p>
+
+    <div class="pathway">
+      <div class="pw-step"><span class="n" style="color:var(--coral)">DOWN</span><h4>ยังไม่เห็น Hello</h4><p>ไม่มีข้อมูลเพื่อนบ้าน</p></div>
+      <div class="pw-step"><span class="n" style="color:var(--coral)">INIT</span><h4>ได้ Hello ฝั่งเดียว</h4><p>ยังไม่เห็น RID ตัวเองใน Hello อีกฝั่ง</p></div>
+      <div class="pw-step"><span class="n" style="color:var(--gold)">2-WAY</span><h4>เห็นกันสองทิศ</h4><p>จุดเลือก DR/BDR บน Ethernet</p></div>
+      <div class="pw-step"><span class="n" style="color:var(--slate)">EXSTART</span><h4>ตกลงบทบาท</h4><p>เลือก Master/Slave และ sequence</p></div>
+      <div class="pw-step"><span class="n" style="color:var(--slate)">EXCHANGE</span><h4>เทียบสารบัญ</h4><p>แลก DBD ซึ่งมี LSA headers</p></div>
+      <div class="pw-step"><span class="n" style="color:var(--violet)">LOADING</span><h4>ขอชิ้นที่ขาด</h4><p>ส่ง LSR และรับ LSU</p></div>
+      <div class="pw-step"><span class="n" style="color:var(--fwd)">FULL</span><h4>Sync สำเร็จ</h4><p>LSDB ตรงกัน พร้อมใช้งาน</p></div>
+    </div>
+    <p style="color:var(--ink-3);font-size:.86rem;margin-top:10px">State <b>Attempt</b> พบใน NBMA ตอน Router พยายามติดต่อ neighbor ที่กำหนดไว้ด้วยตัวเอง จึงไม่อยู่ใน flow ปกติของ Ethernet ด้านบน</p>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>OSPF Packet Types — ซองจดหมายที่ใช้คุยกัน</caption>
+        <thead><tr><th scope="col">Type</th><th scope="col">Packet</th><th scope="col">หน้าที่</th><th scope="col">ภาพจำ</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">1</th><td><Term id="ospfHelloPacket">Hello</Term></td><td>ค้นหาและรักษา neighbor รวมถึงเลือก DR/BDR</td><td>“ฉันอยู่ตรงนี้ ใครเห็นฉันบ้าง”</td></tr>
+          <tr><th scope="row">2</th><td>Database Description (DBD/DD)</td><td>ส่งรายการย่อหรือ headers ของ LSAs</td><td>สารบัญ ไม่ใช่หนังสือทั้งเล่ม</td></tr>
+          <tr><th scope="row">3</th><td>Link-State Request (LSR)</td><td>ขอ LSA ที่ไม่มีหรือเก่ากว่า</td><td>ใบขอเอกสาร</td></tr>
+          <tr><th scope="row">4</th><td>Link-State Update (LSU)</td><td>ขน LSA ฉบับเต็มหนึ่งรายการหรือหลายรายการ</td><td>กล่องที่ใส่เอกสาร</td></tr>
+          <tr><th scope="row">5</th><td>Link-State Acknowledgment</td><td>ยืนยันว่าได้รับ LSA แล้ว</td><td>ใบเซ็นรับ</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>LSA ไม่ใช่ LSU <span class="tag">ต้องแยกให้ออก</span></h4>
+      <p><b>LSA</b> คือเนื้อหาหนึ่งชิ้นในแผนที่ เช่น Router นี้มีลิงก์อะไร หรือ prefix นี้อยู่ Area ไหน ส่วน <b>LSU</b> คือ Packet Type 4 ที่ใช้ขน LSA เหล่านั้นบนสายจริง</p>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3>ทำไม Ethernet ต้องมี DR/BDR</h3>
+        <p style="color:var(--ink-2);margin:0 0 10px">ถ้ามี Router หลายตัวบน LAN เดียวกันแล้ว Full กันทุกคู่ จำนวน adjacency และการ flood จะโตเร็ว OSPF จึงเลือก <Term id="ospfDR">DR</Term> เป็นศูนย์กลางและมี <Term id="ospfBDR">BDR</Term> สำรอง</p>
+        <ul>
+          <li>Priority สูงกว่าชนะ; เท่ากันใช้ RID สูงกว่า</li>
+          <li>Priority 0 ไม่มีสิทธิ์เป็น DR/BDR</li>
+          <li>การเลือกเป็น non-preemptive — ผู้มาทีหลังไม่แย่งทันที</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>2-Way อาจเป็นสถานะปกติ</h3>
+        <p style="color:var(--ink-2);margin:0">บน Broadcast LAN, DROTHER จะ Full กับ DR/BDR แต่คู่ DROTHER ↔ DROTHER อยู่ที่ 2-Way ได้ตามปกติ ส่วนลิงก์ Point-to-Point มีเพียงสองฝั่ง จึงควรขึ้น Full และไม่ต้องเลือก DR/BDR</p>
+      </div>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>Neighbor ไม่ขึ้น — อ่านอาการให้ตรงจุด</caption>
+        <thead><tr><th scope="col">อาการ</th><th scope="col">ตรวจอะไรเป็นอันดับแรก</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">ไม่เห็น Neighbor เลย</th><td>Interface up/up, เปิด OSPF ถูก interface, passive-interface, Area ID, Hello/Dead timer, authentication, network type, ACL ที่บล็อก IP protocol 89</td></tr>
+          <tr><th scope="row">ค้าง INIT</th><td>อีกฝั่งรับ Hello กลับหรือไม่, multicast เดินได้หรือไม่, ACL หรือปัญหา Layer 2 แบบทางเดียว</td></tr>
+          <tr><th scope="row">ค้าง 2-WAY</th><td>ดูก่อนว่าเป็น DROTHER ↔ DROTHER บน Ethernet หรือไม่ — ถ้าใช่ถือว่าปกติ</td></tr>
+          <tr><th scope="row">ค้าง EXSTART/EXCHANGE</th><td>MTU สองฝั่งไม่ตรงกัน, Router ID ซ้ำ, packet loss หรือ network type ไม่สอดคล้อง</td></tr>
+          <tr><th scope="row">OSPFv3 ไม่ขึ้น</th><td>เพิ่ม Instance ID, IPv6 link-local address และการเปิด IPv6 unicast routing เข้า checklist</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="2" y="5" width="9" height="16" rx="3" fill="var(--slate-soft)" stroke="var(--slate)"/><rect x="15" y="5" width="9" height="16" rx="3" fill="var(--violet-soft)" stroke="var(--violet)"/><path d="M11 13 H15" stroke="var(--coral)" stroke-width="2"/></svg>
+      <h2>Areas และ Router Types — แบ่งแผนที่เป็นห้อง</h2>
+    </div>
+    <p class="sec-sub">Router ใน Area เดียวกันต้องมี LSDB ของ Area นั้นตรงกัน การแบ่ง Area จึงช่วยจำกัดการ flood และการรัน SPF ส่วน <Term id="backboneArea">Area 0</Term> เป็นทางเชื่อมกลางระหว่าง Area อื่น</p>
+
+    <div class="figwrap">
+      <figure>
+        <svg viewBox="0 0 820 320" role="img" aria-label="Topology สาม Area: R1 เป็น Internal Router ใน Area 1, R2 เป็น ABR เชื่อม Area 1 กับ Area 0, R3 เป็น Backbone Router และ ASBR, R4 เป็น ABR เชื่อม Area 0 กับ Area 2 และ R5 เป็น Internal Router ใน Area 2">
+          <rect x="15" y="45" width="270" height="210" rx="16" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="1.5" stroke-dasharray="6 4"/>
+          <rect x="275" y="45" width="270" height="210" rx="16" fill="var(--gold-soft)" stroke="var(--gold)" stroke-width="2"/>
+          <rect x="535" y="45" width="270" height="210" rx="16" fill="var(--violet-soft)" stroke="var(--violet)" stroke-width="1.5" stroke-dasharray="6 4"/>
+          <text x="140" y="30" text-anchor="middle" font-size="14" font-weight="700" fill="var(--slate)">Area 1</text>
+          <text x="410" y="30" text-anchor="middle" font-size="14" font-weight="700" fill="var(--gold)">Area 0 · Backbone</text>
+          <text x="680" y="30" text-anchor="middle" font-size="14" font-weight="700" fill="var(--violet)">Area 2</text>
+
+          <g fill="var(--card)" stroke="var(--ink-2)" stroke-width="1.8">
+            <rect x="45" y="115" width="125" height="60" rx="9"/>
+            <rect x="220" y="115" width="125" height="60" rx="9" stroke="var(--coral)" stroke-width="2.3"/>
+            <rect x="350" y="115" width="125" height="60" rx="9" stroke="var(--gold)" stroke-width="2.3"/>
+            <rect x="480" y="115" width="125" height="60" rx="9" stroke="var(--coral)" stroke-width="2.3"/>
+            <rect x="650" y="115" width="125" height="60" rx="9"/>
+          </g>
+          <path d="M170 145 H220 M345 145 H350 M475 145 H480 M605 145 H650" stroke="var(--ink-2)" stroke-width="2"/>
+          <text x="107" y="140" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">R1</text><text x="107" y="158" text-anchor="middle" font-size="10" fill="var(--ink-2)">Internal</text>
+          <text x="282" y="140" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">R2</text><text x="282" y="158" text-anchor="middle" font-size="10" fill="var(--coral)">ABR</text>
+          <text x="412" y="136" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">R3</text><text x="412" y="154" text-anchor="middle" font-size="10" fill="var(--gold)">Backbone + ASBR</text>
+          <text x="542" y="140" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">R4</text><text x="542" y="158" text-anchor="middle" font-size="10" fill="var(--coral)">ABR</text>
+          <text x="712" y="140" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">R5</text><text x="712" y="158" text-anchor="middle" font-size="10" fill="var(--ink-2)">Internal</text>
+
+          <path d="M412 175 V235" stroke="var(--coral)" stroke-width="2"/>
+          <rect x="330" y="235" width="165" height="46" rx="8" fill="var(--coral-soft)" stroke="var(--coral)"/>
+          <text x="412" y="255" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)">Static / BGP / Internet</text>
+          <text x="412" y="270" text-anchor="middle" font-size="9.5" fill="var(--ink-2)">Redistribute เข้าสู่ OSPF</text>
+        </svg>
+        <figcaption>บทบาทเป็นคุณสมบัติของ Router ตามตำแหน่งใน topology และ Router หนึ่งตัวมีหลายบทบาทพร้อมกันได้ เช่น R3 เป็นทั้ง Backbone Router และ ASBR</figcaption>
+      </figure>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>Router Types — ดูจาก interface และแหล่งที่มาของ Route</caption>
+        <thead><tr><th scope="col">Type</th><th scope="col">เงื่อนไข</th><th scope="col">หน้าที่สำคัญ</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Internal Router</th><td>OSPF interfaces ทั้งหมดอยู่ Area เดียว</td><td>สร้างและรับรู้ topology ภายใน Area ของตัวเอง</td></tr>
+          <tr><th scope="row">Backbone Router</th><td>มีอย่างน้อยหนึ่ง interface อยู่ Area 0</td><td>เป็นสมาชิกของ Backbone</td></tr>
+          <tr><th scope="row"><Term id="abr">ABR</Term></th><td>เชื่อม Area 0 กับ Area อื่น</td><td>ถือ LSDB แยกตาม Area และสร้าง Type 3/4 ส่งข้อมูลข้าม Area</td></tr>
+          <tr><th scope="row">ASBR</th><td>Redistribute route จากแหล่งภายนอกเข้า OSPF</td><td>สร้าง Type 5 หรือ Type 7 ถ้าอยู่ NSSA</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>Area Types — เลือกว่าจะให้ External และ Inter-area information เข้ามามากแค่ไหน</caption>
+        <thead><tr><th scope="col">Area</th><th scope="col">Type 5</th><th scope="col">Type 3</th><th scope="col">Type 7</th><th scope="col">ความหมาย</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Normal</th><td>รับ</td><td>รับ</td><td>ไม่มี</td><td>Area มาตรฐาน ไม่ตัดข้อมูล</td></tr>
+          <tr><th scope="row">Stub</th><td>ไม่รับ</td><td>รับ</td><td>ไม่มี</td><td>ABR ใช้ default route แทน external routes</td></tr>
+          <tr><th scope="row">Totally Stubby</th><td>ไม่รับ</td><td>ตัดเกือบหมด</td><td>ไม่มี</td><td>เหลือ default route เป็นหลัก; เป็น vendor extension</td></tr>
+          <tr><th scope="row">NSSA</th><td>ไม่รับจากภายนอก</td><td>รับ</td><td>รับ</td><td>มี ASBR ภายใน Area ได้ โดยสร้าง Type 7</td></tr>
+          <tr><th scope="row">Totally NSSA</th><td>ไม่รับจากภายนอก</td><td>ตัดเกือบหมด</td><td>รับ</td><td>NSSA ที่ลด inter-area details เพิ่มอีก</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M5 3 H18 L22 7 V23 H5 Z" fill="none" stroke="var(--violet)" stroke-width="1.8"/><path d="M18 3 V8 H22 M9 12 H18 M9 16 H18 M9 20 H15" stroke="var(--violet)" stroke-width="1.5"/></svg>
+      <h2>LSA Types — แต่ละชิ้นตอบคนละคำถาม</h2>
+    </div>
+    <p class="sec-sub">ไม่ต้องเริ่มจากท่องเลข ให้ถามก่อนว่า “ใครสร้างข้อมูลนี้ กำลังบอกอะไร และ flood ไปได้ไกลแค่ไหน”</p>
+
+    <div class="tablewrap">
+      <table>
+        <caption>LSA ที่ใช้บ่อยใน OSPFv2</caption>
+        <thead><tr><th scope="col">Type</th><th scope="col">ชื่อ</th><th scope="col">ผู้สร้าง</th><th scope="col">ตอบคำถาม</th><th scope="col">ขอบเขต</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">1</th><td><Term id="routerLsa">Router LSA</Term></td><td>Router ทุกตัว</td><td>Router นี้มี link อะไรและ cost เท่าไร</td><td>ภายใน Area</td></tr>
+          <tr><th scope="row">2</th><td>Network LSA</td><td>DR</td><td>บน multi-access network นี้มี Router ใดต่ออยู่บ้าง</td><td>ภายใน Area</td></tr>
+          <tr><th scope="row">3</th><td><Term id="summaryLsa">Summary Network LSA</Term></td><td>ABR</td><td>Network ใน Area อื่นไปทางไหนและ cost เท่าไร</td><td>ข้าม Area</td></tr>
+          <tr><th scope="row">4</th><td>ASBR Summary LSA</td><td>ABR</td><td>จะเดินทางไปหา ASBR ที่อยู่ Area อื่นอย่างไร</td><td>ข้าม Area</td></tr>
+          <tr><th scope="row">5</th><td>AS External LSA</td><td>ASBR</td><td>External prefix ที่ redistribute เข้ามาอยู่ทางไหน</td><td>ทั่ว OSPF domain ยกเว้น Stub/NSSA</td></tr>
+          <tr><th scope="row">7</th><td>NSSA External LSA</td><td>ASBR ใน NSSA</td><td>External prefix ที่เกิดภายใน NSSA อยู่ทางไหน</td><td>ภายใน NSSA; ABR มักแปลงเป็น Type 5 ตอนออก</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>สูตรจำเลขแบบมีเหตุผล <span class="tag">Memory Map</span></h4>
+      <p><b>1</b> Router พูดถึงตัวเอง → <b>2</b> DR พูดถึง LAN → <b>3</b> ABR บอก network ข้าม Area → <b>4</b> ABR บอกทางไป ASBR → <b>5</b> ASBR บอก External → <b>7</b> คือ External แบบเดียวกันแต่ใช้ภายใน NSSA</p>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card"><h3>E1 / N1</h3><p style="color:var(--ink-2);margin:0">คิดทั้ง external metric และ internal OSPF cost ที่ใช้เดินทางไปหา ASBR จึงสะท้อนตำแหน่งของ Router ใน topology</p></div>
+      <div class="card"><h3>E2 / N2</h3><p style="color:var(--ink-2);margin:0">ใช้ external metric เป็นหลัก; internal cost ใช้ช่วยตัดสินเมื่อจำเป็น E2 เป็นค่าที่พบบ่อยเมื่อ redistribute โดยไม่ระบุ metric type</p></div>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>OSPFv3 — ตรรกะเดิม แต่แยก topology ออกจาก IPv6 prefix</caption>
+        <thead><tr><th scope="col">Type</th><th scope="col">OSPFv3 LSA</th><th scope="col">หน้าที่</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">1 / 2</th><td>Router-LSA / Network-LSA</td><td>บอก topology และความสัมพันธ์ระหว่าง Router โดยไม่ต้องฝัง prefix ไว้เหมือน OSPFv2</td></tr>
+          <tr><th scope="row">3</th><td><Term id="interareaPrefixLsa">Inter-Area-Prefix-LSA</Term></td><td>ประกาศ prefix จาก Area อื่น</td></tr>
+          <tr><th scope="row">4</th><td><Term id="interareaRouterLsa">Inter-Area-Router-LSA</Term></td><td>บอกตำแหน่ง ASBR ใน Area อื่น</td></tr>
+          <tr><th scope="row">5 / 7</th><td>AS-External-LSA / NSSA-LSA</td><td>ประกาศ external routes</td></tr>
+          <tr><th scope="row">8</th><td><Term id="linkLsa">Link-LSA</Term></td><td>บอก link-local address และข้อมูล prefix บน link</td></tr>
+          <tr><th scope="row">9</th><td><Term id="intraAreaPrefixLsa">Intra-Area-Prefix-LSA</Term></td><td>ผูก IPv6 prefixes เข้ากับ topology ภายใน Area</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="3" y="3" width="20" height="20" rx="4" fill="none" stroke="var(--coral)" stroke-width="1.8"/><path d="M8 9 H18 M8 13 H15 M8 17 H18" stroke="var(--coral)" stroke-width="1.8"/></svg>
+      <h2>Lab เล็ก — ทำให้ R1 กับ R2 เป็นเพื่อนบ้าน</h2>
+    </div>
+    <p class="sec-sub">Topology เดียวรันทั้ง IPv4 และ IPv6 ใช้ Area 0 และตั้ง Router ID เองเพื่อให้ผลตรวจสอบอ่านง่าย</p>
+
+    <div class="figwrap">
+      <figure>
+        <svg viewBox="0 0 760 190" role="img" aria-label="R1 และ R2 ต่อกันด้วย GigabitEthernet0/0 ใช้ IPv4 10.12.0.0/30 และ IPv6 2001 db8 12 /64">
+          <rect x="55" y="55" width="150" height="76" rx="10" fill="var(--slate-soft)" stroke="var(--slate)" stroke-width="2"/>
+          <rect x="555" y="55" width="150" height="76" rx="10" fill="var(--violet-soft)" stroke="var(--violet)" stroke-width="2"/>
+          <path d="M205 93 H555" stroke="var(--ink-2)" stroke-width="3"/>
+          <text x="130" y="82" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">R1 · RID 1.1.1.1</text>
+          <text x="130" y="104" text-anchor="middle" font-size="11" fill="var(--ink-2)">G0/0 · .1 · ::1</text>
+          <text x="630" y="82" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">R2 · RID 2.2.2.2</text>
+          <text x="630" y="104" text-anchor="middle" font-size="11" fill="var(--ink-2)">G0/0 · .2 · ::2</text>
+          <text x="380" y="75" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">Area 0 · Ethernet</text>
+          <text x="380" y="105" text-anchor="middle" font-size="11" fill="var(--ink-2)">10.12.0.0/30</text>
+          <text x="380" y="124" text-anchor="middle" font-size="11" fill="var(--ink-2)">2001:DB8:12::/64</text>
+          <text x="380" y="165" text-anchor="middle" font-size="11" fill="var(--ink-3)">Loopback: R1 = 10.1.1.1 / 2001:DB8:1::1 · R2 = 10.2.2.2 / 2001:DB8:2::2</text>
+        </svg>
+      </figure>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="knob">
+        <span class="where c1">R1 · OSPFv2 IPv4</span>
+        <pre>interface Loopback0
+ ip address 10.1.1.1 255.255.255.255
+ ip ospf 10 area 0
+!
+interface GigabitEthernet0/0
+ ip address 10.12.0.1 255.255.255.252
+ no shutdown
+ ip ospf 10 area 0
+!
+router ospf 10
+ router-id 1.1.1.1
+ passive-interface Loopback0
+ auto-cost reference-bandwidth 100000</pre>
+      </div>
+      <div class="knob">
+        <span class="where c1">R2 · OSPFv2 IPv4</span>
+        <pre>interface Loopback0
+ ip address 10.2.2.2 255.255.255.255
+ ip ospf 10 area 0
+!
+interface GigabitEthernet0/0
+ ip address 10.12.0.2 255.255.255.252
+ no shutdown
+ ip ospf 10 area 0
+!
+router ospf 10
+ router-id 2.2.2.2
+ passive-interface Loopback0
+ auto-cost reference-bandwidth 100000</pre>
+      </div>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>Network statement เปิด OSPF บน Interface <span class="tag">จุดที่มักเข้าใจผิด</span></h4>
+      <p>ถ้าไม่ใช้ <code>ip ospf 10 area 0</code> ใต้ interface สามารถใช้ <code>network 10.12.0.0 0.0.0.3 area 0</code> ใต้ process ได้ คำสั่งนี้หา interface ที่ IP match wildcard แล้วเปิด OSPF บน interface นั้น ไม่ได้หยิบ route ใดก็ได้มาประกาศตามชื่อ network</p>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="knob">
+        <span class="where c3">R1 · OSPFv3 IPv6</span>
+        <pre>ipv6 unicast-routing
+!
+interface Loopback0
+ ipv6 address 2001:DB8:1::1/128
+ ipv6 ospf 10 area 0
+!
+interface GigabitEthernet0/0
+ ipv6 address 2001:DB8:12::1/64
+ no shutdown
+ ipv6 ospf 10 area 0
+!
+ipv6 router ospf 10
+ router-id 1.1.1.1
+ passive-interface Loopback0</pre>
+      </div>
+      <div class="knob">
+        <span class="where c3">R2 · OSPFv3 IPv6</span>
+        <pre>ipv6 unicast-routing
+!
+interface Loopback0
+ ipv6 address 2001:DB8:2::2/128
+ ipv6 ospf 10 area 0
+!
+interface GigabitEthernet0/0
+ ipv6 address 2001:DB8:12::2/64
+ no shutdown
+ ipv6 ospf 10 area 0
+!
+ipv6 router ospf 10
+ router-id 2.2.2.2
+ passive-interface Loopback0</pre>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h3>OSPFv3 ยังต้องมี Router ID แบบ 32 บิต</h3>
+      <p style="color:var(--ink-2);margin:0">แม้จะ route IPv6 แต่ RID ยังเขียนเป็น dotted-decimal เช่น <code>1.1.1.1</code> และ OSPFv3 ใช้ <Term id="linkLocalAddress">IPv6 link-local address</Term> คุยกับเพื่อนบ้านและเป็น next hop คำสั่งของ IOS XE รุ่นใหม่อาจใช้ <code>router ospfv3</code> กับ address-family แต่ตรรกะ Neighbor, Area, LSA และ SPF เหมือนเดิม</p>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>ตรวจผลตามลำดับ — อย่าดู Routing Table อย่างเดียว</caption>
+        <thead><tr><th scope="col">ตรวจอะไร</th><th scope="col">OSPFv2</th><th scope="col">OSPFv3</th><th scope="col">สิ่งที่ควรเห็น</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Interface</th><td><code>show ip ospf interface brief</code></td><td><code>show ipv6 ospf interface brief</code></td><td>G0/0 อยู่ Area 0 และ process ถูกต้อง</td></tr>
+          <tr><th scope="row">Neighbor</th><td><code>show ip ospf neighbor</code></td><td><code>show ipv6 ospf neighbor</code></td><td>อีกฝั่งเป็น FULL/DR หรือ FULL/BDR บน Ethernet สองตัว</td></tr>
+          <tr><th scope="row">LSDB</th><td><code>show ip ospf database</code></td><td><code>show ipv6 ospf database</code></td><td>เห็น Router ID 1.1.1.1 และ 2.2.2.2</td></tr>
+          <tr><th scope="row">Route</th><td><code>show ip route ospf</code></td><td><code>show ipv6 route ospf</code></td><td>R1 เรียน Loopback ของ R2 และ R2 เรียนของ R1</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M3 5 H10 V11 H16 V5 H23 M3 21 H10 V15 H16 V21 H23" fill="none" stroke="var(--gold)" stroke-width="1.8"/><path d="M10 13 H16" stroke="var(--gold)" stroke-width="2.5"/></svg>
+      <h2>Route Summarization — ย่อรายละเอียดตรงขอบเขต</h2>
+    </div>
+    <p class="sec-sub">ภายใน Area ทุกตัวต้องเห็น topology ตรงกัน จึงไม่ได้ summarize กันกลาง Area จุดที่เหมาะคือ <b>ABR</b> ตอนข้าม Area และ <b>ASBR</b> ตอนนำ external routes เข้ามา</p>
+
+    <div class="knob">
+      <span class="where c2">ตัวอย่าง Aggregate</span>
+      <pre>10.10.0.0/24 ─┐
+10.10.1.0/24  │
+10.10.2.0/24  ├──► 10.10.0.0/22
+10.10.3.0/24 ─┘</pre>
+      <p class="why" style="margin:0">สี่เครือข่ายต่อเนื่องกันและอยู่ในขอบเขต /22 เดียวกัน จึงสรุปได้โดยไม่ครอบ prefix ที่ไม่ตั้งใจ</p>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="knob">
+        <span class="where c1">ABR · Inter-area</span>
+        <h3>รวม Type 3 ที่ออกจาก Area 1</h3>
+        <pre>router ospf 10
+ area 1 range 10.10.0.0 255.255.252.0
+
+ipv6 router ospf 10
+ area 1 range 2001:DB8:10::/48</pre>
+        <p class="why" style="margin:0">คำว่า <code>area 1</code> หมายถึง Area ต้นทางของ routes ที่กำลังถูกสรุป ไม่ใช่ Area ปลายทาง</p>
+      </div>
+      <div class="knob">
+        <span class="where c3">ASBR · External</span>
+        <h3>รวม Routes ที่ Redistribute</h3>
+        <pre>router ospf 10
+ redistribute static subnets
+ summary-address 172.16.0.0 255.255.252.0
+
+ipv6 router ospf 10
+ redistribute static
+ summary-prefix 2001:DB8:FEED::/48</pre>
+        <p class="why" style="margin:0"><code>summary-address</code> ใช้กับ external routes ที่ ASBR นำเข้ามา ไม่ใช้แทน <code>area range</code></p>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card"><h3>ข้อดี</h3><ul><li>LSDB และ Routing Table เล็กลง</li><li>การเปลี่ยนของ prefix ย่อยไม่กระจายออกไปทุก Area</li><li>อ่านและ troubleshoot ตาราง route ง่ายขึ้น</li></ul></div>
+      <div class="exam"><h4>ระวัง Black Hole <span class="tag">สำคัญ</span></h4><p>Summary ที่กว้างเกินจริงบอกว่า “ฉันไปได้ทั้งก้อน” Router จึงมักสร้าง discard route ไป Null0 ป้องกัน loop ถ้า packet ตรงกับ summary แต่ไม่มี more-specific route จริง packet จะถูกทิ้ง จึงต้องวาง IP plan ให้ prefix ต่อเนื่องและ boundary ถูกต้อง</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="10" fill="none" stroke="var(--fwd)" stroke-width="1.8"/><path d="M8 13 L11 16 L18 9" fill="none" stroke="var(--fwd)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <h2>สรุปเป็นเรื่องเดียว</h2>
+    </div>
+
+    <div class="bridge">
+      Router ส่ง <b>Hello</b> เพื่อหา Neighbor → Neighbor ที่เหมาะสมสร้าง <b>Adjacency</b> → ใช้ DBD/LSR/LSU/LSAck แลก <b>LSA</b> → LSA รวมเป็น <b>LSDB</b> ของแต่ละ Area → ทุก Router รัน <b>SPF</b> จากมุมตัวเอง → Route ที่ชนะถูกใส่ Routing Table → <b>ABR</b> เชื่อม Area ผ่าน Area 0 → <b>ASBR</b> นำ External Route เข้ามา → ABR/ASBR เป็นจุดทำ <b>Summarization</b>
+    </div>
+
+    <div class="drill" style="margin-top:20px">
+      <span class="dr-label">เช็กตัวเองก่อนเข้าบท 8</span>
+      <h4>ตอบห้าข้อนี้ได้ แปลว่าฐานแน่นแล้ว</h4>
+      <div class="match-row"><span>Neighbor ต่างจาก Adjacency อย่างไร</span><span class="blank">?</span></div>
+      <div class="match-row"><span>ทำไม DROTHER สองตัวค้าง 2-Way ได้โดยไม่ถือว่าพัง</span><span class="blank">?</span></div>
+      <div class="match-row"><span>LSA กับ LSU ต่างกันอย่างไร</span><span class="blank">?</span></div>
+      <div class="match-row"><span>ABR ต่างจาก ASBR ตรงขอบเขตอะไร</span><span class="blank">?</span></div>
+      <div class="match-row"><span>ทำไม Summarization จึงทำที่ ABR/ASBR</span><span class="blank">?</span></div>
+      <details>
+        <summary>ดูแนวคำตอบ</summary>
+        <div class="answer">Neighbor แค่เห็นกันผ่าน Hello ส่วน Adjacency แลก LSDB; DROTHER sync ผ่าน DR/BDR จึงไม่ต้อง Full กันเอง; LSA คือข้อมูล ส่วน LSU คือ packet ที่ขนข้อมูล; ABR เชื่อม Area ส่วน ASBR เชื่อมแหล่ง route ภายนอก; Summarization ทำตรงขอบเขตเพื่อไม่ทำลายความสอดคล้องของ topology ภายใน Area</div>
+      </details>
+    </div>
+
+    <div class="card" style="margin-top:20px;text-align:center">
+      <h3>พร้อมแล้วค่อยเข้าบทที่ 8</h3>
+      <p style="color:var(--ink-2);margin:0 0 14px">บทเดิมยังอยู่ครบและใช้ลงรายละเอียดคำสั่ง/การปรับแต่งต่อจาก mental model หน้านี้</p>
+      <a class="next-link" href={`${base}/ch8`}>ไปบทที่ 8: OSPF →</a>
+    </div>
+  </section>
+
+  <footer>
+    Internetwork · Pre-Chapter 8 · บทปูพื้น OSPF แบบ concept-first ก่อนเข้าสู่บทเดิม
+  </footer>
+  </div>
+
+  <script is:inline define:vars={{ pre8Glossary }}>
+    (() => {
+      const root = document.querySelector(".pre8-page");
+      if (!root) return;
+
+      const tooltipTerms = {};
+      const aliases = [];
+      for (const entry of pre8Glossary) {
+        const termId = `pre8-${entry.id}`;
+        tooltipTerms[termId] = {
+          term: entry.term,
+          full: entry.full || "",
+          def: entry.def,
+        };
+        for (const alias of entry.aliases) aliases.push({ alias, termId });
+      }
+      const registerTooltipTerms = () => {
+        window.__TERMS__ = { ...(window.__TERMS__ || {}), ...tooltipTerms };
+      };
+      registerTooltipTerms();
+      document.addEventListener("DOMContentLoaded", registerTooltipTerms, { once: true });
+
+      const escapedAliases = aliases
+        .sort((a, b) => b.alias.length - a.alias.length)
+        .map(({ alias }) => alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+      const matcher = new RegExp(`(?<![A-Za-z0-9])(${escapedAliases.join("|")})(?![A-Za-z0-9])`, "giu");
+      const aliasLookup = new Map(aliases.map(({ alias, termId }) => [alias.toLocaleLowerCase(), termId]));
+
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          if (!node.nodeValue || !/[A-Za-z]/.test(node.nodeValue)) return NodeFilter.FILTER_REJECT;
+          const parent = node.parentElement;
+          if (!parent || parent.closest("script, style, pre, code, svg, a, button, .term")) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        },
+      });
+
+      const textNodes = [];
+      while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+      for (const node of textNodes) {
+        matcher.lastIndex = 0;
+        if (!matcher.test(node.nodeValue)) continue;
+        matcher.lastIndex = 0;
+        const fragment = document.createDocumentFragment();
+        let cursor = 0;
+        for (const match of node.nodeValue.matchAll(matcher)) {
+          if (match.index > cursor) fragment.append(node.nodeValue.slice(cursor, match.index));
+          const label = match[0];
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "term";
+          button.dataset.termId = aliasLookup.get(label.toLocaleLowerCase());
+          button.setAttribute("aria-describedby", "term-tooltip");
+          button.setAttribute("aria-expanded", "false");
+          button.textContent = label;
+          fragment.append(button);
+          cursor = match.index + label.length;
+        }
+        if (cursor < node.nodeValue.length) fragment.append(node.nodeValue.slice(cursor));
+        node.replaceWith(fragment);
+      }
+
+      const svgTerms = [];
+      for (const [index, labelNode] of [...root.querySelectorAll("svg text")].entries()) {
+        const label = labelNode.textContent.trim();
+        if (!/[A-Za-z]/.test(label)) continue;
+
+        const matchedIds = [];
+        matcher.lastIndex = 0;
+        for (const match of label.matchAll(matcher)) {
+          const termId = aliasLookup.get(match[0].toLocaleLowerCase());
+          if (termId && !matchedIds.includes(termId)) matchedIds.push(termId);
+        }
+
+        let termId = matchedIds[0];
+        if (matchedIds.length !== 1) {
+          termId = `pre8-svg-${index}`;
+          const definitions = matchedIds
+            .map((id) => tooltipTerms[id]?.def)
+            .filter(Boolean);
+          tooltipTerms[termId] = {
+            term: label,
+            full: "คำอธิบายป้ายในแผนภาพ",
+            def: definitions.length
+              ? definitions.join(" • ")
+              : "ตัวอย่าง IPv6 address หรือ prefix ในแผนภาพ ใช้ระบุตำแหน่งเครือข่าย ไม่ใช่คำศัพท์ที่ต้องแปลแยกจาก topology",
+          };
+        }
+
+        labelNode.classList.add("pre8-svg-term");
+        labelNode.dataset.termId = termId;
+        labelNode.setAttribute("tabindex", "0");
+        labelNode.setAttribute("role", "button");
+        labelNode.setAttribute("aria-describedby", "term-tooltip");
+        labelNode.setAttribute("aria-expanded", "false");
+        svgTerms.push(labelNode);
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        registerTooltipTerms();
+        const tooltip = document.getElementById("term-tooltip");
+        if (!tooltip || !svgTerms.length) return;
+        let activeSvgTerm = null;
+
+        const renderSvgTerm = (trigger) => {
+          const data = window.__TERMS__?.[trigger.dataset.termId];
+          if (!data) return;
+          tooltip.innerHTML = "";
+          const strong = document.createElement("strong");
+          strong.textContent = data.term;
+          tooltip.appendChild(strong);
+          if (data.full) {
+            const full = document.createElement("span");
+            full.className = "term-full";
+            full.textContent = data.full;
+            tooltip.appendChild(full);
+          }
+          const description = document.createElement("p");
+          description.textContent = data.def;
+          tooltip.appendChild(description);
+          activeSvgTerm = trigger;
+          tooltip.hidden = false;
+          const rect = trigger.getBoundingClientRect();
+          const margin = 10;
+          let left = rect.left + rect.width / 2 - tooltip.offsetWidth / 2;
+          left = Math.max(margin, Math.min(left, window.innerWidth - tooltip.offsetWidth - margin));
+          let top = rect.bottom + 8;
+          if (top + tooltip.offsetHeight > window.innerHeight - margin) top = rect.top - tooltip.offsetHeight - 8;
+          tooltip.style.left = `${left + window.scrollX}px`;
+          tooltip.style.top = `${top + window.scrollY}px`;
+          trigger.setAttribute("aria-expanded", "true");
+        };
+
+        const hideSvgTerm = () => {
+          if (!activeSvgTerm) return;
+          activeSvgTerm.setAttribute("aria-expanded", "false");
+          tooltip.hidden = true;
+          activeSvgTerm = null;
+        };
+
+        root.addEventListener("mouseover", (event) => {
+          const trigger = event.target.closest?.(".pre8-svg-term");
+          if (trigger) renderSvgTerm(trigger);
+        });
+        root.addEventListener("mouseout", (event) => {
+          const trigger = event.target.closest?.(".pre8-svg-term");
+          if (trigger && (!event.relatedTarget || !trigger.contains(event.relatedTarget))) hideSvgTerm();
+        });
+        root.addEventListener("focusin", (event) => {
+          const trigger = event.target.closest?.(".pre8-svg-term");
+          if (trigger) renderSvgTerm(trigger);
+        });
+        root.addEventListener("focusout", (event) => {
+          if (event.target.closest?.(".pre8-svg-term")) hideSvgTerm();
+        });
+        root.addEventListener("click", (event) => {
+          const trigger = event.target.closest?.(".pre8-svg-term");
+          if (!trigger) return;
+          event.stopPropagation();
+          if (activeSvgTerm === trigger) hideSvgTerm();
+          else renderSvgTerm(trigger);
+        });
+      }, { once: true });
+    })();
+  </script>
+</Layout>
+
+<style>
+  .pre8-page .exam h4{flex-wrap:wrap}
+  .pre8-page .term{max-width:100%;white-space:normal;overflow-wrap:anywhere;vertical-align:baseline}
+  .pre8-page .pre8-svg-term{cursor:help;text-decoration:underline dotted var(--ink-3);text-underline-offset:2px}
+  .pre8-page .pre8-svg-term:focus{outline:2px solid var(--coral);outline-offset:2px}
+  .next-link{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-height:44px;padding:9px 18px;border-radius:9px;
+    color:#fff;background:var(--coral);text-decoration:none;font-weight:700;
+  }
+  .next-link:hover{filter:brightness(.94)}
+  .next-link:focus-visible{outline:3px solid color-mix(in srgb,var(--coral) 35%,transparent);outline-offset:3px}
+</style>
