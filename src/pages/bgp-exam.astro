@@ -1,0 +1,1929 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+<Layout title="ข้อสอบจำลอง BGP" description="Internetwork Chapter 11 — ข้อสอบจำลอง BGP 148 ข้อ ครอบคลุมแนวคิดพื้นฐาน, iBGP/eBGP, Path Attributes, Neighbors/Sessions, การกำหนดค่า, Next-Hop Processing, Route Summarization">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--slate)">Internetwork · Chapter 11 · BGP</p>
+    <h1>ข้อสอบจำลอง BGP</h1>
+    <p class="deck">148 ข้อ ครอบคลุม 7 หัวข้อของ Chapter 11: แนวคิดพื้นฐาน, iBGP vs eBGP, Path Attributes, Neighbors/Sessions, การกำหนดค่า, Next-Hop Processing, และ Route Summarization — กดเลือกคำตอบได้จริง เลือกแล้วขึ้นถูก/ผิดทันทีพร้อมคำอธิบาย</p>
+    <div class="credit-bar">
+      <span>148 ข้อ</span><span>7 หัวข้อ</span><span>กดตอบได้จริง</span>
+    </div>
+  </header>
+
+  <div class="score-bar" id="scoreBar">
+    <span>ทำแล้ว <b id="scoreDone">0</b>/148 ข้อ</span>
+    <span>ถูก <b id="scoreCorrect">0</b> ข้อ</span>
+    <button type="button" id="resetMock">เริ่มใหม่</button>
+  </div>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">01</span><h2>แนวคิดพื้นฐานของ BGP</h2></div>
+    <p class="sec-sub">Path Vector, Autonomous System, TCP 179, Administrative Distance</p>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 1</p>
+      <p class="mcq-q">BGP จัดอยู่ใน Routing Protocol ประเภทใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Distance Vector</li>
+        <li data-letter="B"><b>B</b> Link-State</li>
+        <li data-letter="C"><b>C</b> Path Vector</li>
+        <li data-letter="D"><b>D</b> Hybrid</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 2</p>
+      <p class="mcq-q">BGP ย่อมาจากอะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Basic Gateway Protocol</li>
+        <li data-letter="B"><b>B</b> Border Gateway Protocol</li>
+        <li data-letter="C"><b>C</b> Backbone Gateway Protocol</li>
+        <li data-letter="D"><b>D</b> Broadcast Gateway Protocol</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 3</p>
+      <p class="mcq-q">BGP ถูกออกแบบมาเพื่อใช้งานในลักษณะใดเป็นหลัก?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Routing ระหว่าง Autonomous System (Inter-AS)</li>
+        <li data-letter="B"><b>B</b> Routing ภายใน AS เดียวกันแทน OSPF</li>
+        <li data-letter="C"><b>C</b> Switching ภายใน VLAN</li>
+        <li data-letter="D"><b>D</b> การจัดการ Spanning Tree</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 4</p>
+      <p class="mcq-q">BGP เวอร์ชันที่ใช้งานอยู่ในปัจจุบันคือเวอร์ชันใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> BGP-1</li>
+        <li data-letter="B"><b>B</b> BGP-2</li>
+        <li data-letter="C"><b>C</b> BGP-3</li>
+        <li data-letter="D"><b>D</b> BGP-4</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 5</p>
+      <p class="mcq-q">RFC ใดที่นิยาม BGP-4?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> RFC 2328</li>
+        <li data-letter="B"><b>B</b> RFC 4271</li>
+        <li data-letter="C"><b>C</b> RFC 1918</li>
+        <li data-letter="D"><b>D</b> RFC 792</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 6</p>
+      <p class="mcq-q">BGP ใช้ Transport Layer Protocol ใดในการสร้าง Session ระหว่าง Peer?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> UDP</li>
+        <li data-letter="B"><b>B</b> ICMP</li>
+        <li data-letter="C"><b>C</b> TCP</li>
+        <li data-letter="D"><b>D</b> ARP</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 7</p>
+      <p class="mcq-q">BGP ใช้ TCP Port หมายเลขใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 179</li>
+        <li data-letter="B"><b>B</b> 89</li>
+        <li data-letter="C"><b>C</b> 520</li>
+        <li data-letter="D"><b>D</b> 646</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 8</p>
+      <p class="mcq-q">ค่า Default Administrative Distance ของ eBGP คือเท่าใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 90</li>
+        <li data-letter="B"><b>B</b> 20</li>
+        <li data-letter="C"><b>C</b> 110</li>
+        <li data-letter="D"><b>D</b> 200</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 9</p>
+      <p class="mcq-q">ค่า Default Administrative Distance ของ iBGP คือเท่าใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 20</li>
+        <li data-letter="B"><b>B</b> 90</li>
+        <li data-letter="C"><b>C</b> 110</li>
+        <li data-letter="D"><b>D</b> 200</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 10</p>
+      <p class="mcq-q">BGP จัดอยู่ในกลุ่มใดเมื่อเทียบกับ OSPF และ EIGRP?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> IGP (Interior Gateway Protocol)</li>
+        <li data-letter="B"><b>B</b> EGP (Exterior Gateway Protocol)</li>
+        <li data-letter="C"><b>C</b> Static Routing</li>
+        <li data-letter="D"><b>D</b> Default Routing</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 11</p>
+      <p class="mcq-q">Autonomous System (AS) หมายถึงอะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> กลุ่มของ VLAN ที่อยู่ใน Switch เดียวกัน</li>
+        <li data-letter="B"><b>B</b> ชื่อของ Routing Table บน Router</li>
+        <li data-letter="C"><b>C</b> กลุ่มของเครือข่ายที่อยู่ภายใต้การบริหารจัดการเดียวกันและมีนโยบายเราต์ติ้งร่วมกัน</li>
+        <li data-letter="D"><b>D</b> โปรโตคอลสำหรับเข้ารหัสข้อมูลระหว่าง Router</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 12</p>
+      <p class="mcq-q">ช่วง Public 16-bit AS Number (Two-Byte ASN) อยู่ในช่วงใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 1 – 64511</li>
+        <li data-letter="B"><b>B</b> 64512 – 65534</li>
+        <li data-letter="C"><b>C</b> 65536 – 4294967294</li>
+        <li data-letter="D"><b>D</b> 0 – 1023</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 13</p>
+      <p class="mcq-q">ช่วง Private 16-bit AS Number อยู่ในช่วงใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 1 – 64511</li>
+        <li data-letter="B"><b>B</b> 64512 – 65534</li>
+        <li data-letter="C"><b>C</b> 65535 เท่านั้น</li>
+        <li data-letter="D"><b>D</b> 100 – 199</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 14</p>
+      <p class="mcq-q">ค่า AS Number ใดที่สงวนไว้ใช้เป็น AS_TRANS สำหรับความเข้ากันได้ระหว่าง 16-bit และ 32-bit ASN?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 65535</li>
+        <li data-letter="B"><b>B</b> 4200000000</li>
+        <li data-letter="C"><b>C</b> 23456</li>
+        <li data-letter="D"><b>D</b> 65001</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 15</p>
+      <p class="mcq-q">BGP ใช้กลไกใดในการป้องกัน Routing Loop ระหว่าง AS?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Split Horizon</li>
+        <li data-letter="B"><b>B</b> Time To Live (TTL)</li>
+        <li data-letter="C"><b>C</b> Poison Reverse</li>
+        <li data-letter="D"><b>D</b> AS_PATH Attribute — ปฏิเสธเส้นทางที่มี AS Number ของตัวเองปรากฏอยู่แล้ว</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 16</p>
+      <p class="mcq-q">การตัดสินใจเลือกเส้นทางที่ดีที่สุดของ BGP อาศัยสิ่งใดเป็นหลัก แตกต่างจาก IGP ที่ใช้ Bandwidth/Delay/Cost?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Hop Count เพียงอย่างเดียว</li>
+        <li data-letter="B"><b>B</b> Path Attributes ต่าง ๆ เช่น Weight, Local Preference, AS_PATH</li>
+        <li data-letter="C"><b>C</b> ความเร็วของสายสัญญาณ (Bandwidth) เพียงอย่างเดียว</li>
+        <li data-letter="D"><b>D</b> Delay ของเครือข่ายเพียงอย่างเดียว</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 17</p>
+      <p class="mcq-q">คำสั่งใดใช้เริ่มต้น Process ของ BGP บน Cisco IOS?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> router ospf 1</li>
+        <li data-letter="B"><b>B</b> router eigrp 100</li>
+        <li data-letter="C"><b>C</b> router bgp &lt;AS-number&gt;</li>
+        <li data-letter="D"><b>D</b> ip bgp enable</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 18</p>
+      <p class="mcq-q">ส่วนของฐานข้อมูล BGP ที่เก็บเส้นทางทั้งหมดที่ได้รับจากทุก Neighbor ก่อนการคัดเลือกเรียกว่าอะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Adj-RIB-In</li>
+        <li data-letter="B"><b>B</b> Loc-RIB</li>
+        <li data-letter="C"><b>C</b> Adj-RIB-Out</li>
+        <li data-letter="D"><b>D</b> FIB (Forwarding Information Base)</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 19</p>
+      <p class="mcq-q">เพราะเหตุใด BGP จึงไม่เหมาะที่จะใช้เป็น IGP ภายในเครือข่ายขนาดเล็ก?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพราะ BGP ไม่รองรับ VLSM/CIDR</li>
+        <li data-letter="B"><b>B</b> เพราะ BGP ถูกออกแบบมาเพื่อ Scalability และ Policy-based Routing ระหว่าง AS ไม่ใช่เพื่อ Convergence ที่รวดเร็วภายในเครือข่ายเดียว</li>
+        <li data-letter="C"><b>C</b> เพราะ BGP ใช้ Broadcast ในการส่ง Update</li>
+        <li data-letter="D"><b>D</b> เพราะ BGP ไม่รองรับ TCP</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 20</p>
+      <p class="mcq-q">คำสั่งใดใช้แสดงสถานะโดยสรุปของ BGP Neighbor ทั้งหมด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> show ip ospf neighbor</li>
+        <li data-letter="B"><b>B</b> show ip protocols</li>
+        <li data-letter="C"><b>C</b> show ip bgp neighbors detail</li>
+        <li data-letter="D"><b>D</b> show ip bgp summary</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">02</span><h2>iBGP vs eBGP</h2></div>
+    <p class="sec-sub">Internal BGP, External BGP, ebgp-multihop, Full Mesh, Route Reflector</p>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 21</p>
+      <p class="mcq-q">eBGP (External BGP) คือการสร้าง Session ระหว่าง Router ในลักษณะใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Router ที่อยู่คนละ Autonomous System</li>
+        <li data-letter="B"><b>B</b> Router ที่อยู่ AS เดียวกันเท่านั้น</li>
+        <li data-letter="C"><b>C</b> Router ที่อยู่ใน VLAN เดียวกัน</li>
+        <li data-letter="D"><b>D</b> Router ที่เชื่อมต่อผ่าน Loopback เท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 22</p>
+      <p class="mcq-q">iBGP (Internal BGP) คือการสร้าง Session ระหว่าง Router ในลักษณะใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Router ที่อยู่คนละ Autonomous System</li>
+        <li data-letter="B"><b>B</b> Router ที่อยู่ใน Autonomous System เดียวกัน</li>
+        <li data-letter="C"><b>C</b> Router ที่เชื่อมต่อโดยตรงเท่านั้น</li>
+        <li data-letter="D"><b>D</b> Router ที่รัน OSPF ร่วมกันเท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 23</p>
+      <p class="mcq-q">โดย Default ค่า TTL (Time To Live) ของ eBGP Session คือเท่าใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 64</li>
+        <li data-letter="B"><b>B</b> 255</li>
+        <li data-letter="C"><b>C</b> 1</li>
+        <li data-letter="D"><b>D</b> 16</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 24</p>
+      <p class="mcq-q">หากต้องการสร้าง eBGP Peering กับ Router ที่ไม่ได้เชื่อมต่อโดยตรง (Multihop) ต้องใช้คำสั่งใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> neighbor &lt;ip-address&gt; ebgp-multihop &lt;ttl&gt;</li>
+        <li data-letter="B"><b>B</b> neighbor &lt;ip-address&gt; next-hop-self</li>
+        <li data-letter="C"><b>C</b> neighbor &lt;ip-address&gt; update-source Loopback0</li>
+        <li data-letter="D"><b>D</b> neighbor &lt;ip-address&gt; multihop enable</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 25</p>
+      <p class="mcq-q">เหตุใด iBGP จึงต้องการ Full Mesh ระหว่าง Router ภายใน AS เดียวกัน (หากไม่ใช้ Route Reflector หรือ Confederation)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพราะ iBGP ไม่รองรับ TCP</li>
+        <li data-letter="B"><b>B</b> เพราะกฎ iBGP Split-Horizon ห้ามไม่ให้ Router ที่เรียนรู้เส้นทางผ่าน iBGP ส่งต่อเส้นทางนั้นไปยัง iBGP Peer อื่นอีก</li>
+        <li data-letter="C"><b>C</b> เพราะ iBGP ต้องการ Bandwidth สูงกว่า eBGP</li>
+        <li data-letter="D"><b>D</b> เพราะ iBGP ใช้ Multicast ในการส่ง Update</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 26</p>
+      <p class="mcq-q">เทคโนโลยีใดช่วยลดความจำเป็นในการทำ Full Mesh ของ iBGP?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> HSRP</li>
+        <li data-letter="B"><b>B</b> DMVPN</li>
+        <li data-letter="C"><b>C</b> VRRP</li>
+        <li data-letter="D"><b>D</b> Route Reflector หรือ Confederation</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 27</p>
+      <p class="mcq-q">เมื่อ Router ส่งเส้นทางผ่าน eBGP ไปยัง AS อื่น โดย Default จะเกิดอะไรขึ้นกับ NEXT_HOP Attribute?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Router เปลี่ยน NEXT_HOP เป็น IP Address ของตัวเองที่ใช้เชื่อมต่อกับ eBGP Peer</li>
+        <li data-letter="B"><b>B</b> NEXT_HOP จะถูกลบทิ้งไปเลย</li>
+        <li data-letter="C"><b>C</b> NEXT_HOP จะยังคงเป็นค่าเดิมที่ได้รับมาเสมอ</li>
+        <li data-letter="D"><b>D</b> NEXT_HOP จะถูกตั้งเป็น 0.0.0.0 เสมอ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 28</p>
+      <p class="mcq-q">เมื่อ Router ส่งเส้นทางผ่าน iBGP ไปยัง Router อื่นใน AS เดียวกัน โดย Default จะเกิดอะไรขึ้นกับ NEXT_HOP Attribute?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ถูกเปลี่ยนเป็น IP ของ Router ที่ส่ง (ผู้ส่ง) เสมอ</li>
+        <li data-letter="B"><b>B</b> ไม่ถูกเปลี่ยน — ยังคงเป็น NEXT_HOP เดิมที่มาจาก eBGP Router ที่ Advertise เข้ามาครั้งแรก</li>
+        <li data-letter="C"><b>C</b> ถูกลบทิ้งทันที</li>
+        <li data-letter="D"><b>D</b> ถูกเปลี่ยนเป็น Loopback ของ Route Reflector เสมอ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 29</p>
+      <p class="mcq-q">คำสั่งใดใช้บังคับให้ Router เปลี่ยน NEXT_HOP เป็นตัวเองเมื่อ Advertise เส้นทางไปยัง iBGP Peer?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> neighbor &lt;ip&gt; ebgp-multihop</li>
+        <li data-letter="B"><b>B</b> neighbor &lt;ip&gt; route-map NH out</li>
+        <li data-letter="C"><b>C</b> neighbor &lt;ip&gt; next-hop-self</li>
+        <li data-letter="D"><b>D</b> neighbor &lt;ip&gt; update-source</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 30</p>
+      <p class="mcq-q">โดยทั่วไป eBGP Peer มักจะเชื่อมต่อกันในลักษณะใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ผ่าน Loopback Interface ที่อยู่ห่างกันหลาย Hop เสมอ</li>
+        <li data-letter="B"><b>B</b> ผ่าน Route Reflector เท่านั้น</li>
+        <li data-letter="C"><b>C</b> ผ่าน Tunnel GRE เท่านั้น</li>
+        <li data-letter="D"><b>D</b> เชื่อมต่อโดยตรง (Directly Connected) ระหว่างขอบเขตของ AS</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 31</p>
+      <p class="mcq-q">Local Preference Attribute จะถูกแลกเปลี่ยนระหว่าง Peer ประเภทใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> iBGP Peer เท่านั้น — ไม่ถูกส่งออกไปยัง eBGP Peer</li>
+        <li data-letter="B"><b>B</b> eBGP Peer เท่านั้น</li>
+        <li data-letter="C"><b>C</b> ทั้ง iBGP และ eBGP เท่า ๆ กัน</li>
+        <li data-letter="D"><b>D</b> ไม่มีการแลกเปลี่ยน Local Preference เลย</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 32</p>
+      <p class="mcq-q">AS_PATH Prepending มักเกิดขึ้นเมื่อเส้นทางถูก Advertise ผ่าน Session ประเภทใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> iBGP เท่านั้น</li>
+        <li data-letter="B"><b>B</b> eBGP — เมื่อข้าม AS Boundary ค่า AS Number จะถูกเพิ่มเข้าไปใน AS_PATH</li>
+        <li data-letter="C"><b>C</b> ไม่มีความเกี่ยวข้องกับประเภทของ Session</li>
+        <li data-letter="D"><b>D</b> Static Route เท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 33</p>
+      <p class="mcq-q">Route Reflector ทำหน้าที่อะไรใน iBGP?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เปลี่ยน AS Number ของเส้นทางที่ผ่านเข้ามา</li>
+        <li data-letter="B"><b>B</b> ทำหน้าที่แปลง eBGP ให้เป็น iBGP</li>
+        <li data-letter="C"><b>C</b> รับเส้นทางจาก iBGP Client แล้ว "สะท้อน (Reflect)" ต่อไปยัง iBGP Client อื่นได้ โดยไม่ต้องทำ Full Mesh</li>
+        <li data-letter="D"><b>D</b> ทำหน้าที่เป็น DNS Server สำหรับ BGP</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 34</p>
+      <p class="mcq-q">BGP Confederation แก้ปัญหา Full Mesh ของ iBGP ด้วยวิธีใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ปิดการทำงานของ Split-Horizon Rule ทั้งหมด</li>
+        <li data-letter="B"><b>B</b> ใช้ MED แทน AS_PATH</li>
+        <li data-letter="C"><b>C</b> ยกเลิกการใช้ TCP Port 179</li>
+        <li data-letter="D"><b>D</b> แบ่ง AS ใหญ่ออกเป็น Sub-AS ย่อย ๆ ภายใน แล้วให้แต่ละ Sub-AS มองภายนอกเป็น AS เดียว</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 35</p>
+      <p class="mcq-q">MED (Multi-Exit Discriminator) ถูกส่งไปยัง Peer ประเภทใดเป็นหลัก?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> eBGP Peer ของ AS ข้างเคียงโดยตรง (ไม่ถูกส่งต่อออกไปยัง AS ถัดไปตามค่า Default)</li>
+        <li data-letter="B"><b>B</b> iBGP Peer เท่านั้น</li>
+        <li data-letter="C"><b>C</b> ทุก AS ที่อยู่ใน Internet</li>
+        <li data-letter="D"><b>D</b> Route Reflector เท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 36</p>
+      <p class="mcq-q">เพราะเหตุใด Administrative Distance ของ eBGP (20) จึงต่ำกว่า (น่าเชื่อถือกว่า) iBGP (200)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพราะ eBGP ใช้ Bandwidth น้อยกว่า</li>
+        <li data-letter="B"><b>B</b> เพราะเส้นทางที่มาจากภายนอก AS ผ่านการตรวจสอบ Policy อย่างเข้มงวดกว่า และ Cisco ถือว่าข้อมูลจากภายนอกที่ตรวจสอบแล้วน่าเชื่อถือกว่าเส้นทางภายในที่ยังไม่ผ่าน IGP</li>
+        <li data-letter="C"><b>C</b> เพราะ eBGP ไม่มี Loop</li>
+        <li data-letter="D"><b>D</b> ไม่มีเหตุผลเชิงเทคนิค เป็นค่า Default ที่กำหนดแบบสุ่ม</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 37</p>
+      <p class="mcq-q">Router ที่ทำหน้าที่เชื่อมต่อ AS ของตนเองเข้ากับ AS ภายนอก (Internet Service Provider) มักใช้ Session ประเภทใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> iBGP เท่านั้น</li>
+        <li data-letter="B"><b>B</b> OSPF Virtual Link</li>
+        <li data-letter="C"><b>C</b> eBGP</li>
+        <li data-letter="D"><b>D</b> EIGRP External</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 38</p>
+      <p class="mcq-q">ข้อใดสรุปความแตกต่างระหว่าง iBGP และ eBGP ได้ถูกต้องที่สุด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> iBGP และ eBGP ใช้ Transport Protocol คนละชนิดกัน</li>
+        <li data-letter="B"><b>B</b> eBGP ต้องการ Full Mesh เสมอ ในขณะที่ iBGP ไม่ต้องการ</li>
+        <li data-letter="C"><b>C</b> iBGP มี Administrative Distance ต่ำกว่า eBGP</li>
+        <li data-letter="D"><b>D</b> eBGP เชื่อมต่อระหว่างต่าง AS และมักเปลี่ยน NEXT_HOP เป็นตัวเอง ส่วน iBGP เชื่อมต่อภายใน AS เดียวกันและไม่เปลี่ยน NEXT_HOP โดย Default</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">03</span><h2>BGP Path Attributes</h2></div>
+    <p class="sec-sub">Weight, Local Preference, AS_PATH, Origin, MED, Community, Best Path Selection</p>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 39</p>
+      <p class="mcq-q">Attribute ใดเป็น Cisco Proprietary และมีผลเฉพาะภายใน Router เครื่องนั้นเท่านั้น (ไม่ถูกส่งต่อไปยัง Neighbor)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Local Preference</li>
+        <li data-letter="B"><b>B</b> Weight</li>
+        <li data-letter="C"><b>C</b> AS_PATH</li>
+        <li data-letter="D"><b>D</b> MED</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 40</p>
+      <p class="mcq-q">ค่า Weight เริ่มต้น (Default) ของเส้นทางที่ Router สร้างขึ้นเองภายในเครื่อง (Locally Originated) คือเท่าใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 0</li>
+        <li data-letter="B"><b>B</b> 100</li>
+        <li data-letter="C"><b>C</b> 32768</li>
+        <li data-letter="D"><b>D</b> 65535</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 41</p>
+      <p class="mcq-q">ค่า Weight เริ่มต้น (Default) ของเส้นทางที่เรียนรู้มาจาก Neighbor คือเท่าใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 0</li>
+        <li data-letter="B"><b>B</b> 100</li>
+        <li data-letter="C"><b>C</b> 32768</li>
+        <li data-letter="D"><b>D</b> 1</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 42</p>
+      <p class="mcq-q">ในการเลือกเส้นทางที่ดีที่สุดด้วยค่า Weight เส้นทางแบบใดจะถูกเลือก?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Weight ต่ำสุด</li>
+        <li data-letter="B"><b>B</b> Weight เท่ากับ 0 เท่านั้น</li>
+        <li data-letter="C"><b>C</b> ไม่นำ Weight มาพิจารณาเลย</li>
+        <li data-letter="D"><b>D</b> Weight สูงสุด</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 43</p>
+      <p class="mcq-q">ค่า Local Preference เริ่มต้น (Default) ของ Cisco IOS คือเท่าใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 0</li>
+        <li data-letter="B"><b>B</b> 100</li>
+        <li data-letter="C"><b>C</b> 32768</li>
+        <li data-letter="D"><b>D</b> 200</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 44</p>
+      <p class="mcq-q">Local Preference มีผลต่อการเลือกเส้นทางในทิศทางใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> มีผลต่อ Router ในทุก AS ทั่ว Internet</li>
+        <li data-letter="B"><b>B</b> มีผลเฉพาะการเลือก NEXT_HOP</li>
+        <li data-letter="C"><b>C</b> มีผลต่อการเลือกเส้นทาง "ขาออก" (Outbound) ของ Router ทั้งหมดภายใน AS เดียวกัน</li>
+        <li data-letter="D"><b>D</b> มีผลเฉพาะเส้นทาง Static Route</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 45</p>
+      <p class="mcq-q">ค่า Local Preference ใดที่จะถูกเลือกเป็นเส้นทางที่ดีกว่า?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ค่าสูงสุด</li>
+        <li data-letter="B"><b>B</b> ค่าต่ำสุด</li>
+        <li data-letter="C"><b>C</b> ค่า 100 เท่านั้น</li>
+        <li data-letter="D"><b>D</b> ค่า 0 เท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 46</p>
+      <p class="mcq-q">Attribute ใดถูกใช้เพื่อป้องกัน Routing Loop ระหว่าง AS และมีผลต่อการเลือกเส้นทาง (ยิ่งสั้นยิ่งดี)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Weight</li>
+        <li data-letter="B"><b>B</b> Local Preference</li>
+        <li data-letter="C"><b>C</b> AS_PATH</li>
+        <li data-letter="D"><b>D</b> Cluster List</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 47</p>
+      <p class="mcq-q">เทคนิค "AS_PATH Prepending" ใช้เพื่อวัตถุประสงค์ใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพิ่มความปลอดภัยในการเข้ารหัส BGP Update</li>
+        <li data-letter="B"><b>B</b> ทำให้เส้นทางนั้นดูมี AS_PATH ยาวขึ้นเทียม เพื่อให้ AS อื่นเลือกเส้นทางนี้เป็นทางเลือกรอง (Influence Inbound Traffic)</li>
+        <li data-letter="C"><b>C</b> ลด MTU ของ Packet</li>
+        <li data-letter="D"><b>D</b> เปลี่ยน Administrative Distance ของเส้นทาง</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 48</p>
+      <p class="mcq-q">Origin Code "i" ใน Output ของ show ip bgp หมายถึงอะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Incomplete — เส้นทางที่ได้จากการ Redistribute</li>
+        <li data-letter="B"><b>B</b> Invalid Route</li>
+        <li data-letter="C"><b>C</b> Internal iBGP Route</li>
+        <li data-letter="D"><b>D</b> IGP — เส้นทางที่ถูก Advertise ด้วยคำสั่ง network ภายใน BGP</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 49</p>
+      <p class="mcq-q">Origin Code "?" ใน Output ของ show ip bgp หมายถึงอะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Incomplete — โดยทั่วไปเกิดจากการ Redistribute เส้นทางจาก Protocol อื่นเข้าสู่ BGP</li>
+        <li data-letter="B"><b>B</b> EGP — เส้นทางที่มาจาก Protocol EGP รุ่นเก่า</li>
+        <li data-letter="C"><b>C</b> IGP — เส้นทางที่ Advertise ด้วยคำสั่ง network</li>
+        <li data-letter="D"><b>D</b> หมายถึงเส้นทางที่ไม่สมบูรณ์และจะไม่ถูกนำมาใช้งานเด็ดขาด</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 50</p>
+      <p class="mcq-q">MED (Multi-Exit Discriminator) มีผลต่อการเลือกเส้นทางในทิศทางใด และค่าใดดีกว่า?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> มีผลต่อ Outbound Traffic และค่าสูงสุดดีกว่า</li>
+        <li data-letter="B"><b>B</b> มีผลต่อ NEXT_HOP เท่านั้น</li>
+        <li data-letter="C"><b>C</b> มีผลต่อ Inbound Traffic ที่ AS ข้างเคียงจะส่งเข้ามา และค่าต่ำสุดดีกว่า</li>
+        <li data-letter="D"><b>D</b> มีผลต่อ Weight ของ Router ปลายทาง</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 51</p>
+      <p class="mcq-q">ค่า MED เริ่มต้น (Default) คือเท่าใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 100</li>
+        <li data-letter="B"><b>B</b> 0</li>
+        <li data-letter="C"><b>C</b> 32768</li>
+        <li data-letter="D"><b>D</b> 1</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 52</p>
+      <p class="mcq-q">โดยค่า Default การเปรียบเทียบ MED จะทำระหว่างเส้นทางในลักษณะใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เปรียบเทียบกับเส้นทางทั้งหมดที่มีอยู่ใน BGP Table ไม่ว่าจะมาจาก AS ใด</li>
+        <li data-letter="B"><b>B</b> ไม่มีการเปรียบเทียบ MED เลยตามค่า Default</li>
+        <li data-letter="C"><b>C</b> เปรียบเทียบเฉพาะเส้นทางที่มาจาก iBGP เท่านั้น</li>
+        <li data-letter="D"><b>D</b> เปรียบเทียบเฉพาะเส้นทางที่มาจาก Neighboring AS เดียวกันเท่านั้น เว้นแต่จะเปิดใช้คำสั่ง bgp always-compare-med</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 53</p>
+      <p class="mcq-q">MED จัดอยู่ในประเภท Attribute ใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Optional Non-Transitive</li>
+        <li data-letter="B"><b>B</b> Well-known Mandatory</li>
+        <li data-letter="C"><b>C</b> Well-known Discretionary</li>
+        <li data-letter="D"><b>D</b> Optional Transitive</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 54</p>
+      <p class="mcq-q">Attribute ใดต่อไปนี้จัดอยู่ในกลุ่ม Well-known Mandatory (ต้องมีอยู่ใน Update ทุกครั้ง และทุก Router ต้องรู้จัก)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Weight</li>
+        <li data-letter="B"><b>B</b> AS_PATH, NEXT_HOP, ORIGIN</li>
+        <li data-letter="C"><b>C</b> Community</li>
+        <li data-letter="D"><b>D</b> MED</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 55</p>
+      <p class="mcq-q">Community Attribute แบบ Well-known "no-export" มีความหมายว่าอย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ห้ามส่งเส้นทางนี้ไปยัง Peer ใด ๆ เลยทั้งสิ้น</li>
+        <li data-letter="B"><b>B</b> เพิ่ม Local Preference ให้เป็น 200 โดยอัตโนมัติ</li>
+        <li data-letter="C"><b>C</b> ห้ามไม่ให้ Advertise เส้นทางนี้ออกนอก Autonomous System (หรือ Confederation)</li>
+        <li data-letter="D"><b>D</b> บังคับให้ Redistribute เข้า OSPF ทันที</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 56</p>
+      <p class="mcq-q">Community Attribute แบบ Well-known "no-advertise" มีความหมายว่าอย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ให้ Advertise ไปยัง eBGP Peer เท่านั้น</li>
+        <li data-letter="B"><b>B</b> ให้ Advertise ไปยัง iBGP Peer เท่านั้น</li>
+        <li data-letter="C"><b>C</b> ให้ Advertise ไปทุกที่ยกเว้น Route Reflector</li>
+        <li data-letter="D"><b>D</b> ห้ามไม่ให้ Advertise เส้นทางนี้ไปยัง BGP Peer ใด ๆ ทั้งสิ้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 57</p>
+      <p class="mcq-q">รูปแบบของค่า BGP Community โดยทั่วไปเขียนในรูปแบบใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> AA:NN (AS Number : Number ที่กำหนดเอง) เช่น 65001:100</li>
+        <li data-letter="B"><b>B</b> IP Address เท่านั้น</li>
+        <li data-letter="C"><b>C</b> MAC Address</li>
+        <li data-letter="D"><b>D</b> ตัวเลข Hexadecimal 8 หลักเท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 58</p>
+      <p class="mcq-q">Attribute ใดจะถูกตั้งค่าเมื่อเส้นทางถูกรวม (Aggregate) และมีข้อมูล AS_PATH บางส่วนสูญหายไป?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> AGGREGATOR</li>
+        <li data-letter="B"><b>B</b> ATOMIC_AGGREGATE</li>
+        <li data-letter="C"><b>C</b> ORIGINATOR_ID</li>
+        <li data-letter="D"><b>D</b> CLUSTER_LIST</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 59</p>
+      <p class="mcq-q">Attribute AGGREGATOR ประกอบด้วยข้อมูลใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ค่า MED ของเส้นทางย่อยทั้งหมด</li>
+        <li data-letter="B"><b>B</b> รายการ Community ทั้งหมด</li>
+        <li data-letter="C"><b>C</b> AS Number และ Router ID ของ Router ที่ทำการรวม (Aggregate) เส้นทาง</li>
+        <li data-letter="D"><b>D</b> ค่า Weight ของเส้นทางต้นฉบับ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 60</p>
+      <p class="mcq-q">ตามลำดับ Cisco BGP Best Path Selection Algorithm หลังจากเปรียบเทียบ Weight แล้ว ขั้นตอนถัดไปคือการเปรียบเทียบ Attribute ใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> MED</li>
+        <li data-letter="B"><b>B</b> Router ID</li>
+        <li data-letter="C"><b>C</b> AS_PATH Length</li>
+        <li data-letter="D"><b>D</b> Local Preference</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 61</p>
+      <p class="mcq-q">ในลำดับ Best Path Selection ของ BGP ขั้นตอนใดถูกพิจารณาก่อนการเปรียบเทียบ AS_PATH Length?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เลือกเส้นทางที่ Router สร้างขึ้นเอง (Locally Originated ผ่าน network, redistribute หรือ aggregate) ก่อนเส้นทางที่เรียนรู้มาจาก Peer</li>
+        <li data-letter="B"><b>B</b> เปรียบเทียบ Router ID ต่ำสุด</li>
+        <li data-letter="C"><b>C</b> เปรียบเทียบ Cluster List สั้นที่สุด</li>
+        <li data-letter="D"><b>D</b> เปรียบเทียบ Neighbor IP Address ต่ำสุด</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 62</p>
+      <p class="mcq-q">เมื่อ Attribute อื่นทั้งหมดเท่ากันหมด BGP จะเลือกเส้นทางที่มาจาก Session ประเภทใดก่อน?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> iBGP ก่อน eBGP เสมอ</li>
+        <li data-letter="B"><b>B</b> eBGP ก่อน iBGP</li>
+        <li data-letter="C"><b>C</b> เลือกแบบสุ่มเสมอ</li>
+        <li data-letter="D"><b>D</b> เลือกตาม Community เสมอ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 63</p>
+      <p class="mcq-q">หากทุก Attribute เท่ากันหมดจนถึงขั้นสุดท้าย BGP จะใช้สิ่งใดเป็นตัวตัดสินสุดท้าย?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ค่า MTU ของ Interface</li>
+        <li data-letter="B"><b>B</b> ชื่อ Hostname ของ Router ที่ตัวอักษรน้อยที่สุด</li>
+        <li data-letter="C"><b>C</b> เปรียบเทียบ BGP Router ID ต่ำสุด และหากยังเท่ากัน ให้เปรียบเทียบ Neighbor (Peer) IP Address ต่ำสุด</li>
+        <li data-letter="D"><b>D</b> เลือกเส้นทางที่มี Hop Count น้อยที่สุด</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 64</p>
+      <p class="mcq-q">คำสั่งใดใช้เปลี่ยนค่า Weight ของเส้นทางที่รับจาก Neighbor รายหนึ่งโดยเฉพาะ?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> bgp default local-preference</li>
+        <li data-letter="B"><b>B</b> neighbor &lt;ip&gt; next-hop-self</li>
+        <li data-letter="C"><b>C</b> aggregate-address</li>
+        <li data-letter="D"><b>D</b> neighbor &lt;ip&gt; weight &lt;value&gt;</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">04</span><h2>BGP Neighbors และ Sessions</h2></div>
+    <p class="sec-sub">BGP States, Keepalive/Holdtime, Authentication, Peer Groups</p>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 65</p>
+      <p class="mcq-q">ลำดับ State ของ BGP Neighbor ก่อนจะเข้าสู่สถานะ Established คือลำดับใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Idle → Active → Connect → OpenSent → OpenConfirm → Established</li>
+        <li data-letter="B"><b>B</b> Idle → Connect → Active → OpenSent → OpenConfirm → Established</li>
+        <li data-letter="C"><b>C</b> Connect → Idle → OpenConfirm → OpenSent → Active → Established</li>
+        <li data-letter="D"><b>D</b> Idle → OpenSent → Connect → Active → OpenConfirm → Established</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 66</p>
+      <p class="mcq-q">State ใดของ BGP Neighbor แสดงว่า Session พร้อมแลกเปลี่ยนเส้นทางกันได้ปกติ?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Idle</li>
+        <li data-letter="B"><b>B</b> Active</li>
+        <li data-letter="C"><b>C</b> Established</li>
+        <li data-letter="D"><b>D</b> Connect</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 67</p>
+      <p class="mcq-q">ค่า Default ของ Keepalive Timer และ Holdtime Timer ของ BGP คือเท่าใด (วินาที)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Keepalive 60 วินาที, Holdtime 180 วินาที</li>
+        <li data-letter="B"><b>B</b> Keepalive 10 วินาที, Holdtime 40 วินาที</li>
+        <li data-letter="C"><b>C</b> Keepalive 30 วินาที, Holdtime 90 วินาที</li>
+        <li data-letter="D"><b>D</b> Keepalive 5 วินาที, Holdtime 15 วินาที</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 68</p>
+      <p class="mcq-q">คำสั่งใดใช้กำหนด Neighbor และ Remote AS Number ของ BGP Peer?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> neighbor &lt;ip&gt; local-as &lt;AS&gt;</li>
+        <li data-letter="B"><b>B</b> neighbor &lt;ip&gt; remote-as &lt;AS&gt;</li>
+        <li data-letter="C"><b>C</b> network &lt;ip&gt; remote-as &lt;AS&gt;</li>
+        <li data-letter="D"><b>D</b> bgp neighbor-as &lt;AS&gt;</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 69</p>
+      <p class="mcq-q">คำสั่งใดใช้ตั้งค่า Authentication แบบ MD5 ระหว่าง BGP Neighbor?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> neighbor &lt;ip&gt; authentication md5</li>
+        <li data-letter="B"><b>B</b> ip bgp md5 &lt;key&gt;</li>
+        <li data-letter="C"><b>C</b> neighbor &lt;ip&gt; key-chain &lt;name&gt;</li>
+        <li data-letter="D"><b>D</b> neighbor &lt;ip&gt; password &lt;string&gt;</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 70</p>
+      <p class="mcq-q">เมื่อ Peering ผ่าน Loopback Interface (เช่นในกรณี iBGP Multihop) ต้องใช้คำสั่งใดเพื่อระบุ Source Interface ที่ใช้ส่ง TCP Session?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> neighbor &lt;ip&gt; source-interface Loopback0</li>
+        <li data-letter="B"><b>B</b> neighbor &lt;ip&gt; next-hop-self</li>
+        <li data-letter="C"><b>C</b> neighbor &lt;ip&gt; update-source Loopback0</li>
+        <li data-letter="D"><b>D</b> interface Loopback0 / bgp source</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 71</p>
+      <p class="mcq-q">คำสั่งใดใช้แสดงรายละเอียดของ BGP Neighbor แบบเจาะลึก เช่น State, Capabilities, และ Message Counter?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> show ip bgp neighbors</li>
+        <li data-letter="B"><b>B</b> show ip bgp paths</li>
+        <li data-letter="C"><b>C</b> show ip route bgp</li>
+        <li data-letter="D"><b>D</b> show bgp attributes</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 72</p>
+      <p class="mcq-q">หากในผลลัพธ์ของ show ip bgp summary แสดง State ของ Neighbor เป็น "Active" (ตัวอักษร) แทนที่จะเป็นตัวเลข Prefix ที่ได้รับ หมายความว่าอย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Session ทำงานปกติ กำลังแลกเปลี่ยนเส้นทาง</li>
+        <li data-letter="B"><b>B</b> Session ยังไม่ Established — Router กำลังพยายามสร้าง TCP Connection แต่ยังไม่สำเร็จ (มักเกิดจากปัญหา Connectivity หรือ Configuration)</li>
+        <li data-letter="C"><b>C</b> Session ถูกปิดโดยผู้ดูแลระบบถาวร</li>
+        <li data-letter="D"><b>D</b> หมายถึงจำนวน Prefix ที่ Active เท่ากับ 0</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 73</p>
+      <p class="mcq-q">Peer Group ใน BGP มีประโยชน์อย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ใช้เข้ารหัสข้อมูลระหว่าง Neighbor</li>
+        <li data-letter="B"><b>B</b> ใช้เปลี่ยน AS Number ของ Neighbor หลายตัวพร้อมกัน</li>
+        <li data-letter="C"><b>C</b> ช่วยจัดกลุ่ม Neighbor ที่มี Policy เหมือนกัน เพื่อลดการตั้งค่าซ้ำซ้อนและลด CPU ในการประมวลผล Update</li>
+        <li data-letter="D"><b>D</b> ใช้แทนคำสั่ง router bgp ทั้งหมด</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 74</p>
+      <p class="mcq-q">คำสั่ง clear ip bgp * ทำหน้าที่อะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ลบเฉพาะเส้นทางที่ Invalid ออกจาก BGP Table</li>
+        <li data-letter="B"><b>B</b> เปลี่ยน AS Number ของ Router</li>
+        <li data-letter="C"><b>C</b> Reset เฉพาะ Interface ที่ใช้ BGP</li>
+        <li data-letter="D"><b>D</b> Hard Reset BGP Session กับ Neighbor ทั้งหมด — ตัด TCP Connection แล้วสร้างใหม่ ทำให้เกิด Interruption ชั่วคราว</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 75</p>
+      <p class="mcq-q">Soft Reset ของ BGP (เช่น clear ip bgp * soft) มีข้อดีกว่า Hard Reset อย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> สามารถ Apply Policy ใหม่ (เช่น Route-map) ได้โดยไม่ต้องตัด TCP Session ทำให้ไม่กระทบ Traffic ที่กำลังส่งผ่านอยู่</li>
+        <li data-letter="B"><b>B</b> เร็วกว่าเพราะไม่ต้องคำนวณ Path Attribute ใหม่เลย</li>
+        <li data-letter="C"><b>C</b> ใช้ได้เฉพาะกับ eBGP เท่านั้น</li>
+        <li data-letter="D"><b>D</b> ไม่จำเป็นต้องมี Route Refresh Capability</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 76</p>
+      <p class="mcq-q">Capability ใดของ BGP ช่วยให้ทำ Soft Reset ขาเข้า (Inbound) ได้โดยไม่ต้องเก็บสำเนา Update เดิมไว้ (ไม่ต้องใช้ soft-reconfiguration inbound)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Graceful Restart</li>
+        <li data-letter="B"><b>B</b> Route Refresh Capability</li>
+        <li data-letter="C"><b>C</b> 4-Byte ASN Capability</li>
+        <li data-letter="D"><b>D</b> Multiprotocol Extension</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 77</p>
+      <p class="mcq-q">เหตุใด BGP Neighbor จึงตกอยู่ใน State "Idle" ได้บ่อยที่สุด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เมื่อ Session Established สำเร็จแล้ว</li>
+        <li data-letter="B"><b>B</b> เมื่อ Router กำลังส่ง Open Message</li>
+        <li data-letter="C"><b>C</b> เมื่อยังไม่มีการเริ่มต้น Session, มีปัญหา Configuration (เช่น Remote-AS ผิด) หรือถูก Shutdown</li>
+        <li data-letter="D"><b>D</b> เมื่อ Router กำลังรอ Keepalive Message ที่หายไป 1 ครั้ง</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 78</p>
+      <p class="mcq-q">การ Peering ผ่าน Loopback Interface จำเป็นต้องมีสิ่งใดเพิ่มเติมเพื่อให้ Session สามารถ Established ได้?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ไม่ต้องมีอะไรเพิ่มเติม ใช้ได้ทันที</li>
+        <li data-letter="B"><b>B</b> ต้องปิด TCP MSS Clamping</li>
+        <li data-letter="C"><b>C</b> ต้องใช้ VLAN Trunking เท่านั้น</li>
+        <li data-letter="D"><b>D</b> ต้องมี Reachability (เช่นผ่าน Static Route หรือ IGP) ไปยัง Loopback ของอีกฝั่ง และมักต้องใช้ ebgp-multihop ร่วมด้วยสำหรับ eBGP</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 79</p>
+      <p class="mcq-q">หาก Holdtime ครบกำหนดโดยไม่มี Keepalive หรือ Update ใด ๆ มาถึง จะเกิดอะไรขึ้นกับ Session?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Session จะถูกตัดและกลับไปเป็น Idle</li>
+        <li data-letter="B"><b>B</b> Session จะยังคงอยู่ในสถานะ Established ต่อไป</li>
+        <li data-letter="C"><b>C</b> Router จะ Reboot อัตโนมัติ</li>
+        <li data-letter="D"><b>D</b> AS Number ของ Neighbor จะถูกลบทิ้ง</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 80</p>
+      <p class="mcq-q">คำสั่งใดใช้เปลี่ยนค่า Keepalive และ Holdtime ของ Neighbor รายใดรายหนึ่งโดยเฉพาะ?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> bgp timers &lt;keepalive&gt; &lt;holdtime&gt;</li>
+        <li data-letter="B"><b>B</b> neighbor &lt;ip&gt; timers &lt;keepalive&gt; &lt;holdtime&gt;</li>
+        <li data-letter="C"><b>C</b> ip bgp-timer &lt;keepalive&gt; &lt;holdtime&gt;</li>
+        <li data-letter="D"><b>D</b> timers ospf &lt;keepalive&gt; &lt;holdtime&gt;</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 81</p>
+      <p class="mcq-q">Message ประเภทใดที่ BGP ใช้ในการเปิด Session ครั้งแรก แลกเปลี่ยน Version, AS Number, Holdtime และ Router ID?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Update Message</li>
+        <li data-letter="B"><b>B</b> Notification Message</li>
+        <li data-letter="C"><b>C</b> Open Message</li>
+        <li data-letter="D"><b>D</b> Keepalive Message</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 82</p>
+      <p class="mcq-q">Message ประเภทใดใช้ในการแจ้งข้อผิดพลาดและปิด Session ของ BGP?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Open Message</li>
+        <li data-letter="B"><b>B</b> Update Message</li>
+        <li data-letter="C"><b>C</b> Keepalive Message</li>
+        <li data-letter="D"><b>D</b> Notification Message</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 83</p>
+      <p class="mcq-q">เหตุใดการตั้งค่า neighbor remote-as ผิด AS Number จึงมักทำให้ Session ค้างอยู่ที่ State ใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Established แต่ไม่มี Prefix</li>
+        <li data-letter="B"><b>B</b> Active หรือ Idle เนื่องจากทั้งสอง Router ตกลง AS Number กันไม่ได้ตอนแลกเปลี่ยน Open Message</li>
+        <li data-letter="C"><b>C</b> OpenConfirm เสมอ</li>
+        <li data-letter="D"><b>D</b> Connect ตลอดไปโดยไม่มีทาง Idle</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 84</p>
+      <p class="mcq-q">คำสั่งใดใช้เพิ่มคำอธิบาย (Label) ให้กับ BGP Neighbor เพื่อให้ง่ายต่อการดูแลรักษา โดยไม่มีผลต่อการทำงานของ Protocol?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> neighbor &lt;ip&gt; description &lt;text&gt;</li>
+        <li data-letter="B"><b>B</b> neighbor &lt;ip&gt; comment &lt;text&gt;</li>
+        <li data-letter="C"><b>C</b> neighbor &lt;ip&gt; label &lt;text&gt;</li>
+        <li data-letter="D"><b>D</b> neighbor &lt;ip&gt; tag &lt;text&gt;</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">05</span><h2>การกำหนดค่า BGP</h2></div>
+    <p class="sec-sub">router bgp, network, redistribute, route-map, filtering, verification</p>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 85</p>
+      <p class="mcq-q">คำสั่ง network &lt;address&gt; mask &lt;mask&gt; ภายใต้ router bgp มีเงื่อนไขสำคัญอย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> จะสร้างเส้นทางใหม่ขึ้นมาใน Routing Table โดยอัตโนมัติเสมอ</li>
+        <li data-letter="B"><b>B</b> ใช้ได้เฉพาะกับ Classful Network เท่านั้น</li>
+        <li data-letter="C"><b>C</b> Network และ Mask ที่ระบุต้องตรงกับ Route ที่มีอยู่แล้วใน IP Routing Table แบบเป๊ะ ๆ (Exact Match) BGP จึงจะ Advertise เส้นทางนั้นได้</li>
+        <li data-letter="D"><b>D</b> ต้องใช้ร่วมกับคำสั่ง redistribute connected เสมอ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 86</p>
+      <p class="mcq-q">คำสั่งใดใช้กำหนดค่า BGP Router ID ด้วยตนเอง?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> bgp router-id &lt;ip-address&gt;</li>
+        <li data-letter="B"><b>B</b> router-id bgp &lt;ip-address&gt;</li>
+        <li data-letter="C"><b>C</b> ip bgp-id &lt;ip-address&gt;</li>
+        <li data-letter="D"><b>D</b> neighbor router-id &lt;ip-address&gt;</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 87</p>
+      <p class="mcq-q">หากไม่ได้กำหนด BGP Router ID ด้วยตนเอง Router จะเลือก Router ID จากที่ใดเป็นลำดับแรก?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> MAC Address ต่ำสุดของ Interface</li>
+        <li data-letter="B"><b>B</b> IP Address ต่ำสุดของ Physical Interface ที่ Active</li>
+        <li data-letter="C"><b>C</b> เลือกแบบสุ่มทุกครั้งที่ Reboot</li>
+        <li data-letter="D"><b>D</b> IP Address สูงสุดของ Loopback Interface ที่มีสถานะ Up (หากไม่มี Loopback จะใช้ IP สูงสุดของ Physical Interface ที่ Active)</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 88</p>
+      <p class="mcq-q">คำสั่งใดใช้นำเส้นทางจาก Protocol อื่น (เช่น OSPF, EIGRP, Static) เข้าสู่ BGP?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> network redistribute</li>
+        <li data-letter="B"><b>B</b> redistribute &lt;protocol&gt;</li>
+        <li data-letter="C"><b>C</b> import &lt;protocol&gt;</li>
+        <li data-letter="D"><b>D</b> neighbor redistribute &lt;protocol&gt;</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 89</p>
+      <p class="mcq-q">Route-map ที่ใช้กับ BGP ผ่านคำสั่ง neighbor &lt;ip&gt; route-map &lt;name&gt; out ทำหน้าที่อะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> กำหนด Encryption สำหรับ Session ขาออก</li>
+        <li data-letter="B"><b>B</b> เปลี่ยน TCP Port ที่ใช้ส่ง Update</li>
+        <li data-letter="C"><b>C</b> กรองและ/หรือปรับแต่ง Attribute (เช่น Set Local Preference, MED, Community) ของเส้นทางก่อน Advertise ออกไปยัง Neighbor นั้น</li>
+        <li data-letter="D"><b>D</b> ปิดการทำงานของ Keepalive Timer</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 90</p>
+      <p class="mcq-q">Prefix-list ที่นำมาใช้กรองเส้นทาง BGP ผ่านคำสั่ง neighbor &lt;ip&gt; prefix-list &lt;name&gt; in มีข้อดีเหนือกว่า Distribute-list (Standard ACL) อย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Prefix-list สามารถระบุ Subnet Mask Range ได้ละเอียดกว่า (ผ่าน ge/le) และประมวลผลได้เร็วกว่า ACL</li>
+        <li data-letter="B"><b>B</b> Prefix-list เข้ารหัสข้อมูลได้ ในขณะที่ ACL ทำไม่ได้</li>
+        <li data-letter="C"><b>C</b> Prefix-list ใช้ได้เฉพาะกับ IPv6 เท่านั้น</li>
+        <li data-letter="D"><b>D</b> ไม่มีความแตกต่างกันเลย</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 91</p>
+      <p class="mcq-q">คำสั่งใดใช้กรองเส้นทางตาม AS_PATH Attribute?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> access-list as-path standard</li>
+        <li data-letter="B"><b>B</b> neighbor filter-community</li>
+        <li data-letter="C"><b>C</b> ip prefix-list as-path</li>
+        <li data-letter="D"><b>D</b> ip as-path access-list &lt;num&gt; permit/deny &lt;regex&gt; ร่วมกับ neighbor &lt;ip&gt; filter-list &lt;num&gt; in/out</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 92</p>
+      <p class="mcq-q">คำสั่ง neighbor &lt;ip&gt; soft-reconfiguration inbound มีผลอย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ปิด BGP Session ทันทีเพื่อรอ Config ใหม่</li>
+        <li data-letter="B"><b>B</b> ให้ Router เก็บสำเนา Update ขาเข้าที่ยังไม่ผ่าน Policy ไว้ใน Memory เพื่อให้สามารถทำ Soft Reset ขาเข้าได้โดยไม่ต้องรีเซ็ต Session (ใช้เมื่อ Neighbor ไม่รองรับ Route Refresh)</li>
+        <li data-letter="C"><b>C</b> เปลี่ยน Administrative Distance เป็น 0</li>
+        <li data-letter="D"><b>D</b> เปิดใช้ Encryption แบบอัตโนมัติ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 93</p>
+      <p class="mcq-q">คำสั่งใดใช้ตรวจสอบว่า BGP Table (ไม่ใช่ IP Routing Table) มีเส้นทางใดอยู่บ้างพร้อม Attribute ต่าง ๆ?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> show ip route bgp</li>
+        <li data-letter="B"><b>B</b> show ip protocols</li>
+        <li data-letter="C"><b>C</b> show ip bgp</li>
+        <li data-letter="D"><b>D</b> show running-config | section bgp</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 94</p>
+      <p class="mcq-q">คำสั่งใดใช้ดูเฉพาะเส้นทางที่มาจาก BGP ในตาราง Routing Table หลักของ Router?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> show ip route bgp</li>
+        <li data-letter="B"><b>B</b> show ip bgp table</li>
+        <li data-letter="C"><b>C</b> show bgp route</li>
+        <li data-letter="D"><b>D</b> show ip bgp rib</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 95</p>
+      <p class="mcq-q">สัญลักษณ์ ">" ที่ปรากฏหน้าเส้นทางใน Output ของ show ip bgp หมายถึงอะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เส้นทางที่ไม่ Valid</li>
+        <li data-letter="B"><b>B</b> เส้นทางที่ถูก Suppress</li>
+        <li data-letter="C"><b>C</b> เส้นทางที่มาจาก iBGP เท่านั้น</li>
+        <li data-letter="D"><b>D</b> เส้นทางนี้ถูกเลือกเป็น Best Path และจะถูกนำไปติดตั้งใน IP Routing Table</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 96</p>
+      <p class="mcq-q">คำสั่ง maximum-paths &lt;n&gt; ภายใต้ router bgp มีประโยชน์อย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> จำกัดจำนวน Neighbor สูงสุดที่ Router รองรับ</li>
+        <li data-letter="B"><b>B</b> อนุญาตให้ติดตั้งเส้นทางแบบ Equal-Cost Multipath จาก eBGP หลายเส้นทางพร้อมกันใน Routing Table เพื่อ Load Balancing</li>
+        <li data-letter="C"><b>C</b> จำกัดจำนวน Attribute ที่ส่งใน Update</li>
+        <li data-letter="D"><b>D</b> กำหนดจำนวน AS สูงสุดที่ AS_PATH ยอมรับได้</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 97</p>
+      <p class="mcq-q">คำสั่ง bgp default local-preference &lt;value&gt; มีผลอย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เปลี่ยนค่า Weight เริ่มต้นของทุกเส้นทาง</li>
+        <li data-letter="B"><b>B</b> เปลี่ยนค่า MED ของทุกเส้นทางที่ส่งออก</li>
+        <li data-letter="C"><b>C</b> เปลี่ยนค่า Local Preference เริ่มต้น (ปกติคือ 100) ที่ Router ใช้กับเส้นทางทั้งหมด แทนการตั้งผ่าน Route-map ทีละเส้นทาง</li>
+        <li data-letter="D"><b>D</b> ปิดการใช้งาน Local Preference ทั้งหมด</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 98</p>
+      <p class="mcq-q">เหตุใดคำสั่ง synchronization (BGP Synchronization Rule) ในยุคก่อนจึงกำหนดว่า Router จะไม่ Advertise เส้นทาง iBGP ไปยัง eBGP Peer จนกว่า IGP จะเรียนรู้เส้นทางนั้นด้วย?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพื่อป้องกัน Router ที่ไม่ได้รัน BGP ภายใน AS Drop Traffic เนื่องจากไม่รู้จักเส้นทางนั้นใน IGP (ปัจจุบัน Cisco IOS สมัยใหม่ปิด Feature นี้เป็นค่า Default แล้ว เพราะสมมติฐานว่า iBGP เป็น Full Mesh)</li>
+        <li data-letter="B"><b>B</b> เพื่อเพิ่มความเร็วในการ Convergence</li>
+        <li data-letter="C"><b>C</b> เพื่อเข้ารหัสเส้นทางก่อนส่งออก</li>
+        <li data-letter="D"><b>D</b> เพื่อบังคับให้ใช้ Static Route แทน BGP เสมอ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 99</p>
+      <p class="mcq-q">คำสั่ง no auto-summary ใน BGP (Cisco IOS รุ่นเก่า) มีผลอย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ปิดการทำงานของ CIDR ทั้งหมด</li>
+        <li data-letter="B"><b>B</b> บังคับให้ Router ทำ Route Summarization แบบ CIDR เสมอ</li>
+        <li data-letter="C"><b>C</b> เปิดใช้งาน VLSM</li>
+        <li data-letter="D"><b>D</b> ปิดการสรุปเส้นทางแบบอัตโนมัติตามขอบเขต Classful Network (ค่า Default ใน IOS สมัยใหม่ปิดอยู่แล้ว)</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 100</p>
+      <p class="mcq-q">คำสั่งใดใช้ปิด (Deactivate) BGP Session กับ Neighbor รายหนึ่งชั่วคราวโดยไม่ต้องลบ Configuration ทิ้ง?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> no neighbor &lt;ip&gt; remote-as &lt;AS&gt;</li>
+        <li data-letter="B"><b>B</b> neighbor &lt;ip&gt; shutdown</li>
+        <li data-letter="C"><b>C</b> neighbor &lt;ip&gt; disable</li>
+        <li data-letter="D"><b>D</b> router bgp shutdown</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 101</p>
+      <p class="mcq-q">สมมติว่ามี Route 10.1.1.0/24 อยู่ใน IP Routing Table แล้ว หากต้องการ Advertise ผ่าน BGP ต้องพิมพ์คำสั่งใดถูกต้อง?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> network 10.1.1.0/24 area 0</li>
+        <li data-letter="B"><b>B</b> redistribute network 10.1.1.0</li>
+        <li data-letter="C"><b>C</b> network 10.1.1.0 mask 255.255.255.0</li>
+        <li data-letter="D"><b>D</b> advertise 10.1.1.0 255.255.255.0</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 102</p>
+      <p class="mcq-q">Route-map ที่ใช้กับ BGP ประกอบด้วยคำสั่งย่อยหลักสองประเภทคืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> match (เงื่อนไขที่ใช้คัดกรอง) และ set (การกำหนดค่า Attribute ใหม่ให้เส้นทางที่ตรงเงื่อนไข)</li>
+        <li data-letter="B"><b>B</b> permit และ deny เท่านั้น โดยไม่มีคำสั่งย่อยอื่น</li>
+        <li data-letter="C"><b>C</b> input และ output</li>
+        <li data-letter="D"><b>D</b> in และ out เท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 103</p>
+      <p class="mcq-q">หากต้องการให้ทุกเส้นทางที่รับจาก Neighbor รายหนึ่งมีค่า Local Preference เป็น 150 ควรใช้คำสั่งชุดใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> neighbor &lt;ip&gt; weight 150</li>
+        <li data-letter="B"><b>B</b> สร้าง Route-map ที่มี set local-preference 150 แล้ว Apply ด้วย neighbor &lt;ip&gt; route-map &lt;name&gt; in</li>
+        <li data-letter="C"><b>C</b> aggregate-address กำหนด Local Preference โดยตรง</li>
+        <li data-letter="D"><b>D</b> bgp local-preference 150 global</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 104</p>
+      <p class="mcq-q">คำสั่ง distribute-list ที่ใช้กับ neighbor ใน BGP อ้างอิงกับสิ่งใดในการกรองเส้นทาง?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Community List เท่านั้น</li>
+        <li data-letter="B"><b>B</b> AS-Path Access-list เท่านั้น</li>
+        <li data-letter="C"><b>C</b> Route-map เท่านั้น</li>
+        <li data-letter="D"><b>D</b> Standard หรือ Extended Access-list ที่อ้างอิงตาม Network Prefix</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 105</p>
+      <p class="mcq-q">ข้อใดคือลำดับคำสั่งพื้นฐานที่ถูกต้องในการตั้งค่า eBGP Neighbor แบบง่าย?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> network 0.0.0.0 → router bgp &lt;AS&gt; → redistribute bgp</li>
+        <li data-letter="B"><b>B</b> neighbor &lt;ip&gt; remote-as &lt;AS&gt; → router bgp &lt;AS&gt; → network &lt;net&gt; mask &lt;mask&gt;</li>
+        <li data-letter="C"><b>C</b> router bgp &lt;AS&gt; → neighbor &lt;ip&gt; remote-as &lt;remote-AS&gt; → network &lt;net&gt; mask &lt;mask&gt;</li>
+        <li data-letter="D"><b>D</b> ip bgp &lt;AS&gt; → neighbor &lt;ip&gt; enable → network &lt;net&gt;</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 106</p>
+      <p class="mcq-q">คำสั่งใดใช้ตรวจสอบ Configuration ของ BGP ทั้งหมดที่กำลังทำงานอยู่บน Router?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> show running-config | section router bgp</li>
+        <li data-letter="B"><b>B</b> show ip bgp config</li>
+        <li data-letter="C"><b>C</b> show startup-config bgp</li>
+        <li data-letter="D"><b>D</b> show ip bgp all-config</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 107</p>
+      <p class="mcq-q">การ Redistribute เส้นทาง Static เข้าสู่ BGP ใช้คำสั่งใด (ภายใต้ router bgp)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> network static</li>
+        <li data-letter="B"><b>B</b> redistribute static</li>
+        <li data-letter="C"><b>C</b> import static</li>
+        <li data-letter="D"><b>D</b> static redistribute bgp</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 108</p>
+      <p class="mcq-q">เมื่อ Redistribute เส้นทางจาก Protocol อื่นเข้าสู่ BGP เส้นทางเหล่านั้นจะมี Origin Code เป็นอะไรตามค่า Default?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> i (IGP)</li>
+        <li data-letter="B"><b>B</b> e (EGP)</li>
+        <li data-letter="C"><b>C</b> s (Static)</li>
+        <li data-letter="D"><b>D</b> ? (Incomplete)</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 109</p>
+      <p class="mcq-q">คำสั่งใดใช้ Reset เฉพาะ BGP Session ของ Neighbor รายเดียว โดยไม่กระทบ Neighbor รายอื่น?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> clear ip bgp *</li>
+        <li data-letter="B"><b>B</b> clear ip route bgp</li>
+        <li data-letter="C"><b>C</b> clear ip bgp &lt;neighbor-ip&gt;</li>
+        <li data-letter="D"><b>D</b> reset bgp neighbor all</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 110</p>
+      <p class="mcq-q">การกรอง Prefix ขาออกโดยใช้ Prefix-list ต้อง Apply ด้วยคำสั่งใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> neighbor &lt;ip&gt; prefix-list &lt;name&gt; out</li>
+        <li data-letter="B"><b>B</b> neighbor &lt;ip&gt; distribute-list &lt;name&gt; in</li>
+        <li data-letter="C"><b>C</b> ip prefix-list &lt;name&gt; apply out</li>
+        <li data-letter="D"><b>D</b> route-map &lt;name&gt; prefix-list out</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">06</span><h2>BGP Next-Hop Processing</h2></div>
+    <p class="sec-sub">Next-Hop Attribute, next-hop-self, Third-Party Next Hop, IGP Reachability</p>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 111</p>
+      <p class="mcq-q">NEXT_HOP Attribute ใน BGP บ่งบอกถึงอะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> AS Number ของปลายทาง</li>
+        <li data-letter="B"><b>B</b> IP Address ของ Router ถัดไปที่ต้องส่ง Packet ไปเพื่อไปถึง Prefix ปลายทางนั้น</li>
+        <li data-letter="C"><b>C</b> Router ID ของผู้ Advertise เส้นทาง</li>
+        <li data-letter="D"><b>D</b> ค่า Metric ของ IGP ที่ใช้ไปถึงปลายทาง</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 112</p>
+      <p class="mcq-q">เมื่อ eBGP Router Advertise เส้นทางออกไปยัง eBGP Peer โดย Default จะทำอะไรกับ NEXT_HOP?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เปลี่ยนเป็น IP Address ของตัวเองบน Interface ที่เชื่อมต่อกับ eBGP Peer นั้น</li>
+        <li data-letter="B"><b>B</b> คงค่า NEXT_HOP เดิมไว้เสมอไม่ว่ากรณีใด</li>
+        <li data-letter="C"><b>C</b> ตั้งเป็น 0.0.0.0</li>
+        <li data-letter="D"><b>D</b> ลบ Attribute นี้ทิ้งไปเลย</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 113</p>
+      <p class="mcq-q">เมื่อ Router Advertise เส้นทางผ่าน iBGP ไปยัง iBGP Peer อื่นภายใน AS เดียวกัน โดย Default จะทำอะไรกับ NEXT_HOP?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เปลี่ยนเป็นตัวเองเสมอเหมือน eBGP</li>
+        <li data-letter="B"><b>B</b> ตั้งเป็น Loopback Address ของ Route Reflector เสมอ</li>
+        <li data-letter="C"><b>C</b> ไม่เปลี่ยนแปลง — คงค่า NEXT_HOP เดิมที่ได้รับมาจาก eBGP Router ที่ Advertise เข้ามาครั้งแรกไว้</li>
+        <li data-letter="D"><b>D</b> ลบ Attribute นี้ทิ้งเสมอ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 114</p>
+      <p class="mcq-q">ปัญหาใดมักเกิดขึ้นเมื่อ iBGP Router ภายใน AS ไม่มีเส้นทางไปยัง NEXT_HOP ที่ได้รับมาจาก eBGP Router?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เส้นทางจะถูกลบออกจาก BGP Table ทันที</li>
+        <li data-letter="B"><b>B</b> AS_PATH จะถูกรีเซ็ตเป็นค่าว่าง</li>
+        <li data-letter="C"><b>C</b> Local Preference จะเปลี่ยนเป็น 0 อัตโนมัติ</li>
+        <li data-letter="D"><b>D</b> เส้นทางนั้นจะยังคงอยู่ใน BGP Table แต่ถูกมองว่า "Inaccessible/Unresolvable" และจะไม่ถูกเลือกเป็น Best Path หรือติดตั้งใน IP Routing Table</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 115</p>
+      <p class="mcq-q">คำสั่ง next-hop-self นิยมใช้ในกรณีใดมากที่สุด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> บน eBGP Peer เพื่อเพิ่ม AS_PATH</li>
+        <li data-letter="B"><b>B</b> บน Router ที่เป็น iBGP Peer เพื่อให้ Router อื่นใน AS ไม่ต้องพึ่งพา IGP ในการ Resolve NEXT_HOP ที่มาจาก eBGP Peer โดยตรง</li>
+        <li data-letter="C"><b>C</b> บน Route Reflector Client เพื่อลบ Cluster List</li>
+        <li data-letter="D"><b>D</b> ใช้เพื่อเปลี่ยน Router ID เท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 116</p>
+      <p class="mcq-q">คำสั่ง next-hop-self มีผลกับเส้นทางประเภทใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เส้นทางที่เรียนรู้มาจาก eBGP แล้วกำลังจะถูก Advertise ต่อไปยัง iBGP Peer รายนั้น</li>
+        <li data-letter="B"><b>B</b> เส้นทางทุกเส้นทางไม่ว่าจะมาจากที่ใด</li>
+        <li data-letter="C"><b>C</b> เฉพาะเส้นทางที่ Router สร้างขึ้นเองผ่านคำสั่ง network เท่านั้น</li>
+        <li data-letter="D"><b>D</b> เฉพาะเส้นทาง Static Route เท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 117</p>
+      <p class="mcq-q">"Third-Party Next Hop" ใน BGP หมายถึงสถานการณ์ใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> การใช้ VPN Provider เป็นตัวกลางในการส่ง Traffic</li>
+        <li data-letter="B"><b>B</b> การให้ Route Reflector เปลี่ยน NEXT_HOP แทน Router ต้นทาง</li>
+        <li data-letter="C"><b>C</b> บน Multiaccess Network เมื่อ Router A Advertise เส้นทางให้ Router C แต่ NEXT_HOP ที่แท้จริงคือ Router B (ซึ่งอยู่ใน Subnet เดียวกันและมี Path ที่ดีกว่า) BGP จะใส่ NEXT_HOP เป็น B แทนที่จะเป็นตัวเอง (A) เพื่อหลีกเลี่ยง Extra Hop</li>
+        <li data-letter="D"><b>D</b> การใช้ Static Route แทน NEXT_HOP ที่ BGP กำหนด</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 118</p>
+      <p class="mcq-q">เพราะเหตุใดในหลายกรณี Network Engineer จึงต้องเปิดใช้ IGP (เช่น OSPF) ร่วมกับ BGP ภายใน AS?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพราะ BGP ไม่สามารถแลกเปลี่ยนเส้นทางกันเองได้เลยหากไม่มี IGP</li>
+        <li data-letter="B"><b>B</b> เพราะ IGP จำเป็นสำหรับการคำนวณ MED</li>
+        <li data-letter="C"><b>C</b> เพราะ AS_PATH ต้องอาศัย IGP ในการคำนวณ</li>
+        <li data-letter="D"><b>D</b> เพื่อให้ Router ภายใน AS มีเส้นทางไปถึง NEXT_HOP ที่ BGP ใช้อ้างอิง (เช่น Loopback ของ eBGP Router) เมื่อไม่ได้ใช้ next-hop-self</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 119</p>
+      <p class="mcq-q">หากไม่ตั้งค่า next-hop-self บน Router ที่ Peer ด้วย eBGP และ iBGP พร้อมกัน (เช่น Edge Router) ผลกระทบที่อาจเกิดขึ้นคืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> BGP Session จะไม่สามารถ Established ได้เลย</li>
+        <li data-letter="B"><b>B</b> Router iBGP ภายใน AS อาจมองเส้นทางเป็น Unresolvable/Inaccessible หากไม่มี IGP พาไปถึง NEXT_HOP ของ eBGP Peer ทำให้เส้นทางไม่ถูกใช้งาน</li>
+        <li data-letter="C"><b>C</b> AS_PATH จะยาวขึ้นโดยอัตโนมัติ</li>
+        <li data-letter="D"><b>D</b> Weight จะถูกรีเซ็ตเป็น 0</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 120</p>
+      <p class="mcq-q">คำสั่งใดใช้เปิดใช้งาน next-hop-self เฉพาะกับ Neighbor รายหนึ่ง?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> neighbor &lt;ip&gt; next-hop-self</li>
+        <li data-letter="B"><b>B</b> bgp next-hop-self all</li>
+        <li data-letter="C"><b>C</b> ip next-hop-self &lt;ip&gt;</li>
+        <li data-letter="D"><b>D</b> neighbor &lt;ip&gt; force-next-hop</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 121</p>
+      <p class="mcq-q">Route Reflector มีพฤติกรรมพิเศษอย่างไรเกี่ยวกับ NEXT_HOP เมื่อเทียบกับ iBGP ปกติ?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Route Reflector จะเปลี่ยน NEXT_HOP เป็นตัวเองเสมอทุกกรณี</li>
+        <li data-letter="B"><b>B</b> Route Reflector ไม่สามารถส่งต่อ NEXT_HOP ได้เลย</li>
+        <li data-letter="C"><b>C</b> โดย Default Route Reflector จะไม่เปลี่ยน NEXT_HOP เหมือน iBGP ทั่วไป (ยังคงพฤติกรรมมาตรฐานของ iBGP)</li>
+        <li data-letter="D"><b>D</b> Route Reflector บังคับให้ใช้ NEXT_HOP เป็น 0.0.0.0</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 122</p>
+      <p class="mcq-q">เส้นทาง BGP ที่มี NEXT_HOP Unresolvable จะแสดงสถานะใดใน show ip bgp?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> จะไม่แสดงใน Table เลย เพราะถูกลบทันที</li>
+        <li data-letter="B"><b>B</b> แสดงอยู่ใน Table แต่ไม่มีเครื่องหมาย ">" (Best Path) นำหน้า เนื่องจากไม่ถูกเลือกให้ใช้งานจริง</li>
+        <li data-letter="C"><b>C</b> แสดงเป็น Origin Code "?" เสมอ</li>
+        <li data-letter="D"><b>D</b> จะถูกแปลงเป็น Static Route โดยอัตโนมัติ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 123</p>
+      <p class="mcq-q">ในสถานการณ์ที่ Router สอง AS เชื่อมต่อกันผ่าน Multiaccess Segment (เช่น Ethernet) ที่มีมากกว่า 2 Router และหนึ่งใน eBGP Neighbor แนะนำเส้นทางที่ NEXT_HOP จริง ๆ ควรชี้ไปยัง Router อีกตัวใน Segment เดียวกัน (ไม่ใช่ตัวเอง) พฤติกรรมนี้เรียกว่าอะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Split Horizon</li>
+        <li data-letter="B"><b>B</b> Poison Reverse</li>
+        <li data-letter="C"><b>C</b> Route Reflection</li>
+        <li data-letter="D"><b>D</b> Third-Party Next-Hop Optimization</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 124</p>
+      <p class="mcq-q">Next-Hop Attribute จัดอยู่ในประเภท Well-known Attribute แบบใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Well-known Mandatory</li>
+        <li data-letter="B"><b>B</b> Optional Transitive</li>
+        <li data-letter="C"><b>C</b> Optional Non-Transitive</li>
+        <li data-letter="D"><b>D</b> Well-known Discretionary</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 125</p>
+      <p class="mcq-q">หากเปิดใช้ next-hop-self บน iBGP Peer ทุกตัวใน AS การพึ่งพา IGP เพื่อ Resolve NEXT_HOP ของเส้นทางที่มาจาก eBGP จะเปลี่ยนไปอย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ยังคงจำเป็นเหมือนเดิมทุกประการ</li>
+        <li data-letter="B"><b>B</b> IGP จะไม่สามารถทำงานร่วมกับ BGP ได้อีกต่อไป</li>
+        <li data-letter="C"><b>C</b> ลดความจำเป็นลง เพราะ NEXT_HOP จะถูกเปลี่ยนเป็น Address ของ Router ที่ Advertise (ซึ่งมักเป็น Directly Connected หรือ Loopback ที่ IGP รู้จักอยู่แล้ว) แทนที่จะเป็น Address ของ eBGP Peer ภายนอก</li>
+        <li data-letter="D"><b>D</b> ทำให้ AS_PATH สั้นลงโดยอัตโนมัติ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 126</p>
+      <p class="mcq-q">คำสั่งใดสามารถใช้ตรวจสอบว่า NEXT_HOP ของเส้นทาง BGP ใดเส้นทางหนึ่ง Resolvable หรือไม่?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> show ip bgp summary</li>
+        <li data-letter="B"><b>B</b> show ip bgp &lt;network&gt; (ดูรายละเอียด Path และสถานะ NEXT_HOP ของ Prefix นั้น)</li>
+        <li data-letter="C"><b>C</b> show ip protocols</li>
+        <li data-letter="D"><b>D</b> show version</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 127</p>
+      <p class="mcq-q">ในกรณี eBGP Multihop ที่ Peer ผ่าน Loopback ระหว่างสอง AS เหตุใด next-hop-self หรือ Static Route จึงมักจำเป็นเพิ่มเติม?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพราะ eBGP Multihop ไม่รองรับ TCP</li>
+        <li data-letter="B"><b>B</b> เพราะ AS_PATH จะไม่ถูกส่งหากไม่มี next-hop-self</li>
+        <li data-letter="C"><b>C</b> เพราะ MED จะกลายเป็นค่าลบ</li>
+        <li data-letter="D"><b>D</b> เพราะ NEXT_HOP ที่ได้จาก Loopback ของอีกฝั่งอาจไม่ Reachable โดยตรงผ่าน IGP หรือ Routing Table ท้องถิ่น จึงต้องมี Static Route หรือปรับ NEXT_HOP เพื่อให้ Router Resolve ได้</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 128</p>
+      <p class="mcq-q">ข้อใดสรุปหลักการของ BGP Next-Hop Processing ได้ถูกต้องที่สุด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> eBGP เปลี่ยน NEXT_HOP เป็นตัวเองตาม Default ส่วน iBGP รักษาค่า NEXT_HOP เดิมไว้ ทำให้ต้องอาศัย IGP หรือ next-hop-self เพื่อให้ Router ภายใน AS เข้าถึง NEXT_HOP นั้นได้</li>
+        <li data-letter="B"><b>B</b> ทั้ง eBGP และ iBGP เปลี่ยน NEXT_HOP เป็นตัวเองเสมอโดยไม่มีข้อยกเว้น</li>
+        <li data-letter="C"><b>C</b> NEXT_HOP ไม่มีผลต่อการติดตั้งเส้นทางใน Routing Table</li>
+        <li data-letter="D"><b>D</b> NEXT_HOP ถูกกำหนดโดย DNS เสมอ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">07</span><h2>BGP Route Summarization</h2></div>
+    <p class="sec-sub">aggregate-address, summary-only, as-set, Atomic Aggregate, CIDR</p>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 129</p>
+      <p class="mcq-q">คำสั่งใดใช้สร้าง Route Summarization (Aggregate) ใน BGP?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> summary-address &lt;network&gt; &lt;mask&gt;</li>
+        <li data-letter="B"><b>B</b> area range &lt;network&gt; &lt;mask&gt;</li>
+        <li data-letter="C"><b>C</b> aggregate-address &lt;network&gt; &lt;mask&gt;</li>
+        <li data-letter="D"><b>D</b> ip summary bgp &lt;network&gt; &lt;mask&gt;</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 130</p>
+      <p class="mcq-q">Keyword ใดของคำสั่ง aggregate-address ที่ใช้ระงับ (Suppress) ไม่ให้ Advertise เส้นทางย่อย (More-specific Routes) และ Advertise เฉพาะเส้นทางสรุปเท่านั้น?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> as-set</li>
+        <li data-letter="B"><b>B</b> summary-only</li>
+        <li data-letter="C"><b>C</b> suppress-all</li>
+        <li data-letter="D"><b>D</b> hide-specific</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 131</p>
+      <p class="mcq-q">Keyword as-set ในคำสั่ง aggregate-address มีผลอย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ลบ AS_PATH ของทุกเส้นทางย่อยทิ้งทั้งหมด</li>
+        <li data-letter="B"><b>B</b> Suppress เส้นทางย่อยทั้งหมดเหมือน summary-only</li>
+        <li data-letter="C"><b>C</b> เปลี่ยน Origin Code เป็น IGP เสมอ</li>
+        <li data-letter="D"><b>D</b> รวบรวมค่า AS Number ที่ปรากฏใน AS_PATH ของเส้นทางย่อยทั้งหมดไว้ในรูปแบบ Unordered Set เพื่อคงข้อมูล AS Path บางส่วนไว้ในเส้นทางสรุป ช่วยป้องกัน Loop</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 132</p>
+      <p class="mcq-q">เงื่อนไขสำคัญที่ทำให้คำสั่ง aggregate-address ทำงานได้ คืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ต้องมีอย่างน้อยหนึ่งเส้นทางย่อย (More-specific Route) ที่อยู่ภายใต้ Range ของ Aggregate นั้นปรากฏอยู่ใน BGP Table แล้ว</li>
+        <li data-letter="B"><b>B</b> ต้องปิด Synchronization ก่อนเสมอ</li>
+        <li data-letter="C"><b>C</b> ต้องมี Loopback Interface ที่ตรงกับ Network Address</li>
+        <li data-letter="D"><b>D</b> ต้องใช้ร่วมกับ OSPF เท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 133</p>
+      <p class="mcq-q">Attribute ใดจะถูกตั้งค่าโดยอัตโนมัติเมื่อทำ Aggregate โดยไม่ใช้ as-set (ทำให้ข้อมูล AS_PATH บางส่วนสูญหาย)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> MED</li>
+        <li data-letter="B"><b>B</b> ATOMIC_AGGREGATE</li>
+        <li data-letter="C"><b>C</b> Weight</li>
+        <li data-letter="D"><b>D</b> Local Preference</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 134</p>
+      <p class="mcq-q">ประโยชน์หลักของ Route Summarization ใน BGP คืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพิ่มจำนวน Entry ใน BGP Table เพื่อความละเอียดของข้อมูล</li>
+        <li data-letter="B"><b>B</b> เข้ารหัสข้อมูลระหว่าง AS</li>
+        <li data-letter="C"><b>C</b> ลดขนาดของ BGP Table, ลดการใช้ CPU/Memory, และลด Update Churn เมื่อเส้นทางย่อยเปลี่ยนแปลง (Route Flapping) เพราะเส้นทางสรุปจะไม่กระทบหากยังมีเส้นทางย่อยบางส่วน Active อยู่</li>
+        <li data-letter="D"><b>D</b> เพิ่มค่า MED โดยอัตโนมัติ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 135</p>
+      <p class="mcq-q">Keyword ใดใช้เลือก Suppress เฉพาะบางเส้นทางย่อยด้วย Route-map แทนที่จะ Suppress ทั้งหมดเหมือน summary-only?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> as-set</li>
+        <li data-letter="B"><b>B</b> summary-only</li>
+        <li data-letter="C"><b>C</b> attribute-map</li>
+        <li data-letter="D"><b>D</b> suppress-map &lt;route-map-name&gt;</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 136</p>
+      <p class="mcq-q">หากเส้นทางย่อยทั้งหมดที่เป็นองค์ประกอบของ Aggregate หายไปจาก BGP Table (เช่น Link ล่มทั้งหมด) จะเกิดอะไรขึ้นกับเส้นทางสรุป (Aggregate Route)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เส้นทางสรุปจะหายไปด้วย เนื่องจากไม่มีเส้นทางย่อยใด ๆ รองรับอยู่อีกต่อไป</li>
+        <li data-letter="B"><b>B</b> เส้นทางสรุปจะยังคงอยู่ตลอดไปแม้ไม่มีเส้นทางย่อยเหลืออยู่เลย</li>
+        <li data-letter="C"><b>C</b> เส้นทางสรุปจะเปลี่ยนเป็น Static Route โดยอัตโนมัติ</li>
+        <li data-letter="D"><b>D</b> เส้นทางสรุปจะถูกเปลี่ยน AS_PATH เป็นค่าว่างแต่ยังคงอยู่</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 137</p>
+      <p class="mcq-q">ข้อแตกต่างสำคัญระหว่างคำสั่ง network ในการ Advertise เส้นทาง กับคำสั่ง aggregate-address คืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ไม่มีความแตกต่างกันเลย ใช้แทนกันได้ทุกกรณี</li>
+        <li data-letter="B"><b>B</b> network ใช้ Advertise เส้นทางที่มีอยู่แล้วใน Routing Table แบบตรงตัว (Exact Match) ส่วน aggregate-address ใช้สร้างเส้นทางสรุปจากเส้นทางย่อยหลายเส้นทางที่มีอยู่ใน BGP Table โดยไม่จำเป็นต้องมีเส้นทางสรุปนั้นใน IP Routing Table มาก่อน</li>
+        <li data-letter="C"><b>C</b> aggregate-address ใช้ได้เฉพาะกับ IPv6 เท่านั้น</li>
+        <li data-letter="D"><b>D</b> network ใช้ได้เฉพาะกับ Static Route เท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 138</p>
+      <p class="mcq-q">สมมติมีเส้นทางย่อย 192.168.0.0/24, 192.168.1.0/24, 192.168.2.0/24 และ 192.168.3.0/24 อยู่ใน BGP Table คำสั่งใดใช้สรุปเป็น Supernet เดียว?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> aggregate-address 192.168.0.0 255.255.255.0</li>
+        <li data-letter="B"><b>B</b> aggregate-address 192.168.0.0 255.255.0.0</li>
+        <li data-letter="C"><b>C</b> aggregate-address 192.168.0.0 255.255.252.0</li>
+        <li data-letter="D"><b>D</b> aggregate-address 192.168.0.0 255.255.255.252</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 139</p>
+      <p class="mcq-q">การใช้ summary-only มีข้อเสียที่อาจเกิดขึ้นคืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ทำให้ BGP Session ไม่สามารถ Established ได้</li>
+        <li data-letter="B"><b>B</b> ทำให้ Router ใช้ CPU เพิ่มขึ้นมหาศาล</li>
+        <li data-letter="C"><b>C</b> ทำให้ Weight ของทุกเส้นทางกลายเป็น 0</li>
+        <li data-letter="D"><b>D</b> อาจทำให้เกิด Suboptimal Routing ได้ เนื่องจากเส้นทางย่อยที่มีรายละเอียดเฉพาะเจาะจง (เช่น Path ที่ดีที่สุดไปยัง Subnet หนึ่ง) ถูกซ่อนไว้ เหลือเพียงเส้นทางสรุปที่อาจไม่ใช่เส้นทางที่ดีที่สุดสำหรับทุก Subnet ย่อย</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 140</p>
+      <p class="mcq-q">คำสั่งใดใช้ตรวจสอบว่า Aggregate Route ถูกสร้างและ Advertise สำเร็จหรือไม่?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> show ip bgp — ดูว่ามี Entry ของ Network/Mask ที่เป็น Supernet พร้อมสัญลักษณ์บ่งบอกว่าเป็น Aggregate (เช่น "a" หรือ Atomic Aggregate flag)</li>
+        <li data-letter="B"><b>B</b> show ip ospf database summary เท่านั้น</li>
+        <li data-letter="C"><b>C</b> show aggregate-address status</li>
+        <li data-letter="D"><b>D</b> show cdp neighbors</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 141</p>
+      <p class="mcq-q">เพราะเหตุใด Internet Service Provider จึงนิยมทำ Route Summarization ก่อนส่งเส้นทางออกสู่ Internet?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพราะกฎหมายบังคับ</li>
+        <li data-letter="B"><b>B</b> เพื่อลดขนาด Global BGP Table ที่ Router ทั่วโลกต้องเก็บไว้ ช่วยลดภาระ Memory/CPU ของ Router ทุกตัวใน Internet และเพิ่มเสถียรภาพ ลด Effect ของ Route Flapping</li>
+        <li data-letter="C"><b>C</b> เพื่อเพิ่มค่า MED ให้สูงขึ้น</li>
+        <li data-letter="D"><b>D</b> เพื่อบังคับให้ใช้ iBGP แทน eBGP</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 142</p>
+      <p class="mcq-q">คำสั่ง aggregate-address 10.0.0.0 255.0.0.0 summary-only as-set มีความหมายว่าอย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> สร้าง Aggregate โดยไม่ Suppress เส้นทางย่อยและไม่เก็บ AS Path Set</li>
+        <li data-letter="B"><b>B</b> ปิดการทำงานของ Aggregate ทันที</li>
+        <li data-letter="C"><b>C</b> สร้าง Aggregate 10.0.0.0/8, Suppress เส้นทางย่อยทั้งหมด (เหลือเฉพาะเส้นทางสรุป) และเก็บข้อมูล AS Number จากเส้นทางย่อยไว้ในรูปแบบ AS_SET เพื่อคงข้อมูลบางส่วนของ AS_PATH ไว้</li>
+        <li data-letter="D"><b>D</b> สร้าง Static Route แทน BGP Route</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 143</p>
+      <p class="mcq-q">Aggregate Route ที่สร้างขึ้นจะปรากฏด้วย Origin Code ใดเป็นค่า Default หากมีการรวมเส้นทางที่มี Origin Code ต่างกัน?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> i (IGP) เสมอ</li>
+        <li data-letter="B"><b>B</b> e (EGP) เสมอ</li>
+        <li data-letter="C"><b>C</b> ค่า Origin จะหายไปจาก Output</li>
+        <li data-letter="D"><b>D</b> ? (Incomplete) เนื่องจากเส้นทางย่อยที่นำมารวมกันมีที่มาต่างกัน ทำให้ Router ไม่สามารถระบุ Origin เดียวที่แน่ชัดได้</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 144</p>
+      <p class="mcq-q">การทำ Route Summarization ที่ Boundary ของ AS ช่วยลดผลกระทบของปัญหาใดต่อ AS ข้างเคียงได้ดีที่สุด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Route Flapping — เมื่อเส้นทางย่อยหนึ่งเส้นทาง Up/Down บ่อยครั้ง แต่ตราบใดที่ยังมีเส้นทางย่อยอื่นที่ยัง Active อยู่ เส้นทางสรุปจะไม่มีการเปลี่ยนแปลงและไม่ส่ง Update ออกไป</li>
+        <li data-letter="B"><b>B</b> ปัญหาการเข้ารหัส Packet</li>
+        <li data-letter="C"><b>C</b> ปัญหา MTU Mismatch</li>
+        <li data-letter="D"><b>D</b> ปัญหา VLAN Mismatch</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 145</p>
+      <p class="mcq-q">Aggregate Address จำเป็นต้องมี Interface หรือ Static Route ที่ชี้ไปยัง Network/Mask นั้นโดยตรงหรือไม่?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> จำเป็นเสมอ เหมือนคำสั่ง network</li>
+        <li data-letter="B"><b>B</b> ไม่จำเป็น — aggregate-address ทำงานจากข้อมูลใน BGP Table โดยตรง ต่างจากคำสั่ง network ที่ต้องมี Exact Match ใน IP Routing Table</li>
+        <li data-letter="C"><b>C</b> จำเป็นเฉพาะเมื่อใช้ summary-only เท่านั้น</li>
+        <li data-letter="D"><b>D</b> จำเป็นเฉพาะบน iBGP Router เท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 146</p>
+      <p class="mcq-q">ข้อใดคือความเสี่ยงหลักของการทำ Aggregate โดยไม่ใช้ as-set เมื่อมีความเป็นไปได้ที่จะเกิด Loop จาก AS ที่ปรากฏในเส้นทางย่อยบางเส้นทาง?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Session จะ Reset ทันที</li>
+        <li data-letter="B"><b>B</b> BGP จะปฏิเสธการสร้าง Aggregate โดยอัตโนมัติ</li>
+        <li data-letter="C"><b>C</b> ข้อมูล AS Number ในเส้นทางย่อยที่อาจใช้ตรวจจับ Loop จะสูญหายไปในเส้นทางสรุป ทำให้ AS ปลายทางอาจไม่รู้ว่าเส้นทางนั้นเคยผ่าน AS ของตัวเองมาก่อน</li>
+        <li data-letter="D"><b>D</b> Local Preference จะเพิ่มขึ้นอัตโนมัติ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="D">
+      <p class="mcq-n">ข้อ 147</p>
+      <p class="mcq-q">ในทางปฏิบัติ AS_SET ที่เกิดจาก as-set มักไม่เป็นที่นิยมใช้ในเครือข่ายขนาดใหญ่ระดับ ISP เพราะเหตุใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพราะ AS_SET ทำให้ MED หายไป</li>
+        <li data-letter="B"><b>B</b> เพราะ AS_SET ไม่รองรับ IPv4</li>
+        <li data-letter="C"><b>C</b> เพราะ AS_SET ทำให้ Weight เปลี่ยนเป็นลบ</li>
+        <li data-letter="D"><b>D</b> เพราะเมื่อเส้นทางย่อยที่เป็นสมาชิกของ AS_SET เปลี่ยนแปลง (Flap) เส้นทางสรุปก็อาจต้องคำนวณ AS_SET ใหม่และส่ง Update ออกไปด้วย ทำให้เสียประโยชน์ด้านความเสถียรภาพที่ Summarization ควรมอบให้</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: D</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 148</p>
+      <p class="mcq-q">ข้อใดสรุปหลักการของ BGP Route Summarization ได้ถูกต้องที่สุด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ใช้คำสั่ง aggregate-address เพื่อรวมเส้นทางย่อยหลายเส้นทางใน BGP Table ให้เป็นเส้นทางสรุปเดียว ช่วยลดขนาด Table และเพิ่มเสถียรภาพ โดยสามารถเลือก Suppress เส้นทางย่อยด้วย summary-only และคง AS Path บางส่วนไว้ด้วย as-set</li>
+        <li data-letter="B"><b>B</b> BGP ไม่สามารถทำ Route Summarization ได้เลยในทุกกรณี</li>
+        <li data-letter="C"><b>C</b> Route Summarization ใน BGP ทำได้เฉพาะผ่านคำสั่ง network เท่านั้น</li>
+        <li data-letter="D"><b>D</b> aggregate-address ใช้ได้เฉพาะกับ iBGP เท่านั้น ไม่สามารถ Advertise ผ่าน eBGP ได้</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="bridge">
+      <b>อยากทวนก่อนทำอีกรอบ:</b> กลับไปอ่าน <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/exam`}>บทสวดขอให้สอบดี</a> ที่มีตารางสรุปรวบยอดทุกบท หรือกลับไปทำ <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/ospf-exam`}>ข้อสอบจำลอง OSPF</a>
+    </div>
+  </section>
+
+  <footer>
+    Internetwork · ข้อสอบจำลอง BGP 148 ข้อ · เรียบเรียงจากเนื้อหา Chapter 11: BGP
+  </footer>
+
+  <style>
+    .score-bar{
+      position:sticky;top:0;z-index:5;
+      display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+      background:var(--slate-soft);border:1px solid var(--slate);border-radius:12px;
+      padding:12px 18px;margin:0 0 24px;font-size:.88rem;color:var(--ink);
+    }
+    .score-bar b{font-family:var(--mono);color:var(--slate);font-size:1rem}
+    .score-bar button{
+      margin-left:auto;border:1px solid var(--slate);background:var(--card);color:var(--slate);
+      font-family:var(--sans);font-size:.82rem;font-weight:700;padding:6px 14px;border-radius:999px;
+      cursor:pointer;transition:background .15s;
+    }
+    .score-bar button:hover{background:var(--slate);color:#fff}
+
+    .mcq{border:1px solid var(--rule-soft);border-radius:14px;padding:22px 24px;margin-bottom:14px;background:var(--card)}
+    .mcq-n{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);font-weight:700;margin:0 0 8px}
+    .mcq-q{margin:0 0 12px;font-size:.98rem;color:var(--ink);font-weight:600;line-height:1.6}
+    .mcq-opts{list-style:none;margin:0 0 4px;padding:0;display:flex;flex-direction:column;gap:7px}
+    .mcq-opts li{padding:8px 12px;border:1px solid var(--rule-soft);border-radius:8px;font-size:.9rem;color:var(--ink-2);cursor:pointer;transition:border-color .12s, background .12s, transform .1s}
+    .mcq-opts li:hover{border-color:var(--slate);transform:translateX(2px)}
+    .mcq-opts li b{font-family:var(--mono);color:var(--slate);margin-right:8px}
+    .mcq[data-locked="1"] .mcq-opts li{cursor:default}
+    .mcq[data-locked="1"] .mcq-opts li:hover{transform:none}
+    .mcq-opts li.is-correct{border-color:var(--fwd);background:var(--fwd-soft);color:var(--ink)}
+    .mcq-opts li.is-correct b{color:var(--fwd)}
+    .mcq-opts li.is-wrong{border-color:var(--coral);background:var(--coral-soft);color:var(--ink)}
+    .mcq-opts li.is-wrong b{color:var(--coral)}
+    .mcq details{margin-top:12px}
+    .mcq summary{cursor:pointer;color:var(--slate);font-weight:700;font-size:.85rem;list-style:none}
+    .mcq summary::-webkit-details-marker{display:none}
+    .mcq summary::before{content:"▸ "}
+    .mcq details[open] summary::before{content:"▾ "}
+    .mcq-answer{margin-top:10px;padding-top:10px;border-top:1px dashed var(--rule);font-size:.88rem;color:var(--ink-2);line-height:1.6}
+    .mcq-answer b{color:var(--fwd)}
+
+    @media (max-width:640px){
+      .score-bar{gap:10px 16px}
+      .score-bar button{margin-left:0}
+    }
+  </style>
+
+  <script>
+    (function () {
+      const doneEl = document.getElementById("scoreDone");
+      const correctEl = document.getElementById("scoreCorrect");
+      const resetBtn = document.getElementById("resetMock");
+      let done = 0;
+      let correct = 0;
+
+      function updateScore() {
+        if (doneEl) doneEl.textContent = String(done);
+        if (correctEl) correctEl.textContent = String(correct);
+      }
+
+      document.querySelectorAll(".mcq[data-answer]").forEach((mcq) => {
+        const answer = mcq.getAttribute("data-answer");
+        mcq.querySelectorAll(".mcq-opts li").forEach((li) => {
+          li.addEventListener("click", () => {
+            if (mcq.getAttribute("data-locked") === "1") return;
+            mcq.setAttribute("data-locked", "1");
+
+            const letter = li.getAttribute("data-letter");
+            const isCorrect = letter === answer;
+            li.classList.add(isCorrect ? "is-correct" : "is-wrong");
+
+            if (!isCorrect) {
+              const correctLi = mcq.querySelector('.mcq-opts li[data-letter="' + answer + '"]');
+              if (correctLi) correctLi.classList.add("is-correct");
+            }
+
+            const details = mcq.querySelector("details");
+            if (details) details.open = true;
+
+            done += 1;
+            if (isCorrect) correct += 1;
+            updateScore();
+          });
+        });
+      });
+
+      if (resetBtn) {
+        resetBtn.addEventListener("click", () => location.reload());
+      }
+    })();
+  </script>
+
+</Layout>

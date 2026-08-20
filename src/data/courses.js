@@ -58,6 +58,7 @@ export const courses = [
         chapters: [
           { n: "★", slug: "exam", title: "บทสวดขอให้สอบดี", ready: true },
           { n: "✎", slug: "ospf-exam", title: "ข้อสอบจำลอง OSPF (50 ข้อ)", ready: true },
+          { n: "✎", slug: "bgp-exam", title: "ข้อสอบจำลอง BGP (148 ข้อ)", ready: true },
         ],
       },
     ],
