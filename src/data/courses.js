@@ -57,6 +57,7 @@ export const courses = [
         accent: "var(--gold)",
         chapters: [
           { n: "★", slug: "exam", title: "บทสวดขอให้สอบดี", ready: true },
+          { n: "✎", slug: "ospf-exam", title: "ข้อสอบจำลอง OSPF (50 ข้อ)", ready: true },
         ],
       },
     ],

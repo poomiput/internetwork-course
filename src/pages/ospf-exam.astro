@@ -1,0 +1,753 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+<Layout title="ข้อสอบจำลอง OSPF" description="Internetwork Chapter 9 — ข้อสอบจำลอง OSPF 50 ข้อ ครอบคลุมแนวคิดพื้นฐาน, Neighbors/Adjacencies, Areas/Router Types, LSAs, Packet Types, OSPFv2/v3, Route Summarization">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--slate)">Internetwork · Chapter 9 · OSPF</p>
+    <h1>ข้อสอบจำลอง OSPF</h1>
+    <p class="deck">50 ข้อ ครอบคลุม 7 หัวข้อของ Chapter 9: แนวคิดพื้นฐาน, Neighbors/Adjacencies, Areas/Router Types, LSAs, Packet Types, การกำหนดค่า OSPFv2/OSPFv3, และ Route Summarization — กดเลือกคำตอบได้จริง เลือกแล้วขึ้นถูก/ผิดทันทีพร้อมคำอธิบาย</p>
+    <div class="credit-bar">
+      <span>50 ข้อ</span><span>7 หัวข้อ</span><span>กดตอบได้จริง</span>
+    </div>
+  </header>
+
+  <div class="score-bar" id="scoreBar">
+    <span>ทำแล้ว <b id="scoreDone">0</b>/50 ข้อ</span>
+    <span>ถูก <b id="scoreCorrect">0</b> ข้อ</span>
+    <button type="button" id="resetMock">เริ่มใหม่</button>
+  </div>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">01</span><h2>แนวคิดพื้นฐานของ OSPF</h2></div>
+    <p class="sec-sub">Link-State, SPF, Cost, Router ID</p>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 1</p>
+      <p class="mcq-q">OSPF จัดอยู่ใน Routing Protocol ประเภทใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Distance Vector</li>
+        <li data-letter="B"><b>B</b> Link-State</li>
+        <li data-letter="C"><b>C</b> Path Vector</li>
+        <li data-letter="D"><b>D</b> Hybrid</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 2</p>
+      <p class="mcq-q">OSPF ใช้ Algorithm ใดในการคำนวณเส้นทางที่ดีที่สุด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Bellman-Ford</li>
+        <li data-letter="B"><b>B</b> Dijkstra (SPF)</li>
+        <li data-letter="C"><b>C</b> DUAL</li>
+        <li data-letter="D"><b>D</b> Floyd-Warshall</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 3</p>
+      <p class="mcq-q">ค่า Default Administrative Distance ของ OSPF คือเท่าใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 90</li>
+        <li data-letter="B"><b>B</b> 100</li>
+        <li data-letter="C"><b>C</b> 110</li>
+        <li data-letter="D"><b>D</b> 120</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 4</p>
+      <p class="mcq-q">OSPF ทำงานอยู่บน Protocol หมายเลขใดโดยตรง (ไม่ใช้ TCP/UDP)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 89</li>
+        <li data-letter="B"><b>B</b> 88</li>
+        <li data-letter="C"><b>C</b> 6</li>
+        <li data-letter="D"><b>D</b> 17</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b> — OSPF ใช้ IP Protocol 89 โดยตรง ส่วน 88 คือ EIGRP, 6 คือ TCP, 17 คือ UDP</div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 5</p>
+      <p class="mcq-q">สูตรคำนวณ Cost ของ OSPF คืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Bandwidth หารด้วย Delay</li>
+        <li data-letter="B"><b>B</b> Reference Bandwidth หารด้วย Interface Bandwidth</li>
+        <li data-letter="C"><b>C</b> Interface Bandwidth คูณ Delay</li>
+        <li data-letter="D"><b>D</b> Hop Count คูณ 10</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 6</p>
+      <p class="mcq-q">ค่า Reference Bandwidth เริ่มต้น (Default) ของ OSPF คือเท่าใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 1000 Mbps</li>
+        <li data-letter="B"><b>B</b> 100 Mbps</li>
+        <li data-letter="C"><b>C</b> 10 Mbps</li>
+        <li data-letter="D"><b>D</b> 10000 Mbps</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 7</p>
+      <p class="mcq-q">เพราะเหตุใดในเครือข่ายที่มีลิงก์ความเร็วสูง (เช่น 10 Gbps) จึงควรปรับค่าด้วยคำสั่ง <code>auto-cost reference-bandwidth</code>?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพื่อให้ Router ID เปลี่ยนอัตโนมัติ</li>
+        <li data-letter="B"><b>B</b> เพราะค่า default ทำให้ลิงก์ความเร็วสูงหลายแบบมี Cost เท่ากันหมด (เช่น Cost=1) ทำให้เลือกเส้นทางผิดพลาด</li>
+        <li data-letter="C"><b>C</b> เพื่อเปลี่ยน Area ID ของ Router</li>
+        <li data-letter="D"><b>D</b> เพื่อปิดการทำงานของ DR/BDR Election</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — ที่ reference bandwidth 100 Mbps ทั้ง FastEthernet, GigabitEthernet และ 10-GigE จะได้ Cost=1 เท่ากันหมด</div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 8</p>
+      <p class="mcq-q">OSPF Router ID ถูกเลือกตามลำดับใด (ถ้าไม่ตั้งค่าด้วยคำสั่ง <code>router-id</code>)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> IP ต่ำสุดของ physical interface ที่ active</li>
+        <li data-letter="B"><b>B</b> IP สูงสุดของ Loopback interface ก่อน ถ้าไม่มีจึงใช้ IP สูงสุดของ physical interface ที่ active</li>
+        <li data-letter="C"><b>C</b> MAC Address ที่ต่ำที่สุดในระบบ</li>
+        <li data-letter="D"><b>D</b> เลือกแบบสุ่มใหม่ทุกครั้งที่ Router reboot</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">02</span><h2>OSPF Neighbors และ Adjacencies</h2></div>
+    <p class="sec-sub">Neighbor States, DR/BDR Election, Network Types</p>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 9</p>
+      <p class="mcq-q">สถานะ (State) ใดคือสถานะสุดท้ายที่บ่งบอกว่า OSPF Adjacency สมบูรณ์เต็มที่แล้ว?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 2-Way</li>
+        <li data-letter="B"><b>B</b> ExStart</li>
+        <li data-letter="C"><b>C</b> Full</li>
+        <li data-letter="D"><b>D</b> Loading</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 10</p>
+      <p class="mcq-q">ข้อใดเรียงลำดับ OSPF Neighbor State ได้ถูกต้อง?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Down → Init → 2-Way → ExStart → Exchange → Loading → Full</li>
+        <li data-letter="B"><b>B</b> Down → 2-Way → Init → Exchange → ExStart → Loading → Full</li>
+        <li data-letter="C"><b>C</b> Init → Down → 2-Way → Loading → Exchange → ExStart → Full</li>
+        <li data-letter="D"><b>D</b> Down → Init → ExStart → 2-Way → Loading → Exchange → Full</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 11</p>
+      <p class="mcq-q">บนเครือข่ายแบบ Broadcast (เช่น Ethernet) Router ที่เป็น DROTHER จะอยู่ในสถานะใดกับ DROTHER ตัวอื่น (ไม่ใช่กับ DR/BDR)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Full</li>
+        <li data-letter="B"><b>B</b> 2-Way</li>
+        <li data-letter="C"><b>C</b> ExStart</li>
+        <li data-letter="D"><b>D</b> Down</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — DROTHER คุยกับ DR/BDR เท่านั้นที่จะขึ้นถึง Full ส่วนกับ DROTHER ด้วยกันจะค้างที่ 2-Way</div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 12</p>
+      <p class="mcq-q">ข้อใด "ไม่ใช่" เงื่อนไขที่ Router สองตัวต้องตรงกันจึงจะเป็น OSPF Neighbor กันได้?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Area ID</li>
+        <li data-letter="B"><b>B</b> Hello/Dead Interval</li>
+        <li data-letter="C"><b>C</b> หมายเลข Process ID (router ospf X)</li>
+        <li data-letter="D"><b>D</b> Authentication</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b> — Process ID เป็นค่า local เฉพาะเครื่องแต่ละเครื่อง ไม่จำเป็นต้องตรงกันเพื่อเป็น Neighbor กัน</div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 13</p>
+      <p class="mcq-q">ค่า Dead Interval มาตรฐานของ OSPF สัมพันธ์กับ Hello Interval อย่างไร (บนเครือข่าย Broadcast/P2P)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เท่ากับ Hello Interval</li>
+        <li data-letter="B"><b>B</b> เป็น 2 เท่าของ Hello Interval</li>
+        <li data-letter="C"><b>C</b> เป็น 4 เท่าของ Hello Interval</li>
+        <li data-letter="D"><b>D</b> ไม่มีความสัมพันธ์กัน ตั้งอิสระ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b> — Hello 10 วิ → Dead 40 วิ (Broadcast/P2P) และ Hello 30 วิ → Dead 120 วิ (NBMA/P2MP)</div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 14</p>
+      <p class="mcq-q">บนเครือข่ายประเภทใดที่ OSPF "ไม่ต้อง" เลือก DR/BDR?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Broadcast</li>
+        <li data-letter="B"><b>B</b> Non-Broadcast (NBMA)</li>
+        <li data-letter="C"><b>C</b> Point-to-Point</li>
+        <li data-letter="D"><b>D</b> ถูกทั้ง Broadcast และ NBMA</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b> — ลิงก์ P2P มีแค่ 2 ปลายทาง ไม่จำเป็นต้องมี DR/BDR มาช่วยลดจำนวน Adjacency</div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 15</p>
+      <p class="mcq-q">การเลือก DR/BDR พิจารณาจากอะไรเป็นอันดับแรก?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Router ID สูงสุด</li>
+        <li data-letter="B"><b>B</b> OSPF Priority สูงสุด (ถ้าเท่ากันจึงใช้ Router ID สูงสุดตัดสิน)</li>
+        <li data-letter="C"><b>C</b> IP Address ต่ำสุดของ Interface</li>
+        <li data-letter="D"><b>D</b> ลำดับการเปิดเครื่องก่อน-หลัง</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 16</p>
+      <p class="mcq-q">Interface ที่ตั้งค่า OSPF Priority เป็น 0 จะมีผลอย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> กลายเป็น DR ทันทีโดยอัตโนมัติ</li>
+        <li data-letter="B"><b>B</b> จะไม่มีสิทธิ์เป็นทั้ง DR และ BDR เลย (0 = ไม่ร่วมเลือกเลย)</li>
+        <li data-letter="C"><b>C</b> ปิดการทำงาน OSPF บน interface นั้นทันที</li>
+        <li data-letter="D"><b>D</b> บังคับให้ต้องเปิด Authentication เพิ่ม</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">03</span><h2>OSPF Areas และ Router Types</h2></div>
+    <p class="sec-sub">Backbone Area, ABR, ASBR, Stub/NSSA</p>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 17</p>
+      <p class="mcq-q">Area ใดที่ทุก Area อื่นต้องเชื่อมต่อด้วยโดยตรงหรือผ่าน Virtual Link?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Area 1</li>
+        <li data-letter="B"><b>B</b> Area 0 (Backbone Area)</li>
+        <li data-letter="C"><b>C</b> Area ที่มีเลขต่ำสุดในเครือข่าย</li>
+        <li data-letter="D"><b>D</b> Stub Area</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 18</p>
+      <p class="mcq-q">Router ที่มี interface อยู่มากกว่า 1 Area โดยหนึ่งใน interface นั้นต้องอยู่ใน Area 0 เรียกว่าอะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Internal Router</li>
+        <li data-letter="B"><b>B</b> ASBR</li>
+        <li data-letter="C"><b>C</b> Area Border Router (ABR)</li>
+        <li data-letter="D"><b>D</b> Backbone Router เท่านั้น (คำเดียวโดดๆ)</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 19</p>
+      <p class="mcq-q">Router ที่ทำหน้าที่ redistribute เส้นทางจากภายนอก (เช่นจาก BGP หรือ Static) เข้าสู่ OSPF เรียกว่าอะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ABR</li>
+        <li data-letter="B"><b>B</b> ASBR (Autonomous System Boundary Router)</li>
+        <li data-letter="C"><b>C</b> Internal Router</li>
+        <li data-letter="D"><b>D</b> DR</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 20</p>
+      <p class="mcq-q">Stub Area บล็อกการรับ LSA ประเภทใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Type 1 และ Type 2</li>
+        <li data-letter="B"><b>B</b> Type 5 (AS External LSA)</li>
+        <li data-letter="C"><b>C</b> Type 3 เท่านั้น</li>
+        <li data-letter="D"><b>D</b> ไม่บล็อกอะไรเลย</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — Stub Area แทน Type 5 ด้วย default route แทน</div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 21</p>
+      <p class="mcq-q">Totally Stubby Area ต่างจาก Stub Area ปกติอย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เหมือนกันทุกประการ ใช้แทนกันได้</li>
+        <li data-letter="B"><b>B</b> Totally Stubby บล็อกทั้ง Type 3 (Summary) และ Type 5 เหลือแค่ default route เท่านั้น</li>
+        <li data-letter="C"><b>C</b> Totally Stubby อนุญาต Type 5 แต่ Stub ปกติไม่อนุญาต</li>
+        <li data-letter="D"><b>D</b> Totally Stubby ใช้ได้กับ Area 0 เท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 22</p>
+      <p class="mcq-q">NSSA (Not-So-Stubby Area) ใช้ LSA ประเภทใดแทน Type 5 ภายใน Area?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Type 1</li>
+        <li data-letter="B"><b>B</b> Type 4</li>
+        <li data-letter="C"><b>C</b> Type 7</li>
+        <li data-letter="D"><b>D</b> Type 3</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 23</p>
+      <p class="mcq-q">Router ที่มี interface ทั้งหมดอยู่ใน Area เดียวกัน (ไม่ใช่ Area 0) เรียกว่าอะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Internal Router</li>
+        <li data-letter="B"><b>B</b> ABR</li>
+        <li data-letter="C"><b>C</b> ASBR</li>
+        <li data-letter="D"><b>D</b> Backbone Router</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 24</p>
+      <p class="mcq-q">เพราะเหตุใด OSPF จึงต้องใช้ระบบ Area แบ่งเครือข่าย แทนที่จะใช้ Area เดียวทั้งหมด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพื่อให้ตั้งชื่อ Router สวยงามเป็นระบบขึ้น</li>
+        <li data-letter="B"><b>B</b> เพื่อลดขนาด Link-State Database และขอบเขตการคำนวณ SPF ในแต่ละ Router ทำให้เครือข่ายขยายใหญ่ได้โดยไม่กระทบประสิทธิภาพ</li>
+        <li data-letter="C"><b>C</b> เพราะ OSPF ไม่รองรับการใช้ Area เดียว</li>
+        <li data-letter="D"><b>D</b> เพื่อบังคับให้ต้องใช้ Virtual Link เสมอ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">04</span><h2>LSAs (Link-State Advertisements)</h2></div>
+    <p class="sec-sub">Type 1-5, 7 และ Type 8-9 ของ OSPFv3</p>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 25</p>
+      <p class="mcq-q">LSA Type 1 (Router LSA) ถูกสร้างโดยใครและ flood ไปถึงไหน?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> สร้างโดย DR เท่านั้น flood ทั่ว AS</li>
+        <li data-letter="B"><b>B</b> สร้างโดยทุก Router flood เฉพาะภายใน Area เดียวกัน</li>
+        <li data-letter="C"><b>C</b> สร้างโดย ABR flood ข้าม Area</li>
+        <li data-letter="D"><b>D</b> สร้างโดย ASBR เท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 26</p>
+      <p class="mcq-q">LSA Type 2 (Network LSA) ถูกสร้างโดยใคร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ทุก Router ในเครือข่าย</li>
+        <li data-letter="B"><b>B</b> DR (Designated Router) บนเครือข่ายแบบ Multi-access</li>
+        <li data-letter="C"><b>C</b> ABR เท่านั้น</li>
+        <li data-letter="D"><b>D</b> ASBR เท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 27</p>
+      <p class="mcq-q">LSA Type 3 (Summary LSA) มีหน้าที่อะไร และสร้างโดยใคร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ประกาศเส้นทางภายนอก AS สร้างโดย ASBR</li>
+        <li data-letter="B"><b>B</b> ประกาศเครือข่ายจาก Area หนึ่งเข้าสู่อีก Area หนึ่ง สร้างโดย ABR</li>
+        <li data-letter="C"><b>C</b> ประกาศตำแหน่งของ ASBR สร้างโดย ABR</li>
+        <li data-letter="D"><b>D</b> อธิบาย Link ของ Router เอง</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — ใน OSPFv3 เรียกว่า Interarea Prefix LSA</div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 28</p>
+      <p class="mcq-q">LSA Type 4 (ASBR Summary LSA) มีหน้าที่อะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> บอกเส้นทางไปยัง Network ภายนอกโดยตรง</li>
+        <li data-letter="B"><b>B</b> บอกตำแหน่ง (reachability) ของ ASBR ให้ Area อื่นรู้จัก</li>
+        <li data-letter="C"><b>C</b> อธิบาย Link ของ DR</li>
+        <li data-letter="D"><b>D</b> ใช้แทน Type 1 ใน Stub Area</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — ใน OSPFv3 เรียกว่า Interarea Router LSA</div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 29</p>
+      <p class="mcq-q">LSA Type 5 (AS External LSA) ถูก flood ไปถึงขอบเขตใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เฉพาะภายใน Area เดียวกัน</li>
+        <li data-letter="B"><b>B</b> ทั่วทั้ง Autonomous System ยกเว้น Stub/NSSA Area</li>
+        <li data-letter="C"><b>C</b> เฉพาะระหว่าง DR กับ BDR เท่านั้น</li>
+        <li data-letter="D"><b>D</b> ไม่ถูก flood ออกจาก Router ที่สร้างเลย</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 30</p>
+      <p class="mcq-q">ใน OSPFv3 (IPv6) มี LSA ใหม่คือ Link LSA และ Intra-Area Prefix LSA ตรงกับหมายเลขใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Type 6 และ Type 7</li>
+        <li data-letter="B"><b>B</b> Type 8 และ Type 9</li>
+        <li data-letter="C"><b>C</b> Type 3 และ Type 4</li>
+        <li data-letter="D"><b>D</b> Type 1 และ Type 2</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 31</p>
+      <p class="mcq-q">เมื่อ NSSA แปลง LSA Type 7 เป็น Type 5 เพื่อส่งต่อออกไปนอก Area จะเกิดขึ้นที่จุดใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ที่ ASBR ต้นทางที่ redistribute เข้ามา</li>
+        <li data-letter="B"><b>B</b> ที่ ABR ของ NSSA นั้น</li>
+        <li data-letter="C"><b>C</b> ที่ DR ภายใน Area</li>
+        <li data-letter="D"><b>D</b> ไม่มีการแปลง ส่ง Type 7 ออกไปตรงๆ ทั่วทั้ง AS</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 32</p>
+      <p class="mcq-q">LSA ประเภทใดที่ Router ทุกตัวสร้างขึ้นเสมอ แม้จะไม่มี Network หรือ External Route ใดๆ เลยก็ตาม?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Type 1 (Router LSA)</li>
+        <li data-letter="B"><b>B</b> Type 3</li>
+        <li data-letter="C"><b>C</b> Type 5</li>
+        <li data-letter="D"><b>D</b> Type 7</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b> — Router LSA อธิบาย Link ของตัวเอง ทุก Router ต้องสร้างเสมอไม่ว่าจะมีเส้นทางอื่นหรือไม่</div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">05</span><h2>OSPF Packet Types</h2></div>
+    <p class="sec-sub">Hello, DBD, LSR, LSU, LSAck</p>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 33</p>
+      <p class="mcq-q">OSPF มี Packet Type ทั้งหมดกี่ประเภท?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 3</li>
+        <li data-letter="B"><b>B</b> 4</li>
+        <li data-letter="C"><b>C</b> 5</li>
+        <li data-letter="D"><b>D</b> 7</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b> — Hello, DBD, LSR, LSU, LSAck</div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 34</p>
+      <p class="mcq-q">Packet ประเภทใดใช้สำหรับค้นหาและรักษาสถานะ Neighbor?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Hello</li>
+        <li data-letter="B"><b>B</b> DBD</li>
+        <li data-letter="C"><b>C</b> LSR</li>
+        <li data-letter="D"><b>D</b> LSAck</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 35</p>
+      <p class="mcq-q">Packet ประเภทใดใช้สรุปเนื้อหาของ Link-State Database ระหว่างขั้นตอน Exchange?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Hello</li>
+        <li data-letter="B"><b>B</b> Database Description (DBD)</li>
+        <li data-letter="C"><b>C</b> LSU</li>
+        <li data-letter="D"><b>D</b> LSAck</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 36</p>
+      <p class="mcq-q">เมื่อ Router พบว่าตนเองขาด LSA บางรายการหลังเปรียบเทียบ DBD จะส่ง Packet ประเภทใดเพื่อขอข้อมูลเพิ่ม?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> LSAck</li>
+        <li data-letter="B"><b>B</b> Link State Request (LSR)</li>
+        <li data-letter="C"><b>C</b> Hello</li>
+        <li data-letter="D"><b>D</b> ส่ง DBD ซ้ำอีกครั้ง</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 37</p>
+      <p class="mcq-q">Packet ประเภทใดที่บรรจุ LSA จริงๆ เพื่อตอบสนองต่อ LSR หรือใช้ flood ข้อมูล?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Link State Update (LSU)</li>
+        <li data-letter="B"><b>B</b> DBD</li>
+        <li data-letter="C"><b>C</b> Hello</li>
+        <li data-letter="D"><b>D</b> LSAck</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 38</p>
+      <p class="mcq-q">Packet ประเภทใดใช้ยืนยันว่าได้รับ LSU เรียบร้อยแล้ว?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> LSR</li>
+        <li data-letter="B"><b>B</b> DBD</li>
+        <li data-letter="C"><b>C</b> Link State Acknowledgment (LSAck)</li>
+        <li data-letter="D"><b>D</b> Hello</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">06</span><h2>การกำหนดค่า OSPFv2 (IPv4) และ OSPFv3 (IPv6)</h2></div>
+    <p class="sec-sub">คำสั่งพื้นฐาน, ipv6 unicast-routing, Router ID</p>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 39</p>
+      <p class="mcq-q">คำสั่งใดใช้เปิดใช้งาน OSPF Process สำหรับ IPv4?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> router ospf &lt;process-id&gt;</li>
+        <li data-letter="B"><b>B</b> ip ospf enable</li>
+        <li data-letter="C"><b>C</b> ospf process &lt;id&gt;</li>
+        <li data-letter="D"><b>D</b> ipv6 router ospf &lt;process-id&gt;</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 40</p>
+      <p class="mcq-q">คำสั่งใดใช้ระบุว่า Interface ใดเข้าร่วม OSPF Area ใด ในรูปแบบดั้งเดิม (Classic) ของ OSPFv2?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> area &lt;id&gt; network &lt;ip&gt;</li>
+        <li data-letter="B"><b>B</b> network &lt;ip&gt; &lt;wildcard-mask&gt; area &lt;area-id&gt;</li>
+        <li data-letter="C"><b>C</b> ip address &lt;ip&gt; area &lt;id&gt;</li>
+        <li data-letter="D"><b>D</b> router-id &lt;id&gt;</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 41</p>
+      <p class="mcq-q">ก่อนใช้งาน OSPFv3 บน Router ต้องเปิดคำสั่ง Global ใดก่อน?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ip routing</li>
+        <li data-letter="B"><b>B</b> ipv6 unicast-routing</li>
+        <li data-letter="C"><b>C</b> ip cef</li>
+        <li data-letter="D"><b>D</b> ipv6 enable ospf</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 42</p>
+      <p class="mcq-q">การเปิดใช้งาน OSPFv3 บน Interface ทำผ่านคำสั่งใด (แบบ Classic)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> network &lt;ipv6&gt; area &lt;id&gt; ภายใต้ router ospf</li>
+        <li data-letter="B"><b>B</b> ipv6 ospf &lt;process-id&gt; area &lt;area-id&gt; ภายใต้โหมด interface</li>
+        <li data-letter="C"><b>C</b> router ospf &lt;id&gt; ipv6</li>
+        <li data-letter="D"><b>D</b> area &lt;id&gt; ipv6-enable</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — ต่างจาก OSPFv2 ตรงที่ OSPFv3 (แบบ Classic) เปิดใช้งานที่ระดับ Interface โดยตรง ไม่ใช้คำสั่ง network</div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 43</p>
+      <p class="mcq-q">เพราะเหตุใด Router ที่รัน OSPFv3 (IPv6-only ไม่มี IPv4 เลย) จึงมักต้องกำหนด Router ID ด้วยตนเอง?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> OSPFv3 ไม่รองรับแนวคิด Router ID</li>
+        <li data-letter="B"><b>B</b> Router ID ยังคงเป็นรูปแบบ 32-bit เหมือน IPv4 แต่ไม่มี IPv4 Address ให้เลือกใช้อัตโนมัติ</li>
+        <li data-letter="C"><b>C</b> OSPFv3 ใช้ MAC Address แทน Router ID เสมอ</li>
+        <li data-letter="D"><b>D</b> ไม่จำเป็นต้องตั้งเลย ระบบสุ่มให้อัตโนมัติเสมอ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 44</p>
+      <p class="mcq-q">OSPFv3 ใช้ Address ประเภทใดในการติดต่อสื่อสารระหว่าง Neighbor (Hello packets)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Global Unicast Address เท่านั้น</li>
+        <li data-letter="B"><b>B</b> Link-Local Address</li>
+        <li data-letter="C"><b>C</b> Multicast Address แบบเดียวกับ IPv4</li>
+        <li data-letter="D"><b>D</b> Anycast Address</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">07</span><h2>OSPF Route Summarization</h2></div>
+    <p class="sec-sub">Interarea Summarization (ABR) vs External Summarization (ASBR)</p>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 45</p>
+      <p class="mcq-q">Route Summarization แบบ Interarea (ระหว่าง Area) ทำที่ Router ประเภทใด และใช้คำสั่งใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ทำที่ ASBR ด้วยคำสั่ง summary-address</li>
+        <li data-letter="B"><b>B</b> ทำที่ ABR ด้วยคำสั่ง area &lt;area-id&gt; range &lt;prefix&gt; &lt;mask&gt;</li>
+        <li data-letter="C"><b>C</b> ทำที่ Internal Router ด้วยคำสั่ง network summary</li>
+        <li data-letter="D"><b>D</b> ทำที่ DR ด้วยคำสั่ง summary-address</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 46</p>
+      <p class="mcq-q">Route Summarization สำหรับเส้นทางภายนอกที่ Redistribute เข้ามา (External Route) ทำที่ Router ประเภทใด และใช้คำสั่งใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ทำที่ ABR ด้วยคำสั่ง area range</li>
+        <li data-letter="B"><b>B</b> ทำที่ ASBR ด้วยคำสั่ง summary-address &lt;prefix&gt; &lt;mask&gt;</li>
+        <li data-letter="C"><b>C</b> ทำที่ DR ด้วยคำสั่ง area range</li>
+        <li data-letter="D"><b>D</b> ไม่สามารถ Summarize เส้นทางภายนอกได้เลย</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 47</p>
+      <p class="mcq-q">ประโยชน์หลักของการทำ Route Summarization ใน OSPF คืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพิ่มจำนวน LSA ให้มากขึ้นเพื่อความละเอียด</li>
+        <li data-letter="B"><b>B</b> ลดขนาด Routing Table และลดผลกระทบจาก Route ที่ Flap บ่อยๆ ไม่ให้กระทบ Area อื่น</li>
+        <li data-letter="C"><b>C</b> เปลี่ยน Router ID โดยอัตโนมัติ</li>
+        <li data-letter="D"><b>D</b> บังคับให้ทุก Router กลายเป็น ABR</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 48</p>
+      <p class="mcq-q">เมื่อทำ Summarization บน ABR ด้วยคำสั่ง <code>area range</code> มักจะเกิดอะไรขึ้นโดยอัตโนมัติเพื่อป้องกัน Routing Loop?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> สร้าง Route ไปยัง Null0 (Discard Route) โดยอัตโนมัติ</li>
+        <li data-letter="B"><b>B</b> ปิดการทำงานของ Interface ทั้งหมดบน ABR</li>
+        <li data-letter="C"><b>C</b> ลบ LSA Type 1 ทิ้งทั้งหมด</li>
+        <li data-letter="D"><b>D</b> เปลี่ยน Area ID ของทุก Router ในเครือข่าย</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 49</p>
+      <p class="mcq-q">ถ้า Network ย่อยภายใน Area 1 เปลี่ยนแปลงสถานะบ่อยครั้ง (Flapping) แต่ ABR ได้ Summarize Area 1 ไว้แล้ว จะเกิดผลอย่างไรกับ Area อื่น?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ทุก Area จะคำนวณ SPF ใหม่ทุกครั้งเหมือนไม่ได้ Summarize</li>
+        <li data-letter="B"><b>B</b> Area อื่นจะไม่เห็นผลกระทบจากการ Flap เพราะเห็นแค่เส้นทางสรุปที่ Summarize ไว้เท่านั้น</li>
+        <li data-letter="C"><b>C</b> เครือข่ายทั้งหมดจะล่มทันที</li>
+        <li data-letter="D"><b>D</b> Summarization จะถูกยกเลิกโดยอัตโนมัติ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 50</p>
+      <p class="mcq-q">ข้อใดคือความแตกต่างสำคัญที่สุดระหว่าง Interarea Summarization กับ External Route Summarization?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ไม่มีความแตกต่างกันเลย ใช้คำสั่งเดียวกันทั้งคู่</li>
+        <li data-letter="B"><b>B</b> Interarea ทำที่ ABR สรุปเส้นทางระหว่าง Area (คำสั่ง area range) ส่วน External ทำที่ ASBR สรุปเส้นทางที่ Redistribute เข้ามา (คำสั่ง summary-address)</li>
+        <li data-letter="C"><b>C</b> Interarea ใช้ได้กับ OSPFv3 เท่านั้น</li>
+        <li data-letter="D"><b>D</b> External Summarization ทำได้เฉพาะใน Stub Area เท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="bridge">
+      <b>อยากทวนก่อนทำอีกรอบ:</b> กลับไปอ่าน <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/ch9`}>Chapter 9: OSPF</a> หรือ <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/exam`}>บทสวดขอให้สอบดี</a> ที่มีตารางสรุปรวบยอดทุกบท
+    </div>
+  </section>
+
+  <footer>
+    Internetwork · ข้อสอบจำลอง OSPF 50 ข้อ · เรียบเรียงจากเนื้อหา Chapter 9: OSPF ครอบคลุมทั้ง OSPFv2 และ OSPFv3
+  </footer>
+
+  <style>
+    .score-bar{
+      position:sticky;top:0;z-index:5;
+      display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+      background:var(--slate-soft);border:1px solid var(--slate);border-radius:12px;
+      padding:12px 18px;margin:0 0 24px;font-size:.88rem;color:var(--ink);
+    }
+    .score-bar b{font-family:var(--mono);color:var(--slate);font-size:1rem}
+    .score-bar button{
+      margin-left:auto;border:1px solid var(--slate);background:var(--card);color:var(--slate);
+      font-family:var(--sans);font-size:.82rem;font-weight:700;padding:6px 14px;border-radius:999px;
+      cursor:pointer;transition:background .15s;
+    }
+    .score-bar button:hover{background:var(--slate);color:#fff}
+
+    .mcq{border:1px solid var(--rule-soft);border-radius:14px;padding:22px 24px;margin-bottom:14px;background:var(--card)}
+    .mcq-n{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);font-weight:700;margin:0 0 8px}
+    .mcq-q{margin:0 0 12px;font-size:.98rem;color:var(--ink);font-weight:600;line-height:1.6}
+    .mcq-opts{list-style:none;margin:0 0 4px;padding:0;display:flex;flex-direction:column;gap:7px}
+    .mcq-opts li{padding:8px 12px;border:1px solid var(--rule-soft);border-radius:8px;font-size:.9rem;color:var(--ink-2);cursor:pointer;transition:border-color .12s, background .12s, transform .1s}
+    .mcq-opts li:hover{border-color:var(--slate);transform:translateX(2px)}
+    .mcq-opts li b{font-family:var(--mono);color:var(--slate);margin-right:8px}
+    .mcq[data-locked="1"] .mcq-opts li{cursor:default}
+    .mcq[data-locked="1"] .mcq-opts li:hover{transform:none}
+    .mcq-opts li.is-correct{border-color:var(--fwd);background:var(--fwd-soft);color:var(--ink)}
+    .mcq-opts li.is-correct b{color:var(--fwd)}
+    .mcq-opts li.is-wrong{border-color:var(--coral);background:var(--coral-soft);color:var(--ink)}
+    .mcq-opts li.is-wrong b{color:var(--coral)}
+    .mcq details{margin-top:12px}
+    .mcq summary{cursor:pointer;color:var(--slate);font-weight:700;font-size:.85rem;list-style:none}
+    .mcq summary::-webkit-details-marker{display:none}
+    .mcq summary::before{content:"▸ "}
+    .mcq details[open] summary::before{content:"▾ "}
+    .mcq-answer{margin-top:10px;padding-top:10px;border-top:1px dashed var(--rule);font-size:.88rem;color:var(--ink-2);line-height:1.6}
+    .mcq-answer b{color:var(--fwd)}
+
+    @media (max-width:640px){
+      .score-bar{gap:10px 16px}
+      .score-bar button{margin-left:0}
+    }
+  </style>
+
+  <script>
+    (function () {
+      const doneEl = document.getElementById("scoreDone");
+      const correctEl = document.getElementById("scoreCorrect");
+      const resetBtn = document.getElementById("resetMock");
+      let done = 0;
+      let correct = 0;
+
+      function updateScore() {
+        if (doneEl) doneEl.textContent = String(done);
+        if (correctEl) correctEl.textContent = String(correct);
+      }
+
+      document.querySelectorAll(".mcq[data-answer]").forEach((mcq) => {
+        const answer = mcq.getAttribute("data-answer");
+        mcq.querySelectorAll(".mcq-opts li").forEach((li) => {
+          li.addEventListener("click", () => {
+            if (mcq.getAttribute("data-locked") === "1") return;
+            mcq.setAttribute("data-locked", "1");
+
+            const letter = li.getAttribute("data-letter");
+            const isCorrect = letter === answer;
+            li.classList.add(isCorrect ? "is-correct" : "is-wrong");
+
+            if (!isCorrect) {
+              const correctLi = mcq.querySelector('.mcq-opts li[data-letter="' + answer + '"]');
+              if (correctLi) correctLi.classList.add("is-correct");
+            }
+
+            const details = mcq.querySelector("details");
+            if (details) details.open = true;
+
+            done += 1;
+            if (isCorrect) correct += 1;
+            updateScore();
+          });
+        });
+      });
+
+      if (resetBtn) {
+        resetBtn.addEventListener("click", () => location.reload());
+      }
+    })();
+  </script>
+
+</Layout>
