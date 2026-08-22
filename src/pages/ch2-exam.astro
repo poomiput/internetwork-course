@@ -1,0 +1,736 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+<Layout title="ข้อสอบจำลอง Chapter 2" description="Internetwork Chapter 2 — ข้อสอบจำลอง 49 ข้อ ครอบคลุม STP/RSTP: Root Bridge Election, Port/Path Cost, Port States/Roles, Rapid Convergence, TCN">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--coral)">Internetwork · Chapter 2 · STP &amp; RSTP</p>
+    <h1>ข้อสอบจำลอง Chapter 2</h1>
+    <p class="deck">49 ข้อ ครอบคลุมเนื้อหา Chapter 2 ทั้งหมด: ศัพท์ STP พื้นฐาน, ลำดับการตัดสินใจ 4 ขั้น, Port Cost vs Path Cost, Designated Port/Blocking, STP vs RSTP (States/Roles/Types), กลไก Rapid Convergence ของ RSTP, และ Topology Change Notification — กดเลือกคำตอบได้จริง เลือกแล้วขึ้นถูก/ผิดทันทีพร้อมคำอธิบาย</p>
+    <div class="credit-bar">
+      <span>49 ข้อ</span><span>6 หัวข้อ</span><span>กดตอบได้จริง</span>
+    </div>
+  </header>
+
+  <div class="score-bar" id="scoreBar">
+    <span>ทำแล้ว <b id="scoreDone">0</b>/49 ข้อ</span>
+    <span>ถูก <b id="scoreCorrect">0</b> ข้อ</span>
+    <button type="button" id="resetMock">เริ่มใหม่</button>
+  </div>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">01</span><h2>STP พื้นฐานและศัพท์สำคัญ</h2></div>
+    <p class="sec-sub">BPDU, Root Bridge, Bridge ID, Timer ต่างๆ — ออกสอบทั้งหมด</p>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 1</p>
+      <p class="mcq-q">Spanning Tree Protocol แก้ปัญหาอะไรเป็นหลัก?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพิ่มความเร็วของลิงก์</li>
+        <li data-letter="B"><b>B</b> ป้องกัน Loop จากสายสำรอง (Redundant Link) ที่อาจทำให้ Broadcast วิ่งวนไม่จบ</li>
+        <li data-letter="C"><b>C</b> เข้ารหัสข้อมูล</li>
+        <li data-letter="D"><b>D</b> จัดการ VLAN Database</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 2</p>
+      <p class="mcq-q">BPDU คืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> PDU ที่สวิตช์ใช้คุยกันเรื่องโครงสร้าง/การเปลี่ยนแปลงของ Spanning Tree</li>
+        <li data-letter="B"><b>B</b> โปรโตคอลเข้ารหัส</li>
+        <li data-letter="C"><b>C</b> ชื่อของ Root Bridge</li>
+        <li data-letter="D"><b>D</b> คำสั่งตั้งค่า VLAN</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 3</p>
+      <p class="mcq-q">Root Bridge คืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> สวิตช์ที่ทุกพอร์ตถูก Block หมด</li>
+        <li data-letter="B"><b>B</b> สวิตช์ที่ถูกเลือกเป็นหัวแถว — ทุกพอร์ตของมันเป็น Designated Port หมด</li>
+        <li data-letter="C"><b>C</b> สวิตช์ตัวสุดท้ายในเครือข่าย</li>
+        <li data-letter="D"><b>D</b> สวิตช์ที่ปิดเครื่องอยู่</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 4</p>
+      <p class="mcq-q">Bridge Identifier ประกอบด้วยอะไรบ้าง?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Priority + System Extension ID + MAC Address</li>
+        <li data-letter="B"><b>B</b> IP Address เท่านั้น</li>
+        <li data-letter="C"><b>C</b> VLAN ID เท่านั้น</li>
+        <li data-letter="D"><b>D</b> Port Number เท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 5</p>
+      <p class="mcq-q">ค่า System Priority เริ่มต้น (Default) ของ STP คือเท่าใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 4096</li>
+        <li data-letter="B"><b>B</b> 32768</li>
+        <li data-letter="C"><b>C</b> 65535</li>
+        <li data-letter="D"><b>D</b> 100</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 6</p>
+      <p class="mcq-q">System Extension ID มีหน้าที่อะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ระบุ VLAN ที่ BPDU นั้นเกี่ยวข้องด้วย เช่น VLAN1 → +1</li>
+        <li data-letter="B"><b>B</b> เข้ารหัสรหัสผ่าน</li>
+        <li data-letter="C"><b>C</b> กำหนดความเร็วพอร์ต</li>
+        <li data-letter="D"><b>D</b> ระบุ MAC Address ของสวิตช์</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 7</p>
+      <p class="mcq-q">Max Age คืออะไร และมีค่า Default เท่าใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เวลาสูงสุดที่พอร์ตเก็บข้อมูล BPDU เดิมไว้ก่อนเชื่อว่าล้าสมัย default 20 วินาที</li>
+        <li data-letter="B"><b>B</b> เวลาที่ต้องรอก่อน Forward default 15 วินาที</li>
+        <li data-letter="C"><b>C</b> ความเร็วสูงสุดของพอร์ต</li>
+        <li data-letter="D"><b>D</b> จำนวนสวิตช์สูงสุดในเครือข่าย</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 8</p>
+      <p class="mcq-q">Hello Time คืออะไร และมีค่า Default เท่าใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ช่วงเวลาที่ BPDU ถูกประกาศออกทุกพอร์ต default 2 วินาที</li>
+        <li data-letter="B"><b>B</b> เวลารอ Forward Delay</li>
+        <li data-letter="C"><b>C</b> เวลาที่ใช้เลือก Root Bridge</li>
+        <li data-letter="D"><b>D</b> เวลา timeout ของ MAC Table</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 9</p>
+      <p class="mcq-q">Forward Delay คืออะไร และมีค่า Default เท่าใด (นับรวมสองช่วง Listening+Learning)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เวลาที่พอร์ตค้างสถานะ Listening/Learning แต่ละช่วง default 15 วินาที (×2 = 30 วิ)</li>
+        <li data-letter="B"><b>B</b> เวลาระหว่าง Hello Packet</li>
+        <li data-letter="C"><b>C</b> เวลาที่ใช้ล้าง MAC Table</li>
+        <li data-letter="D"><b>D</b> เวลา timeout ของ BPDU</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 10</p>
+      <p class="mcq-q">Root Path Cost คืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ค่า cost ของพอร์ตเดียว</li>
+        <li data-letter="B"><b>B</b> ผลรวมค่า cost ของเส้นทางไปยัง Root Bridge สะสมตามจำนวนฮอป</li>
+        <li data-letter="C"><b>C</b> ความเร็วของ Root Bridge</li>
+        <li data-letter="D"><b>D</b> จำนวนสวิตช์ทั้งหมดในเครือข่าย</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">02</span><h2>ลำดับการตัดสินใจของ STP</h2></div>
+    <p class="sec-sub">4 ขั้นตอนที่ RSTP และ MST ก็ใช้โครงเดียวกันสืบทอดต่อไป</p>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 11</p>
+      <p class="mcq-q">ลำดับการตัดสินใจของ STP ข้อแรกสุดคืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Root Path Cost</li>
+        <li data-letter="B"><b>B</b> เลือก Root Bridge (Priority ต่ำสุดชนะ ถ้าเท่ากันดู MAC ต่ำสุด)</li>
+        <li data-letter="C"><b>C</b> Sender Port ID</li>
+        <li data-letter="D"><b>D</b> Sender Bridge ID</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 12</p>
+      <p class="mcq-q">ถ้า Priority ของทุกสวิตช์เท่ากันหมด (เช่น default 32769 บน VLAN1) จะตัดสินเลือก Root Bridge ด้วยอะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> MAC Address ต่ำสุดชนะ</li>
+        <li data-letter="B"><b>B</b> IP Address ต่ำสุดชนะ</li>
+        <li data-letter="C"><b>C</b> ลำดับการเปิดเครื่องก่อน-หลัง</li>
+        <li data-letter="D"><b>D</b> จำนวนพอร์ตที่มากกว่า</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 13</p>
+      <p class="mcq-q">ลำดับการตัดสินใจข้อที่สองของ STP (หลังเลือก Root Bridge แล้ว) คืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Sender Port ID</li>
+        <li data-letter="B"><b>B</b> Root Path Cost — รวม cost ทุกฮอปไปหา root ต่ำสุดชนะ</li>
+        <li data-letter="C"><b>C</b> System Priority</li>
+        <li data-letter="D"><b>D</b> Hello Time</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 14</p>
+      <p class="mcq-q">ถ้า Root Path Cost เท่ากันระหว่างสองเส้นทาง จะตัดสินด้วยอะไรเป็นลำดับถัดไป?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Sender Bridge ID — ต่ำกว่าชนะ</li>
+        <li data-letter="B"><b>B</b> ความเร็วของสาย</li>
+        <li data-letter="C"><b>C</b> จำนวน VLAN</li>
+        <li data-letter="D"><b>D</b> Hello Time</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 15</p>
+      <p class="mcq-q">ถ้า Root Path Cost และ Sender Bridge ID เท่ากันหมด จะตัดสินด้วยอะไรเป็นลำดับสุดท้าย?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Sender Port ID — Prio.Nbr ของพอร์ตฝั่งส่ง ต่ำกว่าชนะ</li>
+        <li data-letter="B"><b>B</b> MAC Address ของ PC ปลายทาง</li>
+        <li data-letter="C"><b>C</b> VLAN ID</li>
+        <li data-letter="D"><b>D</b> จำนวนสายที่เชื่อมต่อ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 16</p>
+      <p class="mcq-q">จากแลปจริง เพราะเหตุใด A1 เลือกเส้นทางตรงไป D1 (cost 19) แทนที่จะอ้อมผ่าน D2 (cost 19+4=23)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพราะ Root Path Cost ต่ำกว่า (19 &lt; 23)</li>
+        <li data-letter="B"><b>B</b> เพราะ MAC Address ต่ำกว่า</li>
+        <li data-letter="C"><b>C</b> เพราะ Hello Time สั้นกว่า</li>
+        <li data-letter="D"><b>D</b> เพราะเป็นสายที่ต่อก่อน</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 17</p>
+      <p class="mcq-q">บน A1 มีสองเส้นทาง (F0/1, F0/2) ไป D1 ด้วย cost เท่ากัน (19=19) เหตุใด F0/1 จึงถูกเลือกเป็น Root Port?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพราะ F0/1 เปิดใช้งานก่อน</li>
+        <li data-letter="B"><b>B</b> เพราะ Port ID ของ F0/1 ต่ำกว่า F0/2</li>
+        <li data-letter="C"><b>C</b> เพราะ F0/1 เร็วกว่า</li>
+        <li data-letter="D"><b>D</b> เพราะสุ่มเลือก</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — F0/1 เป็น Root Port, F0/2 กลายเป็น Alternate (Block)</div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 18</p>
+      <p class="mcq-q">ลำดับการตัดสินใจทั้ง 4 ขั้นของ STP (Root Bridge → Root Path Cost → Sender Bridge ID → Sender Port ID) มีความสำคัญอย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เป็นโครงเดียวกับที่ RSTP และ MST ใช้สืบทอดต่อไป</li>
+        <li data-letter="B"><b>B</b> ใช้ได้เฉพาะกับ STP รุ่นเก่าเท่านั้น ไม่เกี่ยวกับ RSTP</li>
+        <li data-letter="C"><b>C</b> เปลี่ยนแปลงทุกครั้งที่ topology เปลี่ยน</li>
+        <li data-letter="D"><b>D</b> ไม่มีผลต่อการเลือกเส้นทาง</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">03</span><h2>Port Cost vs Path Cost, Designated Port, Blocking</h2></div>
+    <p class="sec-sub">ของจริงจากแลป: ปิด D1's g1/0/1 บังคับให้ D2 ต้องอ้อม</p>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 19</p>
+      <p class="mcq-q">Port Cost ต่างจาก Path Cost อย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Port Cost คือค่าของ "แค่ 1 ฮอป" Path Cost คือ "ผลรวมสะสม" ตลอดเส้นทาง</li>
+        <li data-letter="B"><b>B</b> ทั้งสองคือค่าเดียวกัน</li>
+        <li data-letter="C"><b>C</b> Port Cost คำนวณจาก IP Address</li>
+        <li data-letter="D"><b>D</b> Path Cost ใช้เฉพาะ RSTP</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 20</p>
+      <p class="mcq-q">จากแลปจริง เมื่อปิด g1/0/1 บน D1 ทำให้ D2 ต้องอ้อมผ่าน A1 สองฮอป Path Cost ใหม่คือเท่าใด (cost ต่อฮอป 19)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 19</li>
+        <li data-letter="B"><b>B</b> 4</li>
+        <li data-letter="C"><b>C</b> 38 (19+19)</li>
+        <li data-letter="D"><b>D</b> 23</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 21</p>
+      <p class="mcq-q">ในตัวอย่างข้อ 20 ค่า Port Cost ของแต่ละฮอปเปลี่ยนแปลงหรือไม่?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เปลี่ยนเป็น 0</li>
+        <li data-letter="B"><b>B</b> Port Cost ยังคงเดิม (19) เพราะเป็นค่าประจำฮอปเดียว ไม่เปลี่ยนตามเส้นทาง</li>
+        <li data-letter="C"><b>C</b> เพิ่มขึ้นเป็นสองเท่า</li>
+        <li data-letter="D"><b>D</b> ลดลงครึ่งหนึ่ง</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 22</p>
+      <p class="mcq-q">เพราะเหตุใดลิงก์ระหว่าง A1 กับ D1/D2 ในแลปจึงมี cost 19 (ค่ามาตรฐานของ FastEthernet) แม้บางฝั่งจะเป็นพอร์ต Gigabit?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพราะ cost ขึ้นกับความเร็ว "ที่เจรจาได้จริง" ของลิงก์ ไม่ใช่ป้ายชื่อพอร์ต — A1 เป็นสวิตช์รุ่นเก่าที่มีแค่ FastEthernet ทำให้ทุกลิงก์เจรจาลงมาเหลือความเร็วนั้น</li>
+        <li data-letter="B"><b>B</b> เพราะตั้งค่าผิดพลาด</li>
+        <li data-letter="C"><b>C</b> เพราะ RSTP เปลี่ยนค่าอัตโนมัติ</li>
+        <li data-letter="D"><b>D</b> เพราะ VLAN ไม่ตรงกัน</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 23</p>
+      <p class="mcq-q">ทุก Segment (ทุกสายที่ต่อกัน) ต้องมีพอร์ตใดอยู่เสมอ 1 พอร์ต เพื่อรับหน้าที่ forward ข้อมูล?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Root Port</li>
+        <li data-letter="B"><b>B</b> Designated Port</li>
+        <li data-letter="C"><b>C</b> Alternate Port</li>
+        <li data-letter="D"><b>D</b> Backup Port</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 24</p>
+      <p class="mcq-q">บน Segment ระหว่าง D2-A1 เหตุใด D2 จึงชนะเป็น Designated Port ทั้งสองเส้นที่ต่อไป A1?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพราะ D2 มี root cost ต่ำกว่า (4) เทียบกับ A1 (19) — ตรงกลาง segment ใครถูกกว่าคนนั้นชนะเป็น Designated</li>
+        <li data-letter="B"><b>B</b> เพราะ D2 เปิดเครื่องก่อน</li>
+        <li data-letter="C"><b>C</b> เพราะ D2 มี MAC สูงกว่า</li>
+        <li data-letter="D"><b>D</b> เพราะ A1 ไม่มีสิทธิ์เป็น Designated เลย</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b> — ผลคือ A1 กลายเป็น Alternate ทั้งคู่ฝั่งที่ต่อไป D2</div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 25</p>
+      <p class="mcq-q">เงื่อนไขแรกที่พอร์ตต้องผ่านก่อนถึงจะมีสิทธิ์ถูกพิจารณา Block คืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ต้องเป็น Root Port</li>
+        <li data-letter="B"><b>B</b> ต้องไม่ใช่ Root Port</li>
+        <li data-letter="C"><b>C</b> ต้องเป็น Designated Port</li>
+        <li data-letter="D"><b>D</b> ต้องมี VLAN สูงสุด</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 26</p>
+      <p class="mcq-q">ลำดับการตัดสินใจว่าพอร์ตไหนจะถูก Block (สำหรับพอร์ตที่ไม่ใช่ Root Port) เรียงอย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Path Cost → Priority → MAC Address (ทุกข้อ "สูงกว่า" คือฝั่งที่แพ้และปิดตัวเอง)</li>
+        <li data-letter="B"><b>B</b> MAC Address → Priority → Path Cost</li>
+        <li data-letter="C"><b>C</b> Priority → MAC Address → Path Cost</li>
+        <li data-letter="D"><b>D</b> เลือกแบบสุ่ม</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 27</p>
+      <p class="mcq-q">คอลัมน์ "Cost" ที่แสดงในคำสั่ง <code>show spanning-tree</code> หมายถึงค่าใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Port Cost</li>
+        <li data-letter="B"><b>B</b> Path Cost — ผลรวมสะสมของทุกฮอปที่ต้องผ่าน</li>
+        <li data-letter="C"><b>C</b> Hello Time</li>
+        <li data-letter="D"><b>D</b> System Priority</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">04</span><h2>STP (802.1D) vs RSTP (802.1w)</h2></div>
+    <p class="sec-sub">Port States, Port Roles, Port Types — ออกสอบทั้งคู่</p>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 28</p>
+      <p class="mcq-q">STP (802.1D) มีกี่สถานะพอร์ตหลัก (ไม่รวม Broken)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 3</li>
+        <li data-letter="B"><b>B</b> 5 (Disable → Blocking → Listening → Learning → Forwarding)</li>
+        <li data-letter="C"><b>C</b> 2</li>
+        <li data-letter="D"><b>D</b> 7</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 29</p>
+      <p class="mcq-q">RSTP (802.1w) รวมสถานะ Disable/Blocking/Listening เดิมของ STP เข้าเป็นสถานะเดียวชื่ออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Forwarding</li>
+        <li data-letter="B"><b>B</b> Discarding</li>
+        <li data-letter="C"><b>C</b> Learning</li>
+        <li data-letter="D"><b>D</b> Pending</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 30</p>
+      <p class="mcq-q">RSTP มีกี่สถานะพอร์ตหลัก?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 5</li>
+        <li data-letter="B"><b>B</b> 3 (Discarding → Learning → Forwarding)</li>
+        <li data-letter="C"><b>C</b> 6</li>
+        <li data-letter="D"><b>D</b> 2</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 31</p>
+      <p class="mcq-q">บทบาทพอร์ตใดที่มีใน RSTP แต่ไม่มีใน STP แบบเดิม?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Root Port</li>
+        <li data-letter="B"><b>B</b> Designated Port</li>
+        <li data-letter="C"><b>C</b> Alternate และ Backup Port</li>
+        <li data-letter="D"><b>D</b> Block Port</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 32</p>
+      <p class="mcq-q">Alternate Port ใน RSTP ทำหน้าที่สำรองของพอร์ตใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Root Port</li>
+        <li data-letter="B"><b>B</b> Designated Port</li>
+        <li data-letter="C"><b>C</b> Edge Port</li>
+        <li data-letter="D"><b>D</b> Point-to-Point Port</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 33</p>
+      <p class="mcq-q">Backup Port ใน RSTP ทำหน้าที่สำรองของพอร์ตใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Root Port</li>
+        <li data-letter="B"><b>B</b> Designated Port</li>
+        <li data-letter="C"><b>C</b> Alternate Port</li>
+        <li data-letter="D"><b>D</b> ไม่มีหน้าที่พิเศษ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 34</p>
+      <p class="mcq-q">Edge Port ใน RSTP คืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> พอร์ตที่ต่อกับสวิตช์อื่นเสมอ</li>
+        <li data-letter="B"><b>B</b> พอร์ตที่ต่ออุปกรณ์ปลายทาง (เช่น PC) เปิด PortFast ได้</li>
+        <li data-letter="C"><b>C</b> พอร์ตที่ถูก Block ถาวร</li>
+        <li data-letter="D"><b>D</b> พอร์ตที่ใช้สำหรับ Trunk เท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 35</p>
+      <p class="mcq-q">Point-to-Point Port ใน RSTP หมายถึงพอร์ตแบบใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> พอร์ตที่ต่อ switch แบบ Full-Duplex</li>
+        <li data-letter="B"><b>B</b> พอร์ตที่ต่อ Hub เท่านั้น</li>
+        <li data-letter="C"><b>C</b> พอร์ตที่ปิดใช้งาน</li>
+        <li data-letter="D"><b>D</b> พอร์ตที่ต่อ PC เท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">05</span><h2>RSTP Rapid Convergence + ผลทดลองจริงจากแลป</h2></div>
+    <p class="sec-sub">ตัวเลขนี้มาจาก debug spanning-tree events จริงในแลป</p>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 36</p>
+      <p class="mcq-q">STP แบบเดิม Converge ด้วยวิธีใด (ทำให้ช้า)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ใช้ Handshake ทันที</li>
+        <li data-letter="B"><b>B</b> รอ timer ล้วนๆ (Max Age 20s + Forward Delay 15s×2)</li>
+        <li data-letter="C"><b>C</b> ไม่มีการ Converge</li>
+        <li data-letter="D"><b>D</b> ใช้ TCN เท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 37</p>
+      <p class="mcq-q">RSTP ทำให้ Converge เร็วขึ้นด้วยกลไกใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> รอ timer นานขึ้น</li>
+        <li data-letter="B"><b>B</b> ใช้ Handshake แลกเปลี่ยน BPDU ทันทีที่เชื่อมกัน ไม่ต้องรอ timer</li>
+        <li data-letter="C"><b>C</b> ปิดการใช้งาน BPDU</li>
+        <li data-letter="D"><b>D</b> เพิ่มจำนวน Root Bridge</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 38</p>
+      <p class="mcq-q">ขั้นตอนแรกของ RSTP Handshake เมื่อสวิตช์สองตัวเพิ่งเชื่อมต่อกันคืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เทียบ Priority ทันที</li>
+        <li data-letter="B"><b>B</b> ยืนยันว่าเป็นลิงก์ Full-Duplex (Point-to-Point) ก่อน</li>
+        <li data-letter="C"><b>C</b> ส่ง TCN ทันที</li>
+        <li data-letter="D"><b>D</b> ปิดพอร์ตทั้งคู่</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 39</p>
+      <p class="mcq-q">ในขั้น Handshake ของ RSTP ฝั่งที่ Priority สูงกว่า (แพ้) ต้องทำอะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ปิดพอร์ตถาวร</li>
+        <li data-letter="B"><b>B</b> เลือก Root Port ของตัวเอง ปรับพอร์ต Non-Edge เป็น Discarding ชั่วคราว แล้วส่ง BPDU ไป sync กับ Root</li>
+        <li data-letter="C"><b>C</b> ไม่ต้องทำอะไรเลย</li>
+        <li data-letter="D"><b>D</b> เปลี่ยนเป็น Root Bridge ทันที</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 40</p>
+      <p class="mcq-q">จากผลการทดลองจริงในแลป การปิดสาย D2 ไปยัง D1 ขณะทุกตัวยังเป็น STP เดิม ใช้เวลานานเท่าใดกว่า D2 จะยอมรับเส้นทางใหม่?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 0.048 วินาที</li>
+        <li data-letter="B"><b>B</b> ~17 วินาที</li>
+        <li data-letter="C"><b>C</b> 30 วินาที</li>
+        <li data-letter="D"><b>D</b> 300 วินาที</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 41</p>
+      <p class="mcq-q">เมื่อทดลองเปลี่ยน D1 ตัวเดียวเป็น RSTP (ขณะที่ D2/A1 ยังเป็น STP เดิม) ผลลัพธ์ที่ได้เป็นอย่างไร และเพราะเหตุใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เร็วขึ้นทันที เพราะ RSTP เร็วกว่าเสมอ</li>
+        <li data-letter="B"><b>B</b> แย่กว่าเดิม (VLAN1 ล่มนาน 30 วินาที) เพราะ RSTP ต้อง fallback ไปใช้ timer แบบเก่าเมื่อคุยกับเพื่อนบ้านที่ยังเป็น STP</li>
+        <li data-letter="C"><b>C</b> ไม่มีการเปลี่ยนแปลงใดๆ</li>
+        <li data-letter="D"><b>D</b> เครือข่ายล่มถาวร</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — ต้องอัปเกรดให้ครบทุกตัวถึงจะได้ประโยชน์เต็มที่</div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 42</p>
+      <p class="mcq-q">เมื่อทุกสวิตช์ในแลป (D1, D2, A1) เปลี่ยนเป็น RSTP ครบทั้งหมดแล้ว การปิดสายทำให้ VLAN1 หายไปนานเท่าใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> 17 วินาที</li>
+        <li data-letter="B"><b>B</b> 30 วินาที</li>
+        <li data-letter="C"><b>C</b> 0.048 วินาที</li>
+        <li data-letter="D"><b>D</b> 5 นาที</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b> — นี่คือคำว่า "Rapid" ตัวจริง</div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">06</span><h2>Topology Change Notification (TCN)</h2></div>
+    <p class="sec-sub">เวลาสายขาด ต้องรีบบอกทุกสวิตช์ให้เลิกเชื่อ MAC Table เก่า</p>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 43</p>
+      <p class="mcq-q">TCN ย่อมาจากอะไร และมีหน้าที่อะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Topology Change Notification — แจ้งเตือนว่ามีการเปลี่ยนแปลง topology เพื่อให้สวิตช์เลิกเชื่อ MAC Table เก่า</li>
+        <li data-letter="B"><b>B</b> Trunk Configuration Notice — ตั้งค่า trunk</li>
+        <li data-letter="C"><b>C</b> Timer Control Number — ควบคุมเวลา</li>
+        <li data-letter="D"><b>D</b> Traffic Class Number — จัดลำดับความสำคัญ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 44</p>
+      <p class="mcq-q">เมื่อสวิตช์ตรวจพบการเปลี่ยนแปลง topology จะส่ง TCN ออกทางพอร์ตใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ทุกพอร์ตพร้อมกัน</li>
+        <li data-letter="B"><b>B</b> Root Port ของตัวเอง</li>
+        <li data-letter="C"><b>C</b> Designated Port เท่านั้น</li>
+        <li data-letter="D"><b>D</b> Alternate Port</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 45</p>
+      <p class="mcq-q">สวิตช์ระหว่างทางที่รับ TCN ต้องทำอะไรตอบกลับ?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ไม่ต้องตอบอะไร</li>
+        <li data-letter="B"><b>B</b> ส่งต่อ TCN ผ่าน Root Port ของตัวเอง พร้อมตอบ TCA กลับลงมา</li>
+        <li data-letter="C"><b>C</b> ปิดพอร์ตตัวเองทันที</li>
+        <li data-letter="D"><b>D</b> สร้าง Root Bridge ใหม่</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 46</p>
+      <p class="mcq-q">เมื่อ Root Bridge ได้รับ TCN แล้ว จะทำอะไรต่อ?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพิกเฉยไม่ทำอะไร</li>
+        <li data-letter="B"><b>B</b> สร้าง BPDU Topology Change แจ้งไปยังทุกสวิตช์ในเครือข่าย</li>
+        <li data-letter="C"><b>C</b> ปิดตัวเองลง</li>
+        <li data-letter="D"><b>D</b> เปลี่ยน Priority ทันที</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 47</p>
+      <p class="mcq-q">เมื่อ TCN แพร่กระจายไปทั่วเครือข่าย ทุกสวิตช์จะปรับค่า MAC Aging Timer อย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพิ่มขึ้นจาก 300s เป็น 600s</li>
+        <li data-letter="B"><b>B</b> ลดลงจาก 300s เหลือ 15s ชั่วคราว</li>
+        <li data-letter="C"><b>C</b> ไม่เปลี่ยนแปลง</li>
+        <li data-letter="D"><b>D</b> ตั้งเป็น 0 ถาวร</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 48</p>
+      <p class="mcq-q">หากไม่มี traffic เกิน 15 วินาทีหลัง TCN เกิดขึ้น จะเกิดอะไรขึ้นกับ MAC Table?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ไม่มีอะไรเกิดขึ้น</li>
+        <li data-letter="B"><b>B</b> MAC Table ถูกลบทิ้งแล้วเรียนรู้เพื่อนบ้านใหม่ เฉพาะ VLAN ที่เปลี่ยนเท่านั้น</li>
+        <li data-letter="C"><b>C</b> ทุก VLAN ถูกลบทิ้งหมด</li>
+        <li data-letter="D"><b>D</b> สวิตช์ปิดตัวเองอัตโนมัติ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 49</p>
+      <p class="mcq-q">ถ้าสวิตช์ตัวหนึ่งถูกตัดขาดจาก STP นานเกินไปจนเผลอตั้งตัวเองเป็น Root Bridge แล้วลิงก์กลับมาเชื่อมใหม่ จะเกิดอะไรขึ้น?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ทั้งสองฝั่งยังคงเป็น Root Bridge พร้อมกัน</li>
+        <li data-letter="B"><b>B</b> สวิตช์จะเทียบ Priority กันใหม่ตามกติกาเดิม (Priority ต่ำสุดชนะ) และเชื่อฟังฝั่งที่ต่ำกว่าเท่านั้น</li>
+        <li data-letter="C"><b>C</b> เครือข่ายจะล่มถาวร</li>
+        <li data-letter="D"><b>D</b> ต้อง reboot สวิตช์ทั้งหมด</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — ระหว่างนั้นพอร์ตที่เคย Block อาจสลับเป็น Designated ชั่วคราวเพื่อฟังเพื่อนบ้านก่อนตัดสินใจสถานะสุดท้าย</div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="bridge">
+      <b>อยากทวนก่อนทำอีกรอบ:</b> กลับไปอ่าน <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/ch2`}>Chapter 2: STP Topology Changes &amp; RSTP</a> หรือลองต่อด้วย <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/ch1-exam`}>ข้อสอบจำลอง Chapter 1</a>
+    </div>
+  </section>
+
+  <footer>
+    Internetwork · ข้อสอบจำลอง Chapter 2 · 49 ข้อ · เรียบเรียงจากเนื้อหา Chapter 2: STP &amp; RSTP
+  </footer>
+
+  <style>
+    .score-bar{
+      position:sticky;top:0;z-index:5;
+      display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+      background:var(--coral-soft);border:1px solid var(--coral);border-radius:12px;
+      padding:12px 18px;margin:0 0 24px;font-size:.88rem;color:var(--ink);
+    }
+    .score-bar b{font-family:var(--mono);color:var(--coral);font-size:1rem}
+    .score-bar button{
+      margin-left:auto;border:1px solid var(--coral);background:var(--card);color:var(--coral);
+      font-family:var(--sans);font-size:.82rem;font-weight:700;padding:6px 14px;border-radius:999px;
+      cursor:pointer;transition:background .15s;
+    }
+    .score-bar button:hover{background:var(--coral);color:#fff}
+
+    .mcq{border:1px solid var(--rule-soft);border-radius:14px;padding:22px 24px;margin-bottom:14px;background:var(--card)}
+    .mcq-n{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--coral);font-weight:700;margin:0 0 8px}
+    .mcq-q{margin:0 0 12px;font-size:.98rem;color:var(--ink);font-weight:600;line-height:1.6}
+    .mcq-opts{list-style:none;margin:0 0 4px;padding:0;display:flex;flex-direction:column;gap:7px}
+    .mcq-opts li{padding:8px 12px;border:1px solid var(--rule-soft);border-radius:8px;font-size:.9rem;color:var(--ink-2);cursor:pointer;transition:border-color .12s, background .12s, transform .1s}
+    .mcq-opts li:hover{border-color:var(--coral);transform:translateX(2px)}
+    .mcq-opts li b{font-family:var(--mono);color:var(--coral);margin-right:8px}
+    .mcq[data-locked="1"] .mcq-opts li{cursor:default}
+    .mcq[data-locked="1"] .mcq-opts li:hover{transform:none}
+    .mcq-opts li.is-correct{border-color:var(--fwd);background:var(--fwd-soft);color:var(--ink)}
+    .mcq-opts li.is-correct b{color:var(--fwd)}
+    .mcq-opts li.is-wrong{border-color:var(--blk);background:var(--blk-soft);color:var(--ink)}
+    .mcq-opts li.is-wrong b{color:var(--blk)}
+    .mcq details{margin-top:12px}
+    .mcq summary{cursor:pointer;color:var(--coral);font-weight:700;font-size:.85rem;list-style:none}
+    .mcq summary::-webkit-details-marker{display:none}
+    .mcq summary::before{content:"▸ "}
+    .mcq details[open] summary::before{content:"▾ "}
+    .mcq-answer{margin-top:10px;padding-top:10px;border-top:1px dashed var(--rule);font-size:.88rem;color:var(--ink-2);line-height:1.6}
+    .mcq-answer b{color:var(--fwd)}
+
+    @media (max-width:640px){
+      .score-bar{gap:10px 16px}
+      .score-bar button{margin-left:0}
+    }
+  </style>
+
+  <script>
+    (function () {
+      const doneEl = document.getElementById("scoreDone");
+      const correctEl = document.getElementById("scoreCorrect");
+      const resetBtn = document.getElementById("resetMock");
+      let done = 0;
+      let correct = 0;
+
+      function updateScore() {
+        if (doneEl) doneEl.textContent = String(done);
+        if (correctEl) correctEl.textContent = String(correct);
+      }
+
+      document.querySelectorAll(".mcq[data-answer]").forEach((mcq) => {
+        const answer = mcq.getAttribute("data-answer");
+        mcq.querySelectorAll(".mcq-opts li").forEach((li) => {
+          li.addEventListener("click", () => {
+            if (mcq.getAttribute("data-locked") === "1") return;
+            mcq.setAttribute("data-locked", "1");
+
+            const letter = li.getAttribute("data-letter");
+            const isCorrect = letter === answer;
+            li.classList.add(isCorrect ? "is-correct" : "is-wrong");
+
+            if (!isCorrect) {
+              const correctLi = mcq.querySelector('.mcq-opts li[data-letter="' + answer + '"]');
+              if (correctLi) correctLi.classList.add("is-correct");
+            }
+
+            const details = mcq.querySelector("details");
+            if (details) details.open = true;
+
+            done += 1;
+            if (isCorrect) correct += 1;
+            updateScore();
+          });
+        });
+      });
+
+      if (resetBtn) {
+        resetBtn.addEventListener("click", () => location.reload());
+      }
+    })();
+  </script>
+
+</Layout>

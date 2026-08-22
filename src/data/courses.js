@@ -58,6 +58,7 @@ export const courses = [
         chapters: [
           { n: "★", slug: "exam", title: "บทสวดขอให้สอบดี", ready: true },
           { n: "✎", slug: "ch1-exam", title: "ข้อสอบจำลอง Chapter 1 (30 ข้อ)", ready: true },
+          { n: "✎", slug: "ch2-exam", title: "ข้อสอบจำลอง Chapter 2 (49 ข้อ)", ready: true },
           { n: "✎", slug: "ospf-exam", title: "ข้อสอบจำลอง OSPF (154 ข้อ)", ready: true },
           { n: "✎", slug: "advanced-ospf-exam", title: "ข้อสอบจำลอง Advanced OSPF (144 ข้อ)", ready: true },
           { n: "✎", slug: "bgp-exam", title: "ข้อสอบจำลอง BGP (148 ข้อ)", ready: true },
