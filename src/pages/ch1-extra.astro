@@ -1,0 +1,214 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+<Layout title="Chapter 1 เพิ่มเติม" description="ส่วนเสริมบทที่ 1 — CAM, Process Switching vs Fast Switching vs CEF, และ Port Security ตามขอบเขต MidEx">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--slate)">Internetwork · Chapter 1 เพิ่มเติม</p>
+    <h1>CAM, Switching Methods &amp; Port Security</h1>
+    <p class="deck">หน้านี้เติมสามหัวข้อที่ MidEx ระบุไว้ในขอบเขตบทที่ 1 แต่ยังไม่มีในหน้าหลัก — สองหัวข้อแรก (CAM, Process/Fast Switching) มาจากสไลด์อาจารย์โดยตรง ส่วนหัวข้อสุดท้าย (Port Security) ไม่มีอยู่ในสไลด์เลยแม้แต่คำเดียว เขียนจากความรู้ทั่วไปแทน</p>
+    <div class="credit-bar">
+      <span>CAM</span><span>Process Switching</span><span>Fast Switching</span><span>Port Security</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="legend-note">
+      <b>ทำไมต้องมีหน้านี้แยก:</b> ตรวจสอบสไลด์ต้นฉบับ Chapter 1 (Key Topics, Key Terms, Command Reference ทั้งหมด) แล้วพบว่า <b>CAM</b> และ <b>Process Switching</b> มีอยู่จริงในสไลด์แต่ยังไม่ได้เขียนลงหน้าหลัก ส่วน <span class="badge-extra" style="margin-left:0">เสริม · ไม่มีในสไลด์</span> <b>Port Security</b> ไม่ปรากฏในสไลด์เลยแม้แต่คำเดียว (ไม่มีใน Key Topics, Key Terms หรือ Command Reference) — MidEx ระบุไว้เฉยๆ จึงเขียนเสริมจากความรู้ทั่วไปเผื่อออกสอบ
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="4" y="4" width="18" height="18" rx="3" fill="none" stroke="var(--slate)" stroke-width="1.8"/>
+        <path d="M9 13 L13 13 L13 9 M13 17 L13 13 L17 13" stroke="var(--slate)" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+      </svg>
+      <h2>CAM — ที่เก็บจริงของ MAC Address Table</h2>
+    </div>
+    <p class="sec-sub">สไลด์บอกตรงๆ ว่า MAC Address Table "resides in" CAM — คนละตัวกับ TCAM ที่ CEF ใช้</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>CAM (Content-Addressable Memory)</h3>
+        <ul>
+          <li>เป็นที่เก็บ<b>จริง</b>ของ MAC Address Table บนสวิตช์</li>
+          <li>เป็นหน่วยความจำความเร็วสูง เร็วกว่า RAM ทั่วไป เพราะใช้เทคนิคการค้นหาแบบพิเศษ</li>
+          <li>ค้นหาแบบ <b>exact match</b> เท่านั้น — ให้ผลลัพธ์แบบไบนารี: <code>0</code> = ตรง (true), <code>1</code> = ไม่ตรง (false)</li>
+          <li>เหมาะกับงานที่ต้องเทียบค่าตรงเป๊ะ เช่น "MAC นี้อยู่พอร์ตไหน"</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>TCAM (Ternary CAM) — ทบทวน</h3>
+        <ul>
+          <li>ที่ CEF ใช้ค้นหา ไม่ใช่ที่เก็บ MAC Table</li>
+          <li>ค้นหาแบบ <b>wildcard/range match</b> ได้ ด้วยรูปแบบ Value/Mask/Result (VMR)</li>
+          <li>เหมาะกับงานที่ต้องเทียบแบบมีเงื่อนไข เช่น ACL, QoS, การจับคู่ prefix ของ routing</li>
+          <li>"Ternary" มาจากการมีสถานะที่ 3 (don't-care / X) เพิ่มจาก 0 และ 1 ของ CAM ธรรมดา</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="fixnote" style="background:var(--slate-soft);margin-top:20px">
+      <b style="color:var(--slate)">จุดที่ข้อสอบชอบสับสน:</b> CAM กับ TCAM ไม่ใช่ตัวเดียวกัน — CAM เก็บ MAC Address Table (Layer 2, exact match เท่านั้น) ส่วน TCAM คือฮาร์ดแวร์ที่ CEF/ACL/QoS ใช้ค้นหาแบบมีเงื่อนไขได้ (Layer 3 ขึ้นไป)
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <path d="M4 13 L10 13 M14 13 L20 13" stroke="var(--slate)" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="4" cy="13" r="2.2" fill="var(--slate)"/><circle cx="12" cy="13" r="2.2" fill="var(--slate)"/><circle cx="20" cy="13" r="2.2" fill="var(--slate)"/>
+      </svg>
+      <h2>วิวัฒนาการ: Process Switching → Fast Switching → CEF</h2>
+    </div>
+    <p class="sec-sub">สไลด์อธิบาย Process Switching ไว้ละเอียด 2 หน้าเต็ม ส่วน Fast Switching ถูกพูดถึงแค่ชื่อผ่านๆ (ถูกแทนที่ด้วย CEF ไปแล้วในทางปฏิบัติ)</p>
+
+    <div class="flow">
+      <div class="flow-step" data-n="1">
+        <h4>Process Switching (Software / Slow Path)</h4>
+        <p>CPU ทั่วไปของ Router ประมวลผลทุกแพ็กเก็ตทีละตัว ช้าที่สุดในสามวิธี ใช้กับแพ็กเก็ตที่ซับซ้อนเกินให้ฮาร์ดแวร์จัดการ เช่น แพ็กเก็ตที่ส่ง/รับโดย Router เอง (routing protocol control traffic), แพ็กเก็ตที่มี IP Options, หรือแพ็กเก็ตที่ต้องการข้อมูลที่ยังไม่รู้ (เช่นต้องรอ ARP) — โปรเซส NetIO ถูกออกแบบมาให้จัดการทราฟฟิกส่วนน้อยเท่านั้น เพราะแพ็กเก็ตส่วนใหญ่ควรถูกส่งผ่านฮาร์ดแวร์แทน</p>
+      </div>
+      <div class="flow-step" data-n="2">
+        <h4>Fast Switching (Route Caching)</h4>
+        <p>Cisco สร้างขึ้นมาเพื่อเร่งความเร็วของ Process Switching โดยจำผลลัพธ์การตัดสินใจของแพ็กเก็ตแรกไว้ใน cache แล้วใช้ผลลัพธ์นั้นซ้ำกับแพ็กเก็ตถัดไปที่มีปลายทางเดียวกัน แทนที่จะคำนวณผ่าน CPU ใหม่ทุกครั้ง — ปัจจุบันถูกแทนที่ด้วย CEF เกือบทั้งหมดแล้ว สไลด์ของคอร์สนี้พูดถึงแค่ชื่อผ่านๆ ไม่ได้สอนกลไกละเอียด</p>
+      </div>
+      <div class="flow-step" data-n="3">
+        <h4>CEF (Cisco Express Forwarding)</h4>
+        <p>วิธี Default ของอุปกรณ์ Cisco ยุคปัจจุบันเกือบทั้งหมด พรีคอมไพล์คำตอบไว้ล่วงหน้าทั้ง FIB (จาก Routing Table) และ Adjacency Table (จาก ARP Table) ทำงานบนฮาร์ดแวร์ ASIC/NPU โดยตรง ไม่ต้องพึ่ง CPU ต่อแพ็กเก็ตเหมือนสองวิธีแรก — รายละเอียดเต็มอยู่ในหน้าหลักบทที่ 1 แล้ว</p>
+      </div>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>เทียบสามวิธีให้เห็นภาพรวม</caption>
+        <thead><tr><th scope="col">มิติ</th><th scope="col">Process Switching</th><th scope="col">Fast Switching</th><th scope="col">CEF</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">ประมวลผลที่ไหน</th><td>CPU ทั่วไป ทุกแพ็กเก็ต</td><td>CPU ครั้งแรก แล้ว cache ไว้ใช้ซ้ำ</td><td>ฮาร์ดแวร์ (ASIC/NPU) เกือบทั้งหมด</td></tr>
+          <tr><th scope="row">ความเร็ว</th><td>ช้าที่สุด</td><td>เร็วกว่า Process แต่ยังต้องพึ่ง cache miss</td><td>เร็วที่สุด — ไม่ต้องรอ cache miss เลย</td></tr>
+          <tr><th scope="row">สถานะปัจจุบัน</th><td>ยังใช้เฉพาะแพ็กเก็ตพิเศษ (control-plane)</td><td>เลิกใช้เป็น default แล้ว</td><td>Default บนอุปกรณ์ Cisco สมัยใหม่</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <svg class="mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="3" y="10" width="20" height="13" rx="2.5" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+        <path d="M8 10 V6 a5 5 0 0 1 10 0 V10" fill="none" stroke="var(--coral)" stroke-width="1.8"/>
+      </svg>
+      <h2>Port Security <span class="badge-extra">เสริม · ไม่มีในสไลด์</span></h2>
+    </div>
+    <p class="sec-sub">จำกัดว่า MAC Address ไหนบ้างที่มีสิทธิ์ส่งข้อมูลผ่าน Access Port ได้ — ป้องกัน MAC Flooding และอุปกรณ์แปลกปลอมมาเสียบสาย</p>
+
+    <div class="attack-flow">
+      <div class="af-step af-attack">
+        <span class="af-label">Attack</span>
+        <h4>MAC Flooding / CAM Table Overflow</h4>
+        <p>ผู้โจมตีส่งเฟรมจาก MAC Address ปลอมจำนวนมหาศาลเข้าสวิตช์ จนตาราง CAM (MAC Address Table) เต็ม</p>
+      </div>
+      <div class="af-step af-risk">
+        <span class="af-label">Risk</span>
+        <h4>สวิตช์กลายเป็น Hub</h4>
+        <p>เมื่อ CAM เต็ม สวิตช์ไม่รู้ว่าปลายทางจริงอยู่พอร์ตไหน จึงต้อง Flood ทุกเฟรมออกทุกพอร์ตเหมือน Hub — เปิดช่องให้ดักฟังข้อมูล (sniffing) ของคนอื่นในเครือข่ายได้</p>
+      </div>
+      <div class="af-step af-fix">
+        <span class="af-label">Fix</span>
+        <h4>Port Security</h4>
+        <p>จำกัดจำนวน MAC Address สูงสุดที่แต่ละพอร์ตยอมรับได้ พอเกินโควตาหรือเจอ MAC ที่ไม่อนุญาต จะดำเนินการตาม Violation Mode ที่ตั้งไว้</p>
+      </div>
+    </div>
+
+    <div class="filecard" style="margin-top:20px">
+      <div class="fc-head">
+        <span class="fc-dots"><span></span><span></span><span></span></span>
+        <span class="fc-name">การตั้งค่า Port Security พื้นฐาน</span>
+      </div>
+      <pre><code>interface GigabitEthernet1/0/5
+ switchport mode access
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security mac-address sticky
+ switchport port-security violation restrict</code></pre>
+      <div class="notes">
+        <p style="margin:0;font-size:.86rem;color:var(--ink-2)"><b>ข้อกำหนดสำคัญ:</b> Port Security เปิดได้เฉพาะบน Access Port เท่านั้น (หรือ Trunk ในบางกรณี) — ต้องตั้ง <code>switchport mode access</code> ก่อนเสมอ ก่อนพิมพ์ <code>switchport port-security</code></p>
+      </div>
+    </div>
+
+    <div class="grid-3" style="margin-top:20px">
+      <div class="card" style="border-left:4px solid var(--fwd)">
+        <h3 style="color:var(--fwd)">Protect</h3>
+        <ul><li>ทิ้งเฟรมจาก MAC ที่ไม่อนุญาตเงียบๆ</li><li>ไม่บันทึก log ไม่นับจำนวนครั้งที่ละเมิด</li><li>เบาที่สุด แต่ตรวจสอบย้อนหลังยากที่สุด</li></ul>
+      </div>
+      <div class="card" style="border-left:4px solid var(--gold)">
+        <h3 style="color:var(--gold)">Restrict</h3>
+        <ul><li>ทิ้งเฟรมเหมือน Protect</li><li>แต่<b>บันทึก log และนับจำนวนครั้ง</b>ที่ละเมิดไว้ด้วย (ดูได้จาก <code>show port-security</code>)</li><li>สมดุลระหว่างความเข้มงวดกับการตรวจสอบได้</li></ul>
+      </div>
+      <div class="card" style="border-left:4px solid var(--coral)">
+        <h3 style="color:var(--coral)">Shutdown <span style="font-weight:400;font-size:.8em">(Default)</span></h3>
+        <ul><li>ปิดพอร์ตทันทีเข้าสถานะ <b>err-disabled</b></li><li>ต้อง <code>shutdown</code> / <code>no shutdown</code> มือ หรือตั้ง <code>errdisable recovery</code> ให้ฟื้นเองตามเวลา</li><li>เข้มงวดที่สุด กระทบการใช้งานมากที่สุด</li></ul>
+      </div>
+    </div>
+
+    <div class="exam" style="margin-top:20px">
+      <h4>Sticky MAC Address <span class="tag">ออกสอบ</span></h4>
+      <p>คำสั่ง <code>switchport port-security mac-address sticky</code> ทำให้สวิตช์เรียนรู้ MAC Address ตัวแรกที่เห็นบนพอร์ตแบบไดนามิก แล้ว<b>เขียนลง running-config ให้อัตโนมัติ</b>เหมือนตั้งด้วยมือ — ต่างจากการตั้ง MAC แบบ static (<code>switchport port-security mac-address &lt;mac&gt;</code>) ที่ต้องพิมพ์เลข MAC เองล่วงหน้า และต่างจากการเรียนรู้แบบไดนามิกธรรมดาที่ MAC จะหายไปเมื่อสวิตช์ reboot (sticky ไม่หาย เพราะถูกเซฟลง config แล้ว)</p>
+    </div>
+
+    <div class="tablewrap" style="margin-top:20px">
+      <table>
+        <caption>คำสั่งตรวจสอบ Port Security</caption>
+        <thead><tr><th scope="col">คำสั่ง</th><th scope="col">ใช้ดูอะไร</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">show port-security</th><td>สรุปทุกพอร์ตที่เปิด Port Security — จำนวน MAC สูงสุด/ปัจจุบัน, violation count, mode</td></tr>
+          <tr><th scope="row">show port-security interface &lt;id&gt;</th><td>รายละเอียดของพอร์ตเดียว รวมสถานะและ violation mode ที่ตั้งไว้</td></tr>
+          <tr><th scope="row">show port-security address</th><td>รายชื่อ MAC Address ทั้งหมดที่ถูกจดจำ (static, dynamic, sticky) พร้อมพอร์ตที่สังกัด</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="drill">
+      <p class="dr-label">แบบฝึกหัด — จับคู่ Violation Mode</p>
+      <div class="match-row"><span>1. Protect</span><span>ทิ้งเฟรมเงียบๆ ไม่มี log ไม่นับจำนวนครั้ง</span></div>
+      <div class="match-row"><span>2. Restrict</span><span>ทิ้งเฟรม + บันทึก log + นับจำนวนครั้งละเมิด</span></div>
+      <div class="match-row"><span>3. Shutdown (Default)</span><span>ปิดพอร์ตเข้า err-disabled ทันที</span></div>
+      <div class="match-row"><span>4. Sticky MAC</span><span>เรียนรู้ MAC แล้วเขียนลง running-config ให้อัตโนมัติ</span></div>
+      <div class="match-row"><span>5. CAM</span><span>ที่เก็บจริงของ MAC Address Table ค้นหาแบบ exact match</span></div>
+      <details>
+        <summary>เฉลย</summary>
+        <div class="answer">
+          <p>1→ทิ้งเงียบไม่มี log · 2→ทิ้ง+log+นับจำนวน · 3→ปิดพอร์ต err-disabled · 4→เขียนลง config อัตโนมัติ · 5→ที่เก็บ MAC Table แบบ exact match</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section>
+    <div class="tablewrap">
+      <table>
+        <caption>ศัพท์ที่ต้องรู้ — เพิ่มเติมบทที่ 1</caption>
+        <thead><tr><th scope="col">คำศัพท์</th><th scope="col">ความหมาย</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">CAM</th><td>Content-Addressable Memory — ที่เก็บจริงของ MAC Address Table ค้นหาแบบ exact match (0/1)</td></tr>
+          <tr><th scope="row">Process Switching</th><td>วิธีส่งแพ็กเก็ตช้าที่สุด ใช้ CPU ทั่วไปประมวลผลทุกแพ็กเก็ต</td></tr>
+          <tr><th scope="row">Fast Switching</th><td>Cache ผลลัพธ์แพ็กเก็ตแรกไว้ใช้ซ้ำ เร็วกว่า Process Switching แต่ถูกแทนที่ด้วย CEF แล้ว</td></tr>
+          <tr><th scope="row">Port Security</th><td>จำกัดจำนวน/รายชื่อ MAC Address ที่พอร์ตยอมรับได้ ป้องกัน MAC Flooding</td></tr>
+          <tr><th scope="row">Sticky MAC</th><td>MAC ที่เรียนรู้แบบไดนามิกแล้วถูกเขียนลง running-config ให้อัตโนมัติ</td></tr>
+          <tr><th scope="row">err-disabled</th><td>สถานะพอร์ตที่ถูกปิดอัตโนมัติจากการละเมิดกฎ (เช่น Port Security violation shutdown)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bridge" style="margin-top:20px">
+      <b>เชื่อมกลับ:</b> กลับไปอ่าน <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/ch1`}>Chapter 1: Packet Forwarding</a> หรือลองทำ <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/ch1-exam`}>ข้อสอบจำลอง Chapter 1</a>
+    </div>
+  </section>
+
+  <footer>
+    Internetwork Chapter 1 เพิ่มเติม · CAM และ Process Switching อ้างอิงจากสไลด์ต้นฉบับ Chapter 1 · Port Security เขียนจากความรู้ทั่วไปเนื่องจากไม่มีในสไลด์ต้นฉบับ
+  </footer>
+
+</Layout>

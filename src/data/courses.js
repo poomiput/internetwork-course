@@ -17,6 +17,7 @@ export const courses = [
         chapters: [
           { n: 0, slug: "ch0", title: "Overview Internetworking", ready: false },
           { n: 1, slug: "ch1", title: "Packet Forwarding", ready: true },
+          { n: "1+", slug: "ch1-extra", title: "เพิ่มเติม: CAM, Switching, Port Security", ready: true },
           { n: 2, slug: "ch2", title: "Spanning Tree", ready: true },
           { n: 3, slug: "ch3", title: "Advanced STP Tuning", ready: true },
           { n: 4, slug: "ch4", title: "Multiple Spanning Tree", ready: true },
