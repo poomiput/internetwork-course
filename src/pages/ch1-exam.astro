@@ -1,0 +1,493 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+<Layout title="ข้อสอบจำลอง Chapter 1" description="Internetwork Chapter 1 — ข้อสอบจำลอง 30 ข้อ ครอบคลุม Inter-VLAN Routing, Frame Forwarding Decision, CEF, Native VLAN, TCAM/SDM/ASIC">
+
+  <header class="masthead">
+    <p class="eyebrow" style="color:var(--slate)">Internetwork · Chapter 1 · Packet Forwarding</p>
+    <h1>ข้อสอบจำลอง Chapter 1</h1>
+    <p class="deck">30 ข้อ ครอบคลุมเนื้อหา Chapter 1: Collision/Broadcast Domain, Inter-VLAN Routing (SVI vs Router-on-a-Stick), การตัดสินใจส่งเฟรม, CEF (FIB + Adjacency Table), Native VLAN, และ TCAM/SDM/ASIC/NPU — กดเลือกคำตอบได้จริง เลือกแล้วขึ้นถูก/ผิดทันทีพร้อมคำอธิบาย</p>
+    <div class="credit-bar">
+      <span>30 ข้อ</span><span>กดตอบได้จริง</span>
+    </div>
+  </header>
+
+  <div class="score-bar" id="scoreBar">
+    <span>ทำแล้ว <b id="scoreDone">0</b>/30 ข้อ</span>
+    <span>ถูก <b id="scoreCorrect">0</b> ข้อ</span>
+    <button type="button" id="resetMock">เริ่มใหม่</button>
+  </div>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">01</span><h2>Broadcast/Collision Domain และ Inter-VLAN Routing</h2></div>
+    <p class="sec-sub">ทำไมต้องมี VLAN แล้วทำไมถึงต้องดึง Layer 3 กลับมา</p>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 1</p>
+      <p class="mcq-q">Collision Domain หมายถึงอะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ขอบเขตที่ Broadcast กระจายถึง</li>
+        <li data-letter="B"><b>B</b> ขอบเขตที่เฟรมชนกันได้</li>
+        <li data-letter="C"><b>C</b> ขอบเขตของ VLAN</li>
+        <li data-letter="D"><b>D</b> ขอบเขตของ Trunk</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — Hub กระจายทุกพอร์ต (โดนชนได้หมด) ส่วน Switch แบ่งขอบเขตให้เล็กลงทีละพอร์ต</div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 2</p>
+      <p class="mcq-q">Broadcast Domain ปกติต้องใช้อุปกรณ์ใดตัดขอบเขต (ถ้าไม่ใช้ VLAN)?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Hub</li>
+        <li data-letter="B"><b>B</b> Switch</li>
+        <li data-letter="C"><b>C</b> Router</li>
+        <li data-letter="D"><b>D</b> Access Point</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 3</p>
+      <p class="mcq-q">VLAN (IEEE 802.1Q) ตัด Broadcast Domain ได้โดยไม่ต้องมี Router เพราะเหตุใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพราะแปะ tag บอกที่มาของเฟรม แยกกลุ่มกันตั้งแต่ Layer 2</li>
+        <li data-letter="B"><b>B</b> เพราะเปลี่ยน MAC Address ของทุกเฟรม</li>
+        <li data-letter="C"><b>C</b> เพราะปิดพอร์ตที่ไม่ใช้งาน</li>
+        <li data-letter="D"><b>D</b> เพราะบังคับใช้ Static IP เท่านั้น</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 4</p>
+      <p class="mcq-q">ปัญหาที่ตามมาหลังจากตัด Broadcast Domain ด้วย VLAN คืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เครือข่ายช้าลงมาก</li>
+        <li data-letter="B"><b>B</b> สอง VLAN คุยกันเองไม่ได้เลย ต้องดึง Layer 3 กลับมาช่วย route</li>
+        <li data-letter="C"><b>C</b> ไม่มีปัญหาใดๆ</li>
+        <li data-letter="D"><b>D</b> ต้องเปลี่ยน Native VLAN ทุกครั้ง</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 5</p>
+      <p class="mcq-q">Layer 3 Switch (เช่น D1 ในแลป) ทำ Inter-VLAN Routing อย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ต้องมี Router แยกต่างหากเสมอ</li>
+        <li data-letter="B"><b>B</b> สร้าง SVI (Switch Virtual Interface) แล้ว route เองบนตัวมันเอง ไม่ต้องมี router แยก</li>
+        <li data-letter="C"><b>C</b> ใช้ Access Point ช่วย route</li>
+        <li data-letter="D"><b>D</b> ปิด VLAN ทั้งหมดแล้วใช้ Trunk อย่างเดียว</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 6</p>
+      <p class="mcq-q">คำสั่งใดเปลี่ยนพอร์ตของ Layer 3 Switch จากพอร์ต VLAN ธรรมดาให้กลายเป็น routed port?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> switchport trunk</li>
+        <li data-letter="B"><b>B</b> no switchport</li>
+        <li data-letter="C"><b>C</b> switchport access vlan 1</li>
+        <li data-letter="D"><b>D</b> ip routing</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — เช่นบน G1/0/11 ของ D1 ในแลป: <code>no switchport</code> แล้วตามด้วย <code>ip address ...</code></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 7</p>
+      <p class="mcq-q">เมื่อพอร์ตกลายเป็น routed port แล้ว คำสั่ง <code>show vlan brief</code> จะแสดงผลอย่างไรสำหรับพอร์ตนั้น?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> แสดงว่าอยู่ VLAN 1</li>
+        <li data-letter="B"><b>B</b> แสดงว่าอยู่ VLAN 999</li>
+        <li data-letter="C"><b>C</b> ไม่มีผลลัพธ์เลย เพราะไม่ผูกกับ VLAN ไหนอีกต่อไป</li>
+        <li data-letter="D"><b>D</b> แสดง error เสมอ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 8</p>
+      <p class="mcq-q">Router-on-a-Stick (เช่น R3 ในแลป) ทำ Inter-VLAN Routing โดยใช้อะไรแยกแต่ละ VLAN บนสายกายภาพเส้นเดียว?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Subinterface พร้อม encapsulation dot1q</li>
+        <li data-letter="B"><b>B</b> Access Port หลายพอร์ต</li>
+        <li data-letter="C"><b>C</b> SVI</li>
+        <li data-letter="D"><b>D</b> VTP</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b> — เช่น <code>interface g0/0/1.75</code> พร้อม <code>encapsulation dot1q 75</code></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 9</p>
+      <p class="mcq-q">เหตุใดจึงต้องสร้าง subinterface แยกสำหรับ Native VLAN เสมอในการตั้งค่า Router-on-a-Stick แม้จะไม่มี IP ใช้งานจริง?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพราะ Native VLAN ต้องมี IP เสมอ</li>
+        <li data-letter="B"><b>B</b> เพราะเฟรมของ Native VLAN จะไม่มี tag ติดมาเลย ต้องมี subinterface ที่ตรงกันไว้รับ</li>
+        <li data-letter="C"><b>C</b> เพราะ IOS บังคับให้สร้าง</li>
+        <li data-letter="D"><b>D</b> ไม่มีเหตุผลพิเศษ เป็นธรรมเนียมปฏิบัติ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 10</p>
+      <p class="mcq-q">Native VLAN คืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> VLAN ที่ trunk ใช้เป็นทางผ่านสำหรับเฟรมที่ไม่มี tag ติดมา</li>
+        <li data-letter="B"><b>B</b> VLAN ที่เร็วที่สุดในเครือข่าย</li>
+        <li data-letter="C"><b>C</b> VLAN สำหรับ Management เท่านั้น</li>
+        <li data-letter="D"><b>D</b> VLAN ที่ห้ามใช้งาน</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 11</p>
+      <p class="mcq-q">ค่า Default ของ Native VLAN คือ VLAN หมายเลขใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> VLAN 0</li>
+        <li data-letter="B"><b>B</b> VLAN 1</li>
+        <li data-letter="C"><b>C</b> VLAN 999</li>
+        <li data-letter="D"><b>D</b> VLAN 4095</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — ในแลปตั้งใจเปลี่ยนเป็น VLAN 999 เพื่อไม่ให้ชนกับ VLAN 1 ที่ใช้งานจริง</div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 12</p>
+      <p class="mcq-q">เพราะเหตุใดข้อสอบจึงชอบถามเรื่อง "Native VLAN mismatch"?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพราะเป็นเรื่องที่ไม่มีผลกระทบใดๆ</li>
+        <li data-letter="B"><b>B</b> เพราะถ้า Native VLAN สองฝั่งของ trunk ไม่ตรงกัน จะทำให้เฟรมของ Native VLAN หลุดข้าม VLAN โดยไม่ตั้งใจ</li>
+        <li data-letter="C"><b>C</b> เพราะทำให้สาย fiber ขาด</li>
+        <li data-letter="D"><b>D</b> เพราะเป็นคำสั่งที่ยกเลิกไปแล้ว</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">02</span><h2>การตัดสินใจส่งเฟรม และ CEF</h2></div>
+    <p class="sec-sub">คำถามเดียวตัดสินทุกอย่าง แล้ว CEF เข้ามาช่วยยังไง</p>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 13</p>
+      <p class="mcq-q">เมื่อเฟรมมาถึงสวิตช์ คำถามแรกที่ใช้ตัดสินใจว่าจะส่งอย่างไรคืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ปลายทางอยู่ VLAN/Subnet เดียวกันไหม</li>
+        <li data-letter="B"><b>B</b> ปลายทางเปิดเครื่องอยู่ไหม</li>
+        <li data-letter="C"><b>C</b> มี Firewall กั้นไหม</li>
+        <li data-letter="D"><b>D</b> ใช้ IPv4 หรือ IPv6</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="C">
+      <p class="mcq-n">ข้อ 14</p>
+      <p class="mcq-q">ถ้าปลายทางอยู่ VLAN เดียวกัน สวิตช์จะใช้ตารางใดตัดสินใจส่งเฟรม?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Routing Table</li>
+        <li data-letter="B"><b>B</b> FIB</li>
+        <li data-letter="C"><b>C</b> MAC Address Table</li>
+        <li data-letter="D"><b>D</b> ARP Table</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: C</b> — ถ้าใช่ อ่าน MAC Table แล้วส่งตรงไปพอร์ตปลายทางเป็น Layer 2 ล้วน จบเลย</div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 15</p>
+      <p class="mcq-q">ถ้าปลายทางอยู่คนละ VLAN ต้องทำอะไรก่อนส่งเฟรมออกไป?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ส่งแบบ Broadcast ทันที</li>
+        <li data-letter="B"><b>B</b> เช็ค ARP Table เพื่อหา MAC Address ปลายทาง แล้วใช้กลไก CEF ช่วยส่ง</li>
+        <li data-letter="C"><b>C</b> ปิด Interface ทันที</li>
+        <li data-letter="D"><b>D</b> ลบ MAC Address Table ทิ้ง</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 16</p>
+      <p class="mcq-q">CEF ย่อมาจากอะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Cisco Express Forwarding</li>
+        <li data-letter="B"><b>B</b> Central Ethernet Frame</li>
+        <li data-letter="C"><b>C</b> Cisco External Filter</li>
+        <li data-letter="D"><b>D</b> Common Egress Function</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 17</p>
+      <p class="mcq-q">CEF ประกอบด้วยตารางหลักสองตัวใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> VLAN Table และ Trunk Table</li>
+        <li data-letter="B"><b>B</b> FIB และ Adjacency Table</li>
+        <li data-letter="C"><b>C</b> Routing Table และ ARP Table เท่านั้น</li>
+        <li data-letter="D"><b>D</b> MAC Table และ CAM Table</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 18</p>
+      <p class="mcq-q">FIB (Forwarding Information Base) มาจากตารางใด และเก็บข้อมูลอะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> มาจาก ARP Table เก็บ MAC Address</li>
+        <li data-letter="B"><b>B</b> มาจาก Routing Table เก็บปลายทาง + Next-Hop สำหรับตัดสินใจระดับ Layer 3</li>
+        <li data-letter="C"><b>C</b> มาจาก VLAN Database เก็บชื่อ VLAN</li>
+        <li data-letter="D"><b>D</b> มาจาก STP เก็บ Root Bridge</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — ดูได้ด้วย <code>show ip cef</code></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 19</p>
+      <p class="mcq-q">Adjacency Table มาจากตารางใด และเก็บข้อมูลอะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> มาจาก Routing Table เก็บ Prefix</li>
+        <li data-letter="B"><b>B</b> มาจาก ARP Table เก็บ Layer 2 header สำเร็จรูป (MAC ปลายทาง + interface) พร้อมแปะแล้วยิงออกได้เลย</li>
+        <li data-letter="C"><b>C</b> มาจาก VTP เก็บ VLAN Database</li>
+        <li data-letter="D"><b>D</b> มาจาก DHCP เก็บ IP Address</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b> — ดูได้ด้วย <code>show adjacency detail</code></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 20</p>
+      <p class="mcq-q">ประโยชน์หลักของกลไก CEF คืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เข้ารหัสข้อมูลระหว่างส่ง</li>
+        <li data-letter="B"><b>B</b> ส่งแพ็กเก็ตออกได้ทันทีโดยไม่ต้องผ่าน CPU/คำนวณ Routing Table ใหม่ทุกแพ็กเก็ต เพราะพรีคอมไพล์คำตอบไว้ล่วงหน้าแล้ว</li>
+        <li data-letter="C"><b>C</b> ลด Broadcast Domain</li>
+        <li data-letter="D"><b>D</b> เปลี่ยน MAC Address อัตโนมัติ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 21</p>
+      <p class="mcq-q">คำสั่งใดใช้ดูตาราง FIB บน Cisco IOS?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> show ip route only</li>
+        <li data-letter="B"><b>B</b> show ip cef</li>
+        <li data-letter="C"><b>C</b> show mac address-table</li>
+        <li data-letter="D"><b>D</b> show vlan</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 22</p>
+      <p class="mcq-q">คำสั่งใดใช้ดูรายละเอียดของ Adjacency Table?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> show adjacency detail</li>
+        <li data-letter="B"><b>B</b> show cef adjacency-list</li>
+        <li data-letter="C"><b>C</b> show arp table detail</li>
+        <li data-letter="D"><b>D</b> show ip interface brief</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-tag">03</span><h2>TCAM, SDM, ASIC/NPU และ Forwarding Architecture</h2></div>
+    <p class="sec-sub">Hardware เบื้องหลังที่ทำให้ CEF เร็ว</p>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 23</p>
+      <p class="mcq-q">TCAM คืออะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> โปรโตคอลสำหรับ VLAN Trunking</li>
+        <li data-letter="B"><b>B</b> ตารางที่ CEF ใช้ค้นหาบน Hardware โดยตรง (Value/Mask/Result) เร็วกว่าการค้นหาผ่าน CPU ปกติมาก</li>
+        <li data-letter="C"><b>C</b> ชื่อของ Native VLAN</li>
+        <li data-letter="D"><b>D</b> คำสั่งสำหรับตั้งค่า Static Route</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 24</p>
+      <p class="mcq-q">SDM Template มีหน้าที่อะไร และเกี่ยวข้องกับปัญหาใดถ้าตั้งค่าไม่เหมาะสม?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> กำหนดสัดส่วนการจอง TCAM ระหว่างงานแต่ละประเภท ถ้าจองไม่พอข้อมูลจะล้นไปกิน CPU แทน ทำให้ช้าลง</li>
+        <li data-letter="B"><b>B</b> ใช้ตั้งรหัสผ่านของ Switch</li>
+        <li data-letter="C"><b>C</b> ใช้กำหนดความเร็วของพอร์ต</li>
+        <li data-letter="D"><b>D</b> ไม่มีผลกระทบใดๆ ต่อประสิทธิภาพ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 25</p>
+      <p class="mcq-q">ก่อนเปิดใช้งาน IPv6 บน Switch ควรตรวจสอบคำสั่งใดก่อน เพื่อดูว่า SDM Template รองรับหรือไม่?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> show ipv6 route</li>
+        <li data-letter="B"><b>B</b> show sdm prefer</li>
+        <li data-letter="C"><b>C</b> show vlan brief</li>
+        <li data-letter="D"><b>D</b> show cef state</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 26</p>
+      <p class="mcq-q">ASIC และ NPU ต่างกันอย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ASIC เป็นชิปเฉพาะทางที่แก้ไขไม่ได้แต่เร็วมาก ส่วน NPU ช่วย ASIC ตัดสินใจงานที่ซับซ้อนกว่าเพราะโปรแกรมได้</li>
+        <li data-letter="B"><b>B</b> ทั้งสองทำหน้าที่เดียวกันทุกประการ</li>
+        <li data-letter="C"><b>C</b> ASIC ใช้กับ Router เท่านั้น NPU ใช้กับ Switch เท่านั้น</li>
+        <li data-letter="D"><b>D</b> NPU เร็วกว่า ASIC เสมอ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 27</p>
+      <p class="mcq-q">Centralized Forwarding ต่างจาก Distributed Forwarding อย่างไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> Centralized ทุกการส่งต้องถามส่วนกลาง (Router Processor + Forwarding Engine) มั่นใจแต่ช้ากว่า ส่วน Distributed ย้าย Forwarding Engine ไปที่ Line Card ตัดสินใจเสร็จก็ส่งทันที</li>
+        <li data-letter="B"><b>B</b> ทั้งสองแบบไม่มีความแตกต่างด้านความเร็ว</li>
+        <li data-letter="C"><b>C</b> Centralized ใช้ได้เฉพาะ IPv6</li>
+        <li data-letter="D"><b>D</b> Distributed ต้องใช้ Router หลายตัวเสมอ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 28</p>
+      <p class="mcq-q">SSO (Stateful Switchover) มีหน้าที่อะไร?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพิ่มความเร็ว Trunk</li>
+        <li data-letter="B"><b>B</b> รัน Route Processor 2 ตัวคู่กันเป็น Checkpoint กันการล่มของฝั่งประมวลผลเส้นทาง</li>
+        <li data-letter="C"><b>C</b> ตัดขอบเขต Broadcast Domain</li>
+        <li data-letter="D"><b>D</b> เข้ารหัส VLAN Tag</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="B">
+      <p class="mcq-n">ข้อ 29</p>
+      <p class="mcq-q">จากแลปจริง R1 มี static route แบบ <code>10.2.0.0/16 → D1</code> แต่ D1 กลับมีแค่ default route เดียวชี้กลับมาที่ R1 สะท้อนหลักการออกแบบใด?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> ปลายทางต้องรู้จักทุกเส้นทางในโลกเสมอ</li>
+        <li data-letter="B"><b>B</b> ปลายทาง (D1) ไม่จำเป็นต้องรู้จักทุกเส้นทางในโลก รู้แค่ "ถ้าไม่ใช่ของฉัน ส่งกลับไปให้ตัวกลางจัดการ" ก็พอ</li>
+        <li data-letter="C"><b>C</b> ต้องใช้ Dynamic Routing เท่านั้น</li>
+        <li data-letter="D"><b>D</b> Router ทุกตัวต้องมี Routing Table เท่ากันเสมอ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: B</b></div></details>
+    </div>
+
+    <div class="mcq" data-answer="A">
+      <p class="mcq-n">ข้อ 30</p>
+      <p class="mcq-q">เพราะเหตุใด R1 จึงใช้ static route เจาะจง (10.2.0.0/16) ไปยัง D1 แทนที่จะรู้แค่ default route?</p>
+      <ol class="mcq-opts">
+        <li data-letter="A"><b>A</b> เพราะ D1 มี 2 VLAN (50, 60) อยู่ข้างหลัง R1 จึงต้องรู้ชัดเจนว่า subnet รวมนี้ไปทาง D1 ในขณะที่ D1 ไม่ต้องรู้รายละเอียดเพราะ route เองอยู่แล้ว</li>
+        <li data-letter="B"><b>B</b> เพราะ Default Route ใช้กับ D1 ไม่ได้</li>
+        <li data-letter="C"><b>C</b> เพราะกฎของ Cisco บังคับให้ต้องใช้ Static Route เท่านั้น</li>
+        <li data-letter="D"><b>D</b> ไม่มีเหตุผลพิเศษ</li>
+      </ol>
+      <details><summary>เฉลย</summary><div class="mcq-answer"><b>คำตอบ: A</b></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="bridge">
+      <b>อยากทวนก่อนทำอีกรอบ:</b> กลับไปอ่าน <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/ch1`}>Chapter 1: Packet Forwarding &amp; Inter-VLAN Routing</a>
+    </div>
+  </section>
+
+  <footer>
+    Internetwork · ข้อสอบจำลอง Chapter 1 · 30 ข้อ · เรียบเรียงจากเนื้อหา Chapter 1: Packet Forwarding
+  </footer>
+
+  <style>
+    .score-bar{
+      position:sticky;top:0;z-index:5;
+      display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+      background:var(--slate-soft);border:1px solid var(--slate);border-radius:12px;
+      padding:12px 18px;margin:0 0 24px;font-size:.88rem;color:var(--ink);
+    }
+    .score-bar b{font-family:var(--mono);color:var(--slate);font-size:1rem}
+    .score-bar button{
+      margin-left:auto;border:1px solid var(--slate);background:var(--card);color:var(--slate);
+      font-family:var(--sans);font-size:.82rem;font-weight:700;padding:6px 14px;border-radius:999px;
+      cursor:pointer;transition:background .15s;
+    }
+    .score-bar button:hover{background:var(--slate);color:#fff}
+
+    .mcq{border:1px solid var(--rule-soft);border-radius:14px;padding:22px 24px;margin-bottom:14px;background:var(--card)}
+    .mcq-n{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);font-weight:700;margin:0 0 8px}
+    .mcq-q{margin:0 0 12px;font-size:.98rem;color:var(--ink);font-weight:600;line-height:1.6}
+    .mcq-opts{list-style:none;margin:0 0 4px;padding:0;display:flex;flex-direction:column;gap:7px}
+    .mcq-opts li{padding:8px 12px;border:1px solid var(--rule-soft);border-radius:8px;font-size:.9rem;color:var(--ink-2);cursor:pointer;transition:border-color .12s, background .12s, transform .1s}
+    .mcq-opts li:hover{border-color:var(--slate);transform:translateX(2px)}
+    .mcq-opts li b{font-family:var(--mono);color:var(--slate);margin-right:8px}
+    .mcq[data-locked="1"] .mcq-opts li{cursor:default}
+    .mcq[data-locked="1"] .mcq-opts li:hover{transform:none}
+    .mcq-opts li.is-correct{border-color:var(--fwd);background:var(--fwd-soft);color:var(--ink)}
+    .mcq-opts li.is-correct b{color:var(--fwd)}
+    .mcq-opts li.is-wrong{border-color:var(--coral);background:var(--coral-soft);color:var(--ink)}
+    .mcq-opts li.is-wrong b{color:var(--coral)}
+    .mcq details{margin-top:12px}
+    .mcq summary{cursor:pointer;color:var(--slate);font-weight:700;font-size:.85rem;list-style:none}
+    .mcq summary::-webkit-details-marker{display:none}
+    .mcq summary::before{content:"▸ "}
+    .mcq details[open] summary::before{content:"▾ "}
+    .mcq-answer{margin-top:10px;padding-top:10px;border-top:1px dashed var(--rule);font-size:.88rem;color:var(--ink-2);line-height:1.6}
+    .mcq-answer b{color:var(--fwd)}
+
+    @media (max-width:640px){
+      .score-bar{gap:10px 16px}
+      .score-bar button{margin-left:0}
+    }
+  </style>
+
+  <script>
+    (function () {
+      const doneEl = document.getElementById("scoreDone");
+      const correctEl = document.getElementById("scoreCorrect");
+      const resetBtn = document.getElementById("resetMock");
+      let done = 0;
+      let correct = 0;
+
+      function updateScore() {
+        if (doneEl) doneEl.textContent = String(done);
+        if (correctEl) correctEl.textContent = String(correct);
+      }
+
+      document.querySelectorAll(".mcq[data-answer]").forEach((mcq) => {
+        const answer = mcq.getAttribute("data-answer");
+        mcq.querySelectorAll(".mcq-opts li").forEach((li) => {
+          li.addEventListener("click", () => {
+            if (mcq.getAttribute("data-locked") === "1") return;
+            mcq.setAttribute("data-locked", "1");
+
+            const letter = li.getAttribute("data-letter");
+            const isCorrect = letter === answer;
+            li.classList.add(isCorrect ? "is-correct" : "is-wrong");
+
+            if (!isCorrect) {
+              const correctLi = mcq.querySelector('.mcq-opts li[data-letter="' + answer + '"]');
+              if (correctLi) correctLi.classList.add("is-correct");
+            }
+
+            const details = mcq.querySelector("details");
+            if (details) details.open = true;
+
+            done += 1;
+            if (isCorrect) correct += 1;
+            updateScore();
+          });
+        });
+      });
+
+      if (resetBtn) {
+        resetBtn.addEventListener("click", () => location.reload());
+      }
+    })();
+  </script>
+
+</Layout>
